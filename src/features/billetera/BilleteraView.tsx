@@ -253,7 +253,7 @@ export const BilleteraView: React.FC = () => {
                       <h4 className="font-bold text-slate-800 dark:text-white text-sm">{item.nombre}</h4>
                       {isUSD && equivalentCOP !== null && (
                         <span className="text-xs font-mono text-slate-500 dark:text-slate-400">
-                          Equivalente a: {formatCurrency(equivalentCOP, 'COP')} COP
+                          {formatCurrency(equivalentCOP, 'COP')} COP
                         </span>
                       )}
                     </div>
@@ -353,16 +353,16 @@ export const BilleteraView: React.FC = () => {
                     <div className="flex items-center gap-2">
                       <h4 className="font-bold text-slate-800 dark:text-white text-sm">{item.nombre}</h4>
 
-                      {/* Indicador con ícono de Recibir Pago vs Hacer Pago */}
+                      {/* Indicador con tono suave verde (Me Deben) o rojo (Debo) */}
                       {isPorCobrar ? (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/50">
-                          <ArrowDownLeft className="w-3 h-3 text-blue-600 dark:text-blue-400" />
-                          Me deben
+                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50">
+                          <ArrowDownLeft className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                          Me Deben
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-                          <ArrowUpRight className="w-3 h-3 text-slate-500 dark:text-slate-400" />
-                          Debo pagar
+                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800/50">
+                          <ArrowUpRight className="w-3 h-3 text-rose-600 dark:text-rose-400" />
+                          Debo
                         </span>
                       )}
                     </div>
@@ -545,7 +545,7 @@ export const BilleteraView: React.FC = () => {
                 </div>
               </div>
 
-              {/* Icon Picker con Mosaico Compacto */}
+              {/* Icon Picker con Mosaico Compacto y Pequeño */}
               <IconPicker selectedIconId={billeteraIcon} onSelectIcon={setBilleteraIcon} />
 
               <div className="flex items-center gap-3 pt-3">
@@ -597,10 +597,10 @@ export const BilleteraView: React.FC = () => {
                 />
               </div>
 
-              {/* Selector de Tipo: 'Me deben a mí (Por cobrar)' vs 'Yo debo (Por pagar)' */}
+              {/* Selector de Dirección: 'Me Deben' (Verde suave) vs 'Debo' (Rojo suave) */}
               <div>
                 <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
-                  Tipo de Deuda / Dirección
+                  Dirección
                 </label>
                 <div className="grid grid-cols-2 gap-2">
                   <button
@@ -608,12 +608,12 @@ export const BilleteraView: React.FC = () => {
                     onClick={() => setDeudaTipo('por_cobrar')}
                     className={`py-2.5 px-2 rounded-2xl text-xs font-bold border flex items-center justify-center gap-1.5 transition-all ${
                       deudaTipo === 'por_cobrar'
-                        ? 'bg-blue-100 dark:bg-blue-950/60 border-blue-500 text-blue-800 dark:text-blue-300 shadow-sm'
+                        ? 'bg-emerald-100 dark:bg-emerald-950/60 border-emerald-500 text-emerald-800 dark:text-emerald-300 shadow-sm ring-1 ring-emerald-400'
                         : 'bg-slate-50 dark:bg-slate-950/40 border-slate-300 dark:border-slate-800 text-slate-600 dark:text-slate-400'
                     }`}
                   >
-                    <ArrowDownLeft className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                    Me deben (Cobrar)
+                    <ArrowDownLeft className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                    Me Deben
                   </button>
 
                   <button
@@ -621,12 +621,12 @@ export const BilleteraView: React.FC = () => {
                     onClick={() => setDeudaTipo('por_pagar')}
                     className={`py-2.5 px-2 rounded-2xl text-xs font-bold border flex items-center justify-center gap-1.5 transition-all ${
                       deudaTipo === 'por_pagar'
-                        ? 'bg-blue-100 dark:bg-blue-950/60 border-blue-500 text-blue-800 dark:text-blue-300 shadow-sm'
+                        ? 'bg-rose-100 dark:bg-rose-950/60 border-rose-500 text-rose-800 dark:text-rose-300 shadow-sm ring-1 ring-rose-400'
                         : 'bg-slate-50 dark:bg-slate-950/40 border-slate-300 dark:border-slate-800 text-slate-600 dark:text-slate-400'
                     }`}
                   >
-                    <ArrowUpRight className="w-4 h-4 text-slate-500 dark:text-slate-400" />
-                    Yo debo (Pagar)
+                    <ArrowUpRight className="w-4 h-4 text-rose-600 dark:text-rose-400" />
+                    Debo
                   </button>
                 </div>
               </div>
@@ -737,7 +737,7 @@ export const BilleteraView: React.FC = () => {
                 </div>
               </div>
 
-              {/* Icon Picker con Mosaico Compacto */}
+              {/* Icon Picker con Mosaico Compacto y Pequeño */}
               <IconPicker selectedIconId={deudaIcon} onSelectIcon={setDeudaIcon} />
 
               <div className="flex items-center gap-3 pt-3">

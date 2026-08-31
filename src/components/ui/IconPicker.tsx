@@ -90,7 +90,7 @@ export const ICON_CATEGORIES: IconCategory[] = [
     ]
   },
   {
-    title: 'Bienes, Vehículos & Hogar',
+    title: 'Bienes & Hogar',
     items: [
       { id: 'car', label: 'Vehículo', icon: Car },
       { id: 'home', label: 'Vivienda', icon: Home },
@@ -101,12 +101,12 @@ export const ICON_CATEGORIES: IconCategory[] = [
     ]
   },
   {
-    title: 'Deudas, Facturas & Obligaciones',
+    title: 'Deudas & Obligaciones',
     items: [
-      { id: 'shield_alert', label: 'Deuda / Riesgo', icon: ShieldAlert },
-      { id: 'file_text', label: 'Factura / SOAT', icon: FileText },
+      { id: 'shield_alert', label: 'Deuda', icon: ShieldAlert },
+      { id: 'file_text', label: 'Factura', icon: FileText },
       { id: 'receipt', label: 'Recibo', icon: Receipt },
-      { id: 'scale', label: 'Impuestos / Renta', icon: Scale },
+      { id: 'scale', label: 'Impuestos', icon: Scale },
       { id: 'alert_circle', label: 'Multa', icon: AlertCircle },
     ]
   }
@@ -128,21 +128,21 @@ interface IconPickerProps {
 
 export const IconPicker: React.FC<IconPickerProps> = ({ selectedIconId = 'wallet', onSelectIcon }) => {
   return (
-    <div className="space-y-2">
+    <div className="space-y-1.5">
       <div className="flex items-center justify-between">
         <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block">
-          Ícono de la Categoría
+          Ícono
         </label>
-        <span className="text-[11px] text-slate-400">Desplaza para ver más</span>
+        <span className="text-[10px] text-slate-400">Desplaza para elegir</span>
       </div>
 
-      <div className="max-h-56 overflow-y-auto p-2 bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-2xl space-y-4">
+      <div className="max-h-36 overflow-y-auto p-2 bg-slate-50 dark:bg-slate-950/80 border border-slate-300 dark:border-slate-800 rounded-2xl space-y-2.5">
         {ICON_CATEGORIES.map((cat, idx) => (
-          <div key={idx} className="space-y-1.5">
-            <h5 className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 sticky top-0 bg-slate-50/95 dark:bg-slate-950/95 py-0.5 z-10 backdrop-blur-sm">
+          <div key={idx} className="space-y-1">
+            <h5 className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 sticky top-0 bg-slate-50/95 dark:bg-slate-950/95 py-0.5 z-10 backdrop-blur-sm">
               {cat.title}
             </h5>
-            <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5">
+            <div className="grid grid-cols-3 gap-1.5">
               {cat.items.map(item => {
                 const Icon = item.icon;
                 const isSelected = selectedIconId === item.id;
@@ -151,14 +151,14 @@ export const IconPicker: React.FC<IconPickerProps> = ({ selectedIconId = 'wallet
                     key={item.id}
                     type="button"
                     onClick={() => onSelectIcon(item.id)}
-                    className={`p-2 rounded-xl border flex items-center gap-2 transition-all text-left ${
+                    className={`px-2 py-1.5 rounded-xl border flex items-center gap-1.5 transition-all text-left ${
                       isSelected
                         ? 'bg-blue-600 text-white border-blue-500 shadow-sm ring-1 ring-blue-400'
-                        : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-850'
+                        : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-slate-300 hover:bg-slate-100 dark:hover:bg-slate-850'
                     }`}
                   >
-                    <Icon className="w-4 h-4 flex-shrink-0" />
-                    <span className="text-[11px] font-medium truncate">{item.label}</span>
+                    <Icon className="w-3.5 h-3.5 flex-shrink-0" />
+                    <span className="text-[10px] font-medium truncate">{item.label}</span>
                   </button>
                 );
               })}
