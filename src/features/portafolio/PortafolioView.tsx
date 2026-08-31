@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { useFinance } from '../../context/FinanceContext';
 import { formatCurrency } from '../../services/financeCalculations';
 import { PortfolioAccountItem } from '../../models/finance';
@@ -12,8 +12,21 @@ import {
   Trash2,
   X,
   Calculator,
-  GripVertical
+  GripVertical,
+  Check
 } from 'lucide-react';
+
+// Malla de 4x4 colores predefinidos (16 colores elegantes y distinguibles)
+const PRESET_COLORS_4X4 = [
+  // Fila 1: Azules y Teals
+  '#2563eb', '#0284c7', '#06b6d4', '#0d9488',
+  // Fila 2: Verdes y Amarillos
+  '#059669', '#16a34a', '#65a30d', '#eab308',
+  // Fila 3: Cálidos, Naranjas y Rojos
+  '#d97706', '#ea580c', '#f43f5e', '#dc2626',
+  // Fila 4: Púrpuras, Violetas, Rosas y Neutros
+  '#9333ea', '#7c3aed', '#db2777', '#475569'
+];
 
 export const PortafolioView: React.FC = () => {
   const {
@@ -31,8 +44,8 @@ export const PortafolioView: React.FC = () => {
   // Drag and Drop state
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
-  // Hidden native color picker ref
-  const colorInputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
+  // Active item ID for the 4x4 color palette popover
+  const [activeColorPickerItemId, setActiveColorPickerItemId] = useState<string | null>(null);
 
   // Modal states for Portafolio item (Create / Edit)
   const [showAddModal, setShowAddModal] = useState(false);
@@ -140,7 +153,6 @@ export const PortafolioView: React.FC = () => {
       setDraggedIndex(null);
       return;
     }
-    // Reorder using movePortfolioItem iteratively
     const diff = targetIndex - draggedIndex;
     if (diff > 0) {
       for (let i = draggedIndex; i < targetIndex; i++) {
@@ -211,7 +223,7 @@ export const PortafolioView: React.FC = () => {
               >
                 <div className="flex items-center gap-3">
                   {/* Ícono de agarre arrastrable */}
-                  <div className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 cursor-grab active:cursor-grabbing p-1">
+                  <div className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-1 cursor-grab active:cursor-grabbing">
                     <GripVertical className="w-4 h-4" />
                   </div>
 
@@ -267,25 +279,58 @@ export const PortafolioView: React.FC = () => {
                 {port.items.map((item, i) => (
                   <div
                     key={item.id || i}
-                    className="flex items-center justify-between p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 transition-colors"
+                    className="relative flex items-center justify-between p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 transition-colors"
                   >
                     <div className="flex items-center gap-2.5 truncate">
-                      {/* Círculo de color interactivo / selector de color al clickear */}
+                      {/* Círculo de color interactivo con popover 4x4 */}
                       <div className="relative flex-shrink-0">
                         <button
                           type="button"
-                          onClick={() => colorInputRefs.current[item.id]?.click()}
-                          title="Click para cambiar color"
+                          onClick={() => setActiveColorPickerItemId(activeColorPickerItemId === item.id ? null : item.id)}
+                          title="Click para elegir color (malla 4x4)"
                           className="w-5 h-5 rounded-full shadow-sm ring-2 ring-white dark:ring-slate-800 hover:scale-110 active:scale-95 transition-transform flex items-center justify-center cursor-pointer"
                           style={{ backgroundColor: item.color }}
                         />
-                        <input
-                          ref={el => (colorInputRefs.current[item.id] = el)}
-                          type="color"
-                          value={item.color}
-                          onChange={e => updatePortfolioItem(item.id, { color: e.target.value })}
-                          className="opacity-0 w-0 h-0 absolute pointer-events-none"
-                        />
+
+                        {/* Malla de 4x4 Colores Pop-up */}
+                        {activeColorPickerItemId === item.id && (
+                          <div className="absolute left-0 top-full mt-2 z-30 p-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-2xl shadow-2xl w-48 animate-scaleUp">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                                Elegir Color
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => setActiveColorPickerItemId(null)}
+                                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+
+                            {/* Cuadrícula de 4x4 (16 colores) */}
+                            <div className="grid grid-cols-4 gap-2">
+                              {PRESET_COLORS_4X4.map(colorHex => {
+                                const isSelected = (item.color || '').toLowerCase() === colorHex.toLowerCase();
+                                return (
+                                  <button
+                                    key={colorHex}
+                                    type="button"
+                                    onClick={() => {
+                                      updatePortfolioItem(item.id, { color: colorHex });
+                                      setActiveColorPickerItemId(null);
+                                    }}
+                                    className="w-7 h-7 rounded-xl flex items-center justify-center hover:scale-110 active:scale-95 transition-transform shadow-sm ring-1 ring-black/10"
+                                    style={{ backgroundColor: colorHex }}
+                                    title={colorHex}
+                                  >
+                                    {isSelected && <Check className="w-3.5 h-3.5 text-white drop-shadow" />}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
                       </div>
 
                       <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
