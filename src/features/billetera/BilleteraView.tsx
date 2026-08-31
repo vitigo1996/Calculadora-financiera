@@ -264,6 +264,10 @@ export const BilleteraView: React.FC = () => {
 
   // Open Create Movement Modal
   const openCreateMovement = () => {
+    if (!data.billeteraItems || data.billeteraItems.length === 0) {
+      alert('Debes agregar primero al menos una cuenta en la pestaña Billetera antes de registrar un movimiento.');
+      return;
+    }
     setMovementType('expense');
     setMovementName('');
     setMovementAmount('');
@@ -352,63 +356,69 @@ export const BilleteraView: React.FC = () => {
             </div>
 
             <div className="divide-y divide-slate-200 dark:divide-slate-800">
-              {data.billeteraItems.map((item, idx) => {
-                const isDragging = draggedBilleteraIdx === idx;
-                const Icon = getIconComponent(item.icon);
+              {(!data.billeteraItems || data.billeteraItems.length === 0) ? (
+                <div className="p-8 text-center text-slate-400 dark:text-slate-500 text-xs">
+                  No tienes cuentas en tu billetera. Haz clic en <strong>Agregar</strong> para registrar una.
+                </div>
+              ) : (
+                data.billeteraItems.map((item, idx) => {
+                  const isDragging = draggedBilleteraIdx === idx;
+                  const Icon = getIconComponent(item.icon);
 
-                return (
-                  <div
-                    key={item.id}
-                    draggable
-                    onDragStart={e => {
-                      setDraggedBilleteraIdx(idx);
-                      e.dataTransfer.effectAllowed = 'move';
-                    }}
-                    onDragOver={e => {
-                      e.preventDefault();
-                      e.dataTransfer.dropEffect = 'move';
-                    }}
-                    onDrop={e => {
-                      e.preventDefault();
-                      handleBilleteraDrop(idx);
-                    }}
-                    onDragEnd={() => setDraggedBilleteraIdx(null)}
-                    className={`p-4 bg-white dark:bg-slate-900 transition-all flex items-center justify-between cursor-grab active:cursor-grabbing ${
-                      isDragging ? 'opacity-40 scale-[0.99] bg-blue-50/50 dark:bg-blue-950/30' : ''
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      {/* Grip Handle */}
-                      <div className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-1 cursor-grab active:cursor-grabbing">
-                        <GripVertical className="w-4 h-4" />
+                  return (
+                    <div
+                      key={item.id}
+                      draggable
+                      onDragStart={e => {
+                        setDraggedBilleteraIdx(idx);
+                        e.dataTransfer.effectAllowed = 'move';
+                      }}
+                      onDragOver={e => {
+                        e.preventDefault();
+                        e.dataTransfer.dropEffect = 'move';
+                      }}
+                      onDrop={e => {
+                        e.preventDefault();
+                        handleBilleteraDrop(idx);
+                      }}
+                      onDragEnd={() => setDraggedBilleteraIdx(null)}
+                      className={`p-4 bg-white dark:bg-slate-900 transition-all flex items-center justify-between cursor-grab active:cursor-grabbing ${
+                        isDragging ? 'opacity-40 scale-[0.99] bg-blue-50/50 dark:bg-blue-950/30' : ''
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        {/* Grip Handle */}
+                        <div className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-1 cursor-grab active:cursor-grabbing">
+                          <GripVertical className="w-4 h-4" />
+                        </div>
+
+                        <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${getItemIconStyle()}`}>
+                          <Icon className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-slate-800 dark:text-white text-sm">{item.nombre}</h4>
+                        </div>
                       </div>
 
-                      <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${getItemIconStyle()}`}>
-                        <Icon className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <h4 className="font-bold text-slate-800 dark:text-white text-sm">{item.nombre}</h4>
+                      <div className="flex items-center gap-2">
+                        <div className="text-right">
+                          <span className="font-mono font-bold text-sm text-slate-800 dark:text-white block">
+                            {formatCurrency(item.saldo)}
+                          </span>
+                        </div>
+
+                        <button
+                          onClick={() => openEditBilletera(item)}
+                          className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-300/80 dark:border-transparent transition-colors"
+                          title="Editar saldo y cuenta"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
                       </div>
                     </div>
-
-                    <div className="flex items-center gap-2">
-                      <div className="text-right">
-                        <span className="font-mono font-bold text-sm text-slate-800 dark:text-white block">
-                          {formatCurrency(item.saldo)}
-                        </span>
-                      </div>
-
-                      <button
-                        onClick={() => openEditBilletera(item)}
-                        className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-300/80 dark:border-transparent transition-colors"
-                        title="Editar saldo y cuenta"
-                      >
-                        <Edit2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })
+              )}
             </div>
           </div>
 
@@ -427,7 +437,12 @@ export const BilleteraView: React.FC = () => {
             </div>
 
             <div className="divide-y divide-slate-200 dark:divide-slate-800">
-              {data.deudaItems.map((item, idx) => {
+              {(!data.deudaItems || data.deudaItems.length === 0) ? (
+                <div className="p-8 text-center text-slate-400 dark:text-slate-500 text-xs">
+                  No tienes deudas registradas. Haz clic en <strong>Agregar</strong> para registrar una.
+                </div>
+              ) : (
+                data.deudaItems.map((item, idx) => {
                 const isDragging = draggedDeudaIdx === idx;
                 const Icon = getIconComponent(item.icon);
                 const isPorCobrar = item.tipo === 'por_cobrar';
@@ -501,11 +516,12 @@ export const BilleteraView: React.FC = () => {
                     </div>
                   </div>
                 );
-              })}
-            </div>
+              })
+            )}
           </div>
         </div>
-      ) : (
+      </div>
+    ) : (
         /* SECCIÓN: REGISTRO (Movimientos) */
         <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
           <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between flex-wrap gap-2">

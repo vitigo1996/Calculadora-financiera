@@ -212,69 +212,75 @@ export const PortafolioView: React.FC = () => {
         </div>
 
         <div className="divide-y divide-slate-200 dark:divide-slate-800">
-          {(data.portfolioItems || []).map((item, idx) => {
-            const Icon = getIconComponent(item.icon || 'trending_up');
-            const itemMoneda = item.moneda || 'COP';
-            const isDiff = itemMoneda !== baseCurrency;
-            const equivalentInBase = convertToBase(item.saldo, itemMoneda, baseCurrency, dolarRate);
-            const isDragging = draggedIndex === idx;
+          {(!data.portfolioItems || data.portfolioItems.length === 0) ? (
+            <div className="p-8 text-center text-slate-400 dark:text-slate-500 text-xs">
+              No tienes activos en tu portafolio. Haz clic en <strong>Agregar</strong> para registrar uno.
+            </div>
+          ) : (
+            data.portfolioItems.map((item, idx) => {
+              const Icon = getIconComponent(item.icon || 'trending_up');
+              const itemMoneda = item.moneda || 'COP';
+              const isDiff = itemMoneda !== baseCurrency;
+              const equivalentInBase = convertToBase(item.saldo, itemMoneda, baseCurrency, dolarRate);
+              const isDragging = draggedIndex === idx;
 
-            return (
-              <div
-                key={item.id}
-                draggable
-                onDragStart={e => handleDragStart(e, idx)}
-                onDragOver={e => handleDragOver(e, idx)}
-                onDrop={e => handleDrop(e, idx)}
-                onDragEnd={() => setDraggedIndex(null)}
-                className={`p-4 bg-white dark:bg-slate-900 transition-all flex items-center justify-between cursor-grab active:cursor-grabbing ${
-                  isDragging ? 'opacity-40 scale-[0.99] bg-blue-50/50 dark:bg-blue-950/30' : ''
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  {/* Ícono de agarre arrastrable */}
-                  <div className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-1 cursor-grab active:cursor-grabbing">
-                    <GripVertical className="w-4 h-4" />
+              return (
+                <div
+                  key={item.id}
+                  draggable
+                  onDragStart={e => handleDragStart(e, idx)}
+                  onDragOver={e => handleDragOver(e, idx)}
+                  onDrop={e => handleDrop(e, idx)}
+                  onDragEnd={() => setDraggedIndex(null)}
+                  className={`p-4 bg-white dark:bg-slate-900 transition-all flex items-center justify-between cursor-grab active:cursor-grabbing ${
+                    isDragging ? 'opacity-40 scale-[0.99] bg-blue-50/50 dark:bg-blue-950/30' : ''
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    {/* Ícono de agarre arrastrable */}
+                    <div className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-1 cursor-grab active:cursor-grabbing">
+                      <GripVertical className="w-4 h-4" />
+                    </div>
+
+                    <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${getItemIconStyle()}`}>
+                      <Icon className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h4 className="font-bold text-slate-800 dark:text-white text-sm">{item.nombre}</h4>
+                        {isDiff && (
+                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300">
+                            {itemMoneda}
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   </div>
 
-                  <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${getItemIconStyle()}`}>
-                    <Icon className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h4 className="font-bold text-slate-800 dark:text-white text-sm">{item.nombre}</h4>
+                  <div className="flex items-center gap-2">
+                    <div className="text-right">
+                      <span className="font-mono font-bold text-sm text-slate-800 dark:text-white block">
+                        {formatCurrency(item.saldo, itemMoneda)}
+                      </span>
                       {isDiff && (
-                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300">
-                          {itemMoneda}
+                        <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 block">
+                          {formatCurrency(equivalentInBase, baseCurrency)} COP
                         </span>
                       )}
                     </div>
+
+                    <button
+                      onClick={() => openEditModal(item)}
+                      className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-300/80 dark:border-transparent transition-colors"
+                      title="Editar activo y monto"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                 </div>
-
-                <div className="flex items-center gap-2">
-                  <div className="text-right">
-                    <span className="font-mono font-bold text-sm text-slate-800 dark:text-white block">
-                      {formatCurrency(item.saldo, itemMoneda)}
-                    </span>
-                    {isDiff && (
-                      <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 block">
-                        {formatCurrency(equivalentInBase, baseCurrency)} COP
-                      </span>
-                    )}
-                  </div>
-
-                  <button
-                    onClick={() => openEditModal(item)}
-                    className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-300/80 dark:border-transparent transition-colors"
-                    title="Editar activo y monto"
-                  >
-                    <Edit2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-            );
-          })}
+              );
+            })
+          )}
         </div>
       </div>
 

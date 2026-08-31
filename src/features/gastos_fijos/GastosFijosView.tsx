@@ -317,7 +317,12 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
         </div>
 
         <div className="divide-y divide-slate-200 dark:divide-slate-800">
-          {data.housingExpenses.map((item, idx) => {
+          {(!data.housingExpenses || data.housingExpenses.length === 0) ? (
+            <div className="p-8 text-center text-slate-400 dark:text-slate-500 text-xs">
+              No tienes gastos de vivienda registrados. Haz clic en <strong>Agregar</strong> para registrar uno.
+            </div>
+          ) : (
+            data.housingExpenses.map((item, idx) => {
             const isDragging = draggedHousingIdx === idx;
             const isSharedItem = item.isShared !== false;
 
@@ -410,7 +415,8 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
                 </div>
               </div>
             );
-          })}
+          })
+        )}
         </div>
       </div>
 
@@ -429,7 +435,12 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
         </div>
 
         <div className="divide-y divide-slate-200 dark:divide-slate-800">
-          {data.obligations.map((ob, idx) => {
+          {(!data.obligations || data.obligations.length === 0) ? (
+            <div className="p-8 text-center text-slate-400 dark:text-slate-500 text-xs">
+              No tienes obligaciones registradas. Haz clic en <strong>Agregar</strong> para registrar una.
+            </div>
+          ) : (
+            data.obligations.map((ob, idx) => {
             const isDragging = draggedObligationIdx === idx;
             const monthlyPayment = ob.davidAmount !== undefined && ob.davidAmount !== ob.totalAmount && ob.totalDebtBalance
               ? ob.davidAmount
@@ -531,7 +542,8 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
                 </div>
               </div>
             );
-          })}
+          })
+        )}
         </div>
       </div>
 
@@ -552,7 +564,12 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
         </div>
 
         <div className="divide-y divide-slate-200 dark:divide-slate-800">
-          {data.subscriptions.map((sub, idx) => {
+          {(!data.subscriptions || data.subscriptions.length === 0) ? (
+            <div className="p-8 text-center text-slate-400 dark:text-slate-500 text-xs">
+              No tienes suscripciones registradas. Haz clic en <strong>Agregar</strong> para registrar una.
+            </div>
+          ) : (
+            data.subscriptions.map((sub, idx) => {
             const monthlyCost = calculateSubscriptionMonthlyCost(sub);
             const isDragging = draggedSubIdx === idx;
             const isYearly = sub.billing === 'yearly';
@@ -626,7 +643,8 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
                 </div>
               </div>
             );
-          })}
+          })
+        )}
         </div>
       </div>
 

@@ -1,8 +1,8 @@
-import { AppFinanceData, BilleteraAccountItem, DeudaItem, PortfolioAccountItem } from '../models/finance';
+import { AppFinanceData } from '../models/finance';
 import { initialFinanceData } from './defaultData';
 import * as XLSX from 'xlsx';
 
-const STORAGE_KEY = 'app_finanzas_data_v6';
+const STORAGE_KEY = 'app_finanzas_data_v7';
 
 export const StorageService = {
   loadData(): AppFinanceData {
@@ -11,16 +11,6 @@ export const StorageService = {
       if (stored) {
         const parsed = JSON.parse(stored);
         if (parsed) {
-          if (Array.isArray(parsed.deudaItems)) {
-            parsed.deudaItems = parsed.deudaItems.map((d: any) => ({
-              ...d,
-              moneda: d.moneda || 'COP',
-              tipo: d.tipo || 'por_pagar'
-            }));
-          }
-          if (!Array.isArray(parsed.portfolioItems) || parsed.portfolioItems.length === 0) {
-            parsed.portfolioItems = initialFinanceData.portfolioItems;
-          }
           return {
             ...initialFinanceData,
             ...parsed
@@ -64,7 +54,7 @@ export const StorageService = {
     // Sheet: Billetera
     const billeteraRows = [
       { Concepto: 'Tasa Dolar TRM (USD/COP)', Valor: data.dolarRate, Moneda: 'COP' },
-      ...data.billeteraItems.map(b => ({
+      ...(data.billeteraItems || []).map(b => ({
         Concepto: b.nombre,
         Valor: b.saldo,
         Moneda: b.moneda
@@ -74,7 +64,7 @@ export const StorageService = {
     XLSX.utils.book_append_sheet(wb, wsBilletera, 'Billetera');
 
     // Sheet: Deudas
-    const deudasRows = data.deudaItems.map(d => ({
+    const deudasRows = (data.deudaItems || []).map(d => ({
       Concepto: d.nombre,
       Tipo: d.tipo === 'por_cobrar' ? 'Me Deben' : 'Debo',
       Monto: d.monto || 0,

@@ -179,32 +179,37 @@ export const CreditosSuscripcionesView: React.FC = () => {
 
       {/* SECCIÓN TARJETAS DE CRÉDITO: Diseño Horizontal Desplazable */}
       <div className="space-y-4">
-        <div className="flex items-stretch gap-4 overflow-x-auto pb-3 pt-1 scrollbar-thin snap-x">
-          {data.creditCards.map((cc, idx) => {
-            const isSelected = (selectedCard?.id === cc.id);
-            const totalDeuda = calculateCardPurchasesTotal(cc);
-            const pagoDelMes = calculateCardPaymentDue(cc);
-            const cupoDisponible = cc.creditLimit - totalDeuda;
-            const hasCutoff = cc.billingCutoffAmount !== undefined;
-            const isDragging = draggedIndex === idx;
+        {data.creditCards.length === 0 ? (
+          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 p-8 text-center text-slate-400 dark:text-slate-500 text-xs">
+            No tienes tarjetas agregadas. Haz clic en <strong>Agregar Tarjeta</strong> para registrar una.
+          </div>
+        ) : (
+          <div className="flex items-stretch gap-4 overflow-x-auto pb-3 pt-1 scrollbar-thin snap-x">
+            {data.creditCards.map((cc, idx) => {
+              const isSelected = (selectedCard?.id === cc.id);
+              const totalDeuda = calculateCardPurchasesTotal(cc);
+              const pagoDelMes = calculateCardPaymentDue(cc);
+              const cupoDisponible = cc.creditLimit - totalDeuda;
+              const hasCutoff = cc.billingCutoffAmount !== undefined;
+              const isDragging = draggedIndex === idx;
 
-            return (
-              <div
-                key={cc.id}
-                draggable
-                onDragStart={e => handleDragStart(e, idx)}
-                onDragOver={e => handleDragOver(e, idx)}
-                onDrop={e => handleDrop(e, idx)}
-                onDragEnd={() => setDraggedIndex(null)}
-                onClick={() => setSelectedCardId(cc.id)}
-                className={`w-[290px] sm:w-[320px] flex-shrink-0 snap-start p-5 rounded-3xl border transition-all cursor-pointer relative overflow-hidden flex flex-col justify-between ${
-                  isDragging ? 'opacity-40 scale-[0.98]' : ''
-                } ${
-                  isSelected
-                    ? 'bg-white dark:bg-slate-900 border-blue-500 shadow-md ring-2 ring-blue-500/20'
-                    : 'bg-white/80 dark:bg-slate-900/80 border-slate-300 dark:border-slate-800 shadow-sm'
-                }`}
-              >
+              return (
+                <div
+                  key={cc.id}
+                  draggable
+                  onDragStart={e => handleDragStart(e, idx)}
+                  onDragOver={e => handleDragOver(e, idx)}
+                  onDrop={e => handleDrop(e, idx)}
+                  onDragEnd={() => setDraggedIndex(null)}
+                  onClick={() => setSelectedCardId(cc.id)}
+                  className={`w-[290px] sm:w-[320px] flex-shrink-0 snap-start p-5 rounded-3xl border transition-all cursor-pointer relative overflow-hidden flex flex-col justify-between ${
+                    isDragging ? 'opacity-40 scale-[0.98]' : ''
+                  } ${
+                    isSelected
+                      ? 'bg-white dark:bg-slate-900 border-blue-500 shadow-md ring-2 ring-blue-500/20'
+                      : 'bg-white/80 dark:bg-slate-900/80 border-slate-300 dark:border-slate-800 shadow-sm'
+                  }`}
+                >
                 <div>
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-2">
@@ -294,6 +299,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
             );
           })}
         </div>
+      )}
 
         {/* DETALLES DE LA TARJETA SELECCIONADA: Compras y Acciones de Corte */}
         {selectedCard && (
