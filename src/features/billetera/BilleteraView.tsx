@@ -10,7 +10,8 @@ import {
   Minus,
   Trash2,
   X,
-  SlidersHorizontal
+  SlidersHorizontal,
+  Calculator
 } from 'lucide-react';
 
 export const BilleteraView: React.FC = () => {
@@ -36,6 +37,7 @@ export const BilleteraView: React.FC = () => {
   const [billeteraCurrency, setBilleteraCurrency] = useState<'COP' | 'USD'>('COP');
   const [billeteraBalance, setBilleteraBalance] = useState('');
   const [billeteraIcon, setBilleteraIcon] = useState('wallet');
+  const [showBilleteraCalculator, setShowBilleteraCalculator] = useState(false);
   const [billeteraCalcDelta, setBilleteraCalcDelta] = useState('');
 
   // Deudas Edit Mode & State
@@ -47,6 +49,7 @@ export const BilleteraView: React.FC = () => {
   const [deudaName, setDeudaName] = useState('');
   const [deudaAmount, setDeudaAmount] = useState('');
   const [deudaIcon, setDeudaIcon] = useState('shield_alert');
+  const [showDeudaCalculator, setShowDeudaCalculator] = useState(false);
   const [deudaCalcDelta, setDeudaCalcDelta] = useState('');
 
   // Helper color based on currency and name
@@ -68,6 +71,7 @@ export const BilleteraView: React.FC = () => {
     setBilleteraBalance('');
     setBilleteraIcon('wallet');
     setBilleteraCalcDelta('');
+    setShowBilleteraCalculator(false);
     setEditingBilleteraObj(null);
     setShowAddBilleteraModal(true);
   };
@@ -80,6 +84,7 @@ export const BilleteraView: React.FC = () => {
     setBilleteraBalance(b.saldo.toString());
     setBilleteraIcon(b.icon || (b.moneda === 'USD' ? 'coins' : 'wallet'));
     setBilleteraCalcDelta('');
+    setShowBilleteraCalculator(false);
     setShowAddBilleteraModal(true);
   };
 
@@ -125,6 +130,7 @@ export const BilleteraView: React.FC = () => {
     setDeudaAmount('');
     setDeudaIcon('shield_alert');
     setDeudaCalcDelta('');
+    setShowDeudaCalculator(false);
     setEditingDeudaObj(null);
     setShowAddDeudaModal(true);
   };
@@ -136,6 +142,7 @@ export const BilleteraView: React.FC = () => {
     setDeudaAmount((d.monto || 0).toString());
     setDeudaIcon(d.icon || 'shield_alert');
     setDeudaCalcDelta('');
+    setShowDeudaCalculator(false);
     setShowAddDeudaModal(true);
   };
 
@@ -354,7 +361,7 @@ export const BilleteraView: React.FC = () => {
         </div>
       </div>
 
-      {/* Modal: Crear / Editar Billetera con Calculadora integrada (+ / -) */}
+      {/* Modal: Crear / Editar Billetera con Botón Calculadora */}
       {showAddBilleteraModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl animate-scaleUp max-h-[90vh] overflow-y-auto">
@@ -412,11 +419,25 @@ export const BilleteraView: React.FC = () => {
                 </div>
               </div>
 
-              {/* Saldo y Calculadora simple (+ / -) */}
+              {/* Saldo y Botón de Calculadora */}
               <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                  Saldo {billeteraCurrency === 'USD' ? '(en Dólares USD)' : '(en Pesos COP)'}
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    Saldo {billeteraCurrency === 'USD' ? '(USD)' : '(COP)'}
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setShowBilleteraCalculator(!showBilleteraCalculator)}
+                    className={`text-xs font-semibold flex items-center gap-1 px-2.5 py-1 rounded-xl transition-all ${
+                      showBilleteraCalculator
+                        ? 'bg-emerald-600 text-white shadow-sm'
+                        : 'bg-slate-100 dark:bg-slate-800 text-emerald-700 dark:text-emerald-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+                    }`}
+                  >
+                    <Calculator className="w-3.5 h-3.5" /> Calculadora
+                  </button>
+                </div>
+
                 <div className="space-y-2">
                   <input
                     type="number"
@@ -427,37 +448,39 @@ export const BilleteraView: React.FC = () => {
                     className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white font-mono focus:outline-none focus:border-emerald-500"
                   />
 
-                  {/* Simple Add / Subtract Tool */}
-                  <div className="flex items-center gap-1.5 p-2 bg-slate-50 dark:bg-slate-950/80 rounded-2xl border border-slate-200 dark:border-slate-800">
-                    <input
-                      type="number"
-                      step="any"
-                      value={billeteraCalcDelta}
-                      onChange={e => setBilleteraCalcDelta(e.target.value)}
-                      placeholder="Valor a sumar o restar..."
-                      className="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs px-3 py-1.5 rounded-xl text-slate-800 dark:text-white font-mono focus:outline-none"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => applyBilleteraCalc('+')}
-                      className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1 transition-all"
-                      title="Sumar al saldo actual"
-                    >
-                      <Plus className="w-3.5 h-3.5" /> Sumar
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => applyBilleteraCalc('-')}
-                      className="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs flex items-center gap-1 transition-all"
-                      title="Restar al saldo actual"
-                    >
-                      <Minus className="w-3.5 h-3.5" /> Restar
-                    </button>
-                  </div>
+                  {/* Espacio desplegable de sumar o restar */}
+                  {showBilleteraCalculator && (
+                    <div className="flex items-center gap-1.5 p-2 bg-slate-50 dark:bg-slate-950/80 rounded-2xl border border-slate-200 dark:border-slate-800 animate-scaleUp">
+                      <input
+                        type="number"
+                        step="any"
+                        value={billeteraCalcDelta}
+                        onChange={e => setBilleteraCalcDelta(e.target.value)}
+                        placeholder="Valor a sumar o restar..."
+                        className="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs px-3 py-1.5 rounded-xl text-slate-800 dark:text-white font-mono focus:outline-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => applyBilleteraCalc('+')}
+                        className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1 transition-all"
+                        title="Sumar al saldo actual"
+                      >
+                        <Plus className="w-3.5 h-3.5" /> Sumar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => applyBilleteraCalc('-')}
+                        className="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs flex items-center gap-1 transition-all"
+                        title="Restar al saldo actual"
+                      >
+                        <Minus className="w-3.5 h-3.5" /> Restar
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {/* Icon Picker */}
+              {/* Icon Picker con Mosaico Compacto y Categorías */}
               <IconPicker selectedIconId={billeteraIcon} onSelectIcon={setBilleteraIcon} />
 
               <div className="flex items-center gap-3 pt-3">
@@ -480,7 +503,7 @@ export const BilleteraView: React.FC = () => {
         </div>
       )}
 
-      {/* Modal: Crear / Editar Deuda con Calculadora integrada (+ / -) */}
+      {/* Modal: Crear / Editar Deuda con Botón Calculadora */}
       {showAddDeudaModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl animate-scaleUp max-h-[90vh] overflow-y-auto">
@@ -509,9 +532,25 @@ export const BilleteraView: React.FC = () => {
                 />
               </div>
 
-              {/* Monto y Calculadora simple (+ / -) */}
+              {/* Monto y Botón de Calculadora */}
               <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">Monto (COP)</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    Monto (COP)
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setShowDeudaCalculator(!showDeudaCalculator)}
+                    className={`text-xs font-semibold flex items-center gap-1 px-2.5 py-1 rounded-xl transition-all ${
+                      showDeudaCalculator
+                        ? 'bg-rose-600 text-white shadow-sm'
+                        : 'bg-slate-100 dark:bg-slate-800 text-rose-700 dark:text-rose-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+                    }`}
+                  >
+                    <Calculator className="w-3.5 h-3.5" /> Calculadora
+                  </button>
+                </div>
+
                 <div className="space-y-2">
                   <input
                     type="number"
@@ -522,37 +561,39 @@ export const BilleteraView: React.FC = () => {
                     className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white font-mono focus:outline-none focus:border-rose-500"
                   />
 
-                  {/* Simple Add / Subtract Tool */}
-                  <div className="flex items-center gap-1.5 p-2 bg-slate-50 dark:bg-slate-950/80 rounded-2xl border border-slate-200 dark:border-slate-800">
-                    <input
-                      type="number"
-                      step="any"
-                      value={deudaCalcDelta}
-                      onChange={e => setDeudaCalcDelta(e.target.value)}
-                      placeholder="Valor a sumar o restar..."
-                      className="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs px-3 py-1.5 rounded-xl text-slate-800 dark:text-white font-mono focus:outline-none"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => applyDeudaCalc('+')}
-                      className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1 transition-all"
-                      title="Sumar al monto actual"
-                    >
-                      <Plus className="w-3.5 h-3.5" /> Sumar
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => applyDeudaCalc('-')}
-                      className="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs flex items-center gap-1 transition-all"
-                      title="Restar al monto actual"
-                    >
-                      <Minus className="w-3.5 h-3.5" /> Restar
-                    </button>
-                  </div>
+                  {/* Espacio desplegable de sumar o restar */}
+                  {showDeudaCalculator && (
+                    <div className="flex items-center gap-1.5 p-2 bg-slate-50 dark:bg-slate-950/80 rounded-2xl border border-slate-200 dark:border-slate-800 animate-scaleUp">
+                      <input
+                        type="number"
+                        step="any"
+                        value={deudaCalcDelta}
+                        onChange={e => setDeudaCalcDelta(e.target.value)}
+                        placeholder="Valor a sumar o restar..."
+                        className="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs px-3 py-1.5 rounded-xl text-slate-800 dark:text-white font-mono focus:outline-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => applyDeudaCalc('+')}
+                        className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1 transition-all"
+                        title="Sumar al monto actual"
+                      >
+                        <Plus className="w-3.5 h-3.5" /> Sumar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => applyDeudaCalc('-')}
+                        className="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs flex items-center gap-1 transition-all"
+                        title="Restar al monto actual"
+                      >
+                        <Minus className="w-3.5 h-3.5" /> Restar
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {/* Icon Picker */}
+              {/* Icon Picker con Mosaico Compacto y Categorías */}
               <IconPicker selectedIconId={deudaIcon} onSelectIcon={setDeudaIcon} />
 
               <div className="flex items-center gap-3 pt-3">
