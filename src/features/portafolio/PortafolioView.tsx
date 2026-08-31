@@ -3,6 +3,7 @@ import { useFinance } from '../../context/FinanceContext';
 import { formatCurrency, convertToBase } from '../../services/financeCalculations';
 import { PortfolioAccountItem } from '../../models/finance';
 import { getIconComponent, IconPicker } from '../../components/ui/IconPicker';
+import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import {
   TrendingUp as PieChartIcon,
@@ -39,6 +40,17 @@ export const PortafolioView: React.FC = () => {
     movePortfolioItem
   } = useFinance();
 
+  // Confirmation modal state
+  const [confirmConfig, setConfirmConfig] = useState<{
+    isOpen: boolean;
+    title?: string;
+    message: string;
+    confirmText?: string;
+    cancelText?: string | null;
+    variant?: 'danger' | 'warning' | 'info';
+    onConfirm: () => void;
+  } | null>(null);
+
   const dolarRate = data.dolarRate || 3600;
   const port = summary.portafolio;
 
@@ -57,6 +69,7 @@ export const PortafolioView: React.FC = () => {
   const [itemCurrency, setItemCurrency] = useState<'COP' | 'USD'>('COP');
   const [itemBalance, setItemBalance] = useState('');
   const [itemIcon, setItemIcon] = useState('trending_up');
+  const [itemColor, setItemColor] = useState('#2563eb');
   const [showCalcPopup, setShowCalcPopup] = useState(false);
   const [calcDelta, setCalcDelta] = useState('');
 
@@ -71,6 +84,7 @@ export const PortafolioView: React.FC = () => {
     setItemCurrency('COP');
     setItemBalance('');
     setItemIcon('trending_up');
+    setItemColor('#2563eb');
     setCalcDelta('');
     setShowCalcPopup(false);
     setEditingItemObj(null);
@@ -81,9 +95,10 @@ export const PortafolioView: React.FC = () => {
   const openEditModal = (p: PortfolioAccountItem) => {
     setEditingItemObj(p);
     setItemName(p.nombre);
-    setItemCurrency(p.moneda);
+    setItemCurrency(p.moneda || 'COP');
     setItemBalance(p.saldo.toString());
     setItemIcon(p.icon || (p.moneda === 'USD' ? 'coins' : 'trending_up'));
+    setItemColor(p.color || '#2563eb');
     setCalcDelta('');
     setShowCalcPopup(false);
     setShowAddModal(true);
@@ -112,14 +127,16 @@ export const PortafolioView: React.FC = () => {
         nombre: itemName.trim(),
         moneda: itemCurrency,
         saldo,
-        icon: itemIcon
+        icon: itemIcon,
+        color: itemColor
       });
     } else {
       addPortfolioItem({
         nombre: itemName.trim(),
         moneda: itemCurrency,
         saldo,
-        icon: itemIcon
+        icon: itemIcon,
+        color: itemColor
       });
     }
 
@@ -130,11 +147,19 @@ export const PortafolioView: React.FC = () => {
   // Delete Item from Modal
   const handleDeleteFromModal = () => {
     if (!editingItemObj) return;
-    if (confirm(`¿Eliminar "${editingItemObj.nombre}" del portafolio?`)) {
-      deletePortfolioItem(editingItemObj.id);
-      setShowAddModal(false);
-      setEditingItemObj(null);
-    }
+    setConfirmConfig({
+      isOpen: true,
+      title: 'Eliminar Activo',
+      message: `¿Estás seguro de eliminar "${editingItemObj.nombre}" del portafolio?`,
+      confirmText: 'Sí, eliminar',
+      cancelText: 'Cancelar',
+      variant: 'danger',
+      onConfirm: () => {
+        deletePortfolioItem(editingItemObj.id);
+        setShowAddModal(false);
+        setEditingItemObj(null);
+      }
+    });
   };
 
   // Drag and Drop handlers
@@ -448,7 +473,7 @@ export const PortafolioView: React.FC = () => {
                   type="text"
                   value={itemName}
                   onChange={e => setItemName(e.target.value)}
-                  placeholder="Ej. Etoro ETF, CDT Bancolombia, Nu Emergencia"
+                  placeholder="Ej. Activo 1, Fondo de ahorro, Inversión"
                   className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
                   required
                 />
@@ -576,6 +601,23 @@ export const PortafolioView: React.FC = () => {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Confirmation Modal */}
+      {confirmConfig && (
+        <ConfirmModal
+          isOpen={confirmConfig.isOpen}
+          title={confirmConfig.title}
+          message={confirmConfig.message}
+          confirmText={confirmConfig.confirmText}
+          cancelText={confirmConfig.cancelText}
+          variant={confirmConfig.variant}
+          onConfirm={() => {
+            confirmConfig.onConfirm();
+            setConfirmConfig(null);
+          }}
+          onCancel={() => setConfirmConfig(null)}
+        />
       )}
     </div>
   );

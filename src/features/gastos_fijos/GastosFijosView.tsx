@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { useFinance } from '../../context/FinanceContext';
 import { formatCurrency, calculateSubscriptionMonthlyCost } from '../../services/financeCalculations';
 import { HousingExpense, ObligationItem, SubscriptionItem, PaymentPeriod } from '../../models/finance';
+import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import {
   Home,
-  Sparkles,
   Edit2,
   Plus,
   Minus,
@@ -41,6 +41,17 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
     deleteSubscription,
     moveSubscription
   } = useFinance();
+
+  // Confirmation modal state
+  const [confirmConfig, setConfirmConfig] = useState<{
+    isOpen: boolean;
+    title?: string;
+    message: string;
+    confirmText?: string;
+    cancelText?: string | null;
+    variant?: 'danger' | 'warning' | 'info';
+    onConfirm: () => void;
+  } | null>(null);
 
   // Active people for dynamic proportional splits
   const activePeople = (data.people || []).filter(p => p.enabled);
@@ -149,11 +160,19 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
   // Delete Housing
   const handleDeleteHousing = () => {
     if (!editingHousingObj) return;
-    if (confirm(`¿Eliminar "${editingHousingObj.name}"?`)) {
-      deleteHousingExpense(editingHousingObj.id);
-      setShowHousingModal(false);
-      setEditingHousingObj(null);
-    }
+    setConfirmConfig({
+      isOpen: true,
+      title: 'Eliminar Gasto de Vivienda',
+      message: `¿Estás seguro de eliminar el gasto "${editingHousingObj.name}"?`,
+      confirmText: 'Sí, eliminar',
+      cancelText: 'Cancelar',
+      variant: 'danger',
+      onConfirm: () => {
+        deleteHousingExpense(editingHousingObj.id);
+        setShowHousingModal(false);
+        setEditingHousingObj(null);
+      }
+    });
   };
 
   // Open Create Obligation
@@ -215,11 +234,19 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
   // Delete Obligation
   const handleDeleteObligation = () => {
     if (!editingObligationObj) return;
-    if (confirm(`¿Eliminar "${editingObligationObj.name}"?`)) {
-      deleteObligation(editingObligationObj.id);
-      setShowObligationModal(false);
-      setEditingObligationObj(null);
-    }
+    setConfirmConfig({
+      isOpen: true,
+      title: 'Eliminar Obligación',
+      message: `¿Estás seguro de eliminar "${editingObligationObj.name}"?`,
+      confirmText: 'Sí, eliminar',
+      cancelText: 'Cancelar',
+      variant: 'danger',
+      onConfirm: () => {
+        deleteObligation(editingObligationObj.id);
+        setShowObligationModal(false);
+        setEditingObligationObj(null);
+      }
+    });
   };
 
   // Open Create Subscription
@@ -285,11 +312,19 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
   // Delete Subscription
   const handleDeleteSub = () => {
     if (!editingSubObj) return;
-    if (confirm(`¿Eliminar la suscripción "${editingSubObj.name}"?`)) {
-      deleteSubscription(editingSubObj.id);
-      setShowSubModal(false);
-      setEditingSubObj(null);
-    }
+    setConfirmConfig({
+      isOpen: true,
+      title: 'Eliminar Suscripción',
+      message: `¿Estás seguro de eliminar la suscripción "${editingSubObj.name}"?`,
+      confirmText: 'Sí, eliminar',
+      cancelText: 'Cancelar',
+      variant: 'danger',
+      onConfirm: () => {
+        deleteSubscription(editingSubObj.id);
+        setShowSubModal(false);
+        setEditingSubObj(null);
+      }
+    });
   };
 
   return (
@@ -550,8 +585,8 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
       {/* SECCIÓN 3: SUSCRIPCIONES */}
       <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
         <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-          <h3 className="font-bold text-slate-800 dark:text-white text-sm flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-blue-600 dark:text-blue-400" /> Suscripciones
+          <h3 className="font-bold text-slate-800 dark:text-white text-sm">
+            Suscripciones
           </h3>
 
           {/* Botón directo de Agregar */}
@@ -671,7 +706,7 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
                   type="text"
                   value={housingName}
                   onChange={e => setHousingName(e.target.value)}
-                  placeholder="Ej. Arriendo, Administración, Energía, Internet"
+                  placeholder="Ej. Gasto 1, Arriendo, Servicio"
                   className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
                   required
                 />
@@ -856,7 +891,7 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
                   type="text"
                   value={obligationName}
                   onChange={e => setObligationName(e.target.value)}
-                  placeholder="Ej. Icetex, Crédito Hipotecario, Préstamo"
+                  placeholder="Ej. Obligación 1, Crédito, Cuota mensual"
                   className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
                   required
                 />
@@ -1132,7 +1167,7 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
                   type="text"
                   value={subName}
                   onChange={e => setSubName(e.target.value)}
-                  placeholder="Ej. Netflix, Spotify, Gemini, ChatGPT"
+                  placeholder="Ej. Suscripción 1, Membresía, Servicio digital"
                   className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
                   required
                 />
@@ -1362,6 +1397,23 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
             </form>
           </div>
         </div>
+      )}
+
+      {/* Confirmation Modal */}
+      {confirmConfig && (
+        <ConfirmModal
+          isOpen={confirmConfig.isOpen}
+          title={confirmConfig.title}
+          message={confirmConfig.message}
+          confirmText={confirmConfig.confirmText}
+          cancelText={confirmConfig.cancelText}
+          variant={confirmConfig.variant}
+          onConfirm={() => {
+            confirmConfig.onConfirm();
+            setConfirmConfig(null);
+          }}
+          onCancel={() => setConfirmConfig(null)}
+        />
       )}
     </div>
   );

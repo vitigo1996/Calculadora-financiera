@@ -3,6 +3,7 @@ import { useFinance } from '../../context/FinanceContext';
 import { formatCurrency } from '../../services/financeCalculations';
 import { BilleteraAccountItem, DeudaItem } from '../../models/finance';
 import { getIconComponent, IconPicker } from '../../components/ui/IconPicker';
+import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import {
   Wallet,
   Edit2,
@@ -38,6 +39,17 @@ export const BilleteraView: React.FC = () => {
 
   // Submenu: Billetera vs Registro
   const [subView, setSubView] = useState<'billetera' | 'registro'>('billetera');
+
+  // Confirmation modal state
+  const [confirmConfig, setConfirmConfig] = useState<{
+    isOpen: boolean;
+    title?: string;
+    message: string;
+    confirmText?: string;
+    cancelText?: string | null;
+    variant?: 'danger' | 'warning' | 'info';
+    onConfirm: () => void;
+  } | null>(null);
 
   // Drag and drop states
   const [draggedBilleteraIdx, setDraggedBilleteraIdx] = useState<number | null>(null);
@@ -182,11 +194,19 @@ export const BilleteraView: React.FC = () => {
   // Delete Billetera from inside Edit Modal
   const handleDeleteBilleteraFromModal = () => {
     if (!editingBilleteraObj) return;
-    if (confirm(`¿Eliminar la cuenta "${editingBilleteraObj.nombre}"?`)) {
-      deleteBilleteraItem(editingBilleteraObj.id);
-      setShowAddBilleteraModal(false);
-      setEditingBilleteraObj(null);
-    }
+    setConfirmConfig({
+      isOpen: true,
+      title: 'Eliminar Cuenta',
+      message: `¿Estás seguro de eliminar la cuenta "${editingBilleteraObj.nombre}"?`,
+      confirmText: 'Sí, eliminar',
+      cancelText: 'Cancelar',
+      variant: 'danger',
+      onConfirm: () => {
+        deleteBilleteraItem(editingBilleteraObj.id);
+        setShowAddBilleteraModal(false);
+        setEditingBilleteraObj(null);
+      }
+    });
   };
 
   // Open Create Deuda Modal
@@ -255,17 +275,33 @@ export const BilleteraView: React.FC = () => {
   // Delete Deuda from inside Edit Modal
   const handleDeleteDeudaFromModal = () => {
     if (!editingDeudaObj) return;
-    if (confirm(`¿Eliminar la deuda "${editingDeudaObj.nombre}"?`)) {
-      deleteDeudaItem(editingDeudaObj.id);
-      setShowAddDeudaModal(false);
-      setEditingDeudaObj(null);
-    }
+    setConfirmConfig({
+      isOpen: true,
+      title: 'Eliminar Deuda',
+      message: `¿Estás seguro de eliminar el registro "${editingDeudaObj.nombre}"?`,
+      confirmText: 'Sí, eliminar',
+      cancelText: 'Cancelar',
+      variant: 'danger',
+      onConfirm: () => {
+        deleteDeudaItem(editingDeudaObj.id);
+        setShowAddDeudaModal(false);
+        setEditingDeudaObj(null);
+      }
+    });
   };
 
   // Open Create Movement Modal
   const openCreateMovement = () => {
     if (!data.billeteraItems || data.billeteraItems.length === 0) {
-      alert('Debes agregar primero al menos una cuenta en la pestaña Billetera antes de registrar un movimiento.');
+      setConfirmConfig({
+        isOpen: true,
+        title: 'Atención',
+        message: 'Debes agregar primero al menos una cuenta en la pestaña Billetera antes de registrar un movimiento.',
+        confirmText: 'Entendido',
+        cancelText: null,
+        variant: 'warning',
+        onConfirm: () => {}
+      });
       return;
     }
     setMovementType('expense');
@@ -533,9 +569,15 @@ export const BilleteraView: React.FC = () => {
               {movements.length > 0 && (
                 <button
                   onClick={() => {
-                    if (confirm('¿Limpiar todo el historial registrado?')) {
-                      clearExpenseMovements();
-                    }
+                    setConfirmConfig({
+                      isOpen: true,
+                      title: 'Limpiar Historial',
+                      message: '¿Estás seguro de eliminar todo el historial de movimientos registrados?',
+                      confirmText: 'Sí, limpiar',
+                      cancelText: 'Cancelar',
+                      variant: 'danger',
+                      onConfirm: () => clearExpenseMovements()
+                    });
                   }}
                   className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/40 hover:bg-rose-100 transition-all flex items-center gap-1 shadow-sm"
                 >
@@ -626,7 +668,17 @@ export const BilleteraView: React.FC = () => {
                       </div>
 
                       <button
-                        onClick={() => deleteExpenseMovement(mov.id)}
+                        onClick={() => {
+                          setConfirmConfig({
+                            isOpen: true,
+                            title: 'Eliminar Registro',
+                            message: `¿Estás seguro de eliminar el registro "${mov.name}"?`,
+                            confirmText: 'Sí, eliminar',
+                            cancelText: 'Cancelar',
+                            variant: 'danger',
+                            onConfirm: () => deleteExpenseMovement(mov.id)
+                          });
+                        }}
                         className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-rose-100 dark:hover:bg-rose-950/50 text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 border border-slate-300/80 dark:border-transparent transition-colors"
                         title="Eliminar este registro"
                       >
@@ -697,7 +749,7 @@ export const BilleteraView: React.FC = () => {
                   type="text"
                   value={movementName}
                   onChange={e => setMovementName(e.target.value)}
-                  placeholder={movementType === 'income' ? 'Ej. Salario, Honorarios, Reembolso' : 'Ej. Mercado, Gasolina, Almuerzo'}
+                  placeholder={movementType === 'income' ? 'Ej. Ingreso 1, Pago, Abono' : 'Ej. Gasto 1, Compra, Servicio'}
                   className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
                   required
                   autoFocus
@@ -924,7 +976,7 @@ export const BilleteraView: React.FC = () => {
                   type="text"
                   value={billeteraName}
                   onChange={e => setBilleteraName(e.target.value)}
-                  placeholder="Ej. Nequi, Daviplata, Bancolombia, Efectivo"
+                  placeholder="Ej. Cuenta 1, Cuenta 2, Efectivo"
                   className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
                   required
                 />
@@ -1064,7 +1116,7 @@ export const BilleteraView: React.FC = () => {
                   type="text"
                   value={deudaName}
                   onChange={e => setDeudaName(e.target.value)}
-                  placeholder="Ej. Préstamo a familiar, Crédito vehículo, Impuesto"
+                  placeholder="Ej. Deuda 1, Préstamo 1, Compromiso"
                   className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
                   required
                 />
@@ -1116,7 +1168,7 @@ export const BilleteraView: React.FC = () => {
                     step="any"
                     value={deudaAmount}
                     onChange={e => setDeudaAmount(e.target.value)}
-                    placeholder="0 (o valor adeudado)"
+                    placeholder="0"
                     className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl pl-3.5 pr-11 py-2.5 text-sm text-slate-800 dark:text-white font-mono focus:outline-none focus:border-blue-500"
                   />
 
@@ -1213,6 +1265,23 @@ export const BilleteraView: React.FC = () => {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Confirmation Modal */}
+      {confirmConfig && (
+        <ConfirmModal
+          isOpen={confirmConfig.isOpen}
+          title={confirmConfig.title}
+          message={confirmConfig.message}
+          confirmText={confirmConfig.confirmText}
+          cancelText={confirmConfig.cancelText}
+          variant={confirmConfig.variant}
+          onConfirm={() => {
+            confirmConfig.onConfirm();
+            setConfirmConfig(null);
+          }}
+          onCancel={() => setConfirmConfig(null)}
+        />
       )}
     </div>
   );

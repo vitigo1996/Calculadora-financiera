@@ -6,6 +6,7 @@ import {
   calculateCardPaymentDue
 } from '../../services/financeCalculations';
 import { CreditCardItem, PaymentPeriod } from '../../models/finance';
+import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import {
   CreditCard,
   Plus,
@@ -32,6 +33,17 @@ export const CreditosSuscripcionesView: React.FC = () => {
 
   const [selectedCardId, setSelectedCardId] = useState<string>(data.creditCards[0]?.id || '');
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+
+  // Confirmation modal state
+  const [confirmConfig, setConfirmConfig] = useState<{
+    isOpen: boolean;
+    title?: string;
+    message: string;
+    confirmText?: string;
+    cancelText?: string | null;
+    variant?: 'danger' | 'warning' | 'info';
+    onConfirm: () => void;
+  } | null>(null);
 
   // Modal: Add / Edit Credit Card
   const [showCardModal, setShowCardModal] = useState(false);
@@ -94,15 +106,23 @@ export const CreditosSuscripcionesView: React.FC = () => {
   // Delete Card
   const handleDeleteCard = () => {
     if (!editingCardObj) return;
-    if (confirm(`¿Eliminar la tarjeta "${editingCardObj.name}"?`)) {
-      deleteCreditCard(editingCardObj.id);
-      if (selectedCardId === editingCardObj.id) {
-        const remaining = data.creditCards.filter(c => c.id !== editingCardObj.id);
-        setSelectedCardId(remaining[0]?.id || '');
+    setConfirmConfig({
+      isOpen: true,
+      title: 'Eliminar Tarjeta',
+      message: `¿Estás seguro de eliminar la tarjeta "${editingCardObj.name}"?`,
+      confirmText: 'Sí, eliminar',
+      cancelText: 'Cancelar',
+      variant: 'danger',
+      onConfirm: () => {
+        deleteCreditCard(editingCardObj.id);
+        if (selectedCardId === editingCardObj.id) {
+          const remaining = data.creditCards.filter(c => c.id !== editingCardObj.id);
+          setSelectedCardId(remaining[0]?.id || '');
+        }
+        setShowCardModal(false);
+        setEditingCardObj(null);
       }
-      setShowCardModal(false);
-      setEditingCardObj(null);
-    }
+    });
   };
 
   // Open Add Purchase Modal
@@ -133,9 +153,17 @@ export const CreditosSuscripcionesView: React.FC = () => {
   // Do Cutoff
   const handleDoCutoff = (card: CreditCardItem) => {
     const totalCurrent = calculateCardPurchasesTotal(card);
-    if (confirm(`¿Hacer corte en "${card.name}" por ${formatCurrency(totalCurrent)}? Este será el pago fijado del mes. Las compras que agregues después seguirán restando cupo pero no alterarán este pago.`)) {
-      performCardCutoff(card.id);
-    }
+    setConfirmConfig({
+      isOpen: true,
+      title: 'Realizar Corte de Tarjeta',
+      message: `¿Deseas fijar el corte en "${card.name}" por ${formatCurrency(totalCurrent)}? Este será el pago fijado del mes. Las compras posteriores no alterarán este pago.`,
+      confirmText: 'Confirmar Corte',
+      cancelText: 'Cancelar',
+      variant: 'warning',
+      onConfirm: () => {
+        performCardCutoff(card.id);
+      }
+    });
   };
 
   // Drag and drop handlers
@@ -393,7 +421,17 @@ export const CreditosSuscripcionesView: React.FC = () => {
                           </div>
 
                           <button
-                            onClick={() => deleteCardPurchase(selectedCard.id, p.id)}
+                            onClick={() => {
+                              setConfirmConfig({
+                                isOpen: true,
+                                title: 'Eliminar Compra',
+                                message: `¿Estás seguro de eliminar la compra "${p.concept}"?`,
+                                confirmText: 'Sí, eliminar',
+                                cancelText: 'Cancelar',
+                                variant: 'danger',
+                                onConfirm: () => deleteCardPurchase(selectedCard.id, p.id)
+                              });
+                            }}
                             className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors"
                             title="Eliminar compra"
                           >
@@ -433,7 +471,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
                   type="text"
                   value={cardName}
                   onChange={e => setCardName(e.target.value)}
-                  placeholder="Ej. Nu, Bancolombia Black, RappiCard"
+                  placeholder="Ej. Tarjeta 1, Tarjeta 2"
                   className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
                   required
                 />
@@ -544,7 +582,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
                   type="text"
                   value={purchaseConcept}
                   onChange={e => setPurchaseConcept(e.target.value)}
-                  placeholder="Ej. Tiquetes avión, Mercado, Almuerzo"
+                  placeholder="Ej. Compra 1, Servicio, Almuerzo"
                   className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
                   required
                   autoFocus
@@ -585,6 +623,23 @@ export const CreditosSuscripcionesView: React.FC = () => {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Confirmation Modal */}
+      {confirmConfig && (
+        <ConfirmModal
+          isOpen={confirmConfig.isOpen}
+          title={confirmConfig.title}
+          message={confirmConfig.message}
+          confirmText={confirmConfig.confirmText}
+          cancelText={confirmConfig.cancelText}
+          variant={confirmConfig.variant}
+          onConfirm={() => {
+            confirmConfig.onConfirm();
+            setConfirmConfig(null);
+          }}
+          onCancel={() => setConfirmConfig(null)}
+        />
       )}
     </div>
   );

@@ -3,6 +3,7 @@ import { useFinance } from '../../context/FinanceContext';
 import { StorageService } from '../../services/storageService';
 import { formatCurrency } from '../../services/financeCalculations';
 import { PersonProfile, ExpenseSplitMethod } from '../../models/finance';
+import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import {
   Settings as SettingsIcon,
   Users,
@@ -17,6 +18,8 @@ import {
 
 export const SettingsView: React.FC = () => {
   const { data, updatePeople, updateExpenseSplitMethod, resetToDefault } = useFinance();
+
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   // Number of contributors dropdown: 1 to 4 max
   const [personCount, setPersonCount] = useState<number>(Math.min(4, Math.max(1, data.people?.length || 2)));
@@ -238,19 +241,15 @@ export const SettingsView: React.FC = () => {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <button
-            onClick={() => StorageService.exportJSON(data)}
+            onClick={() => StorageService.exportExcel(data)}
             className="w-full py-3 px-4 rounded-2xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold transition-colors flex items-center justify-center gap-2"
           >
-            <Download className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-            Descargar Copia de Seguridad (.json)
+            <FileSpreadsheet className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+            Descargar Excel (.xlsx)
           </button>
 
           <button
-            onClick={() => {
-              if (confirm('¿Restablecer todos los datos a la configuración inicial por defecto?')) {
-                resetToDefault();
-              }
-            }}
+            onClick={() => setShowResetConfirm(true)}
             className="w-full py-3 px-4 rounded-2xl border border-rose-200 dark:border-rose-900/40 bg-rose-50/50 dark:bg-rose-950/20 hover:bg-rose-100 dark:hover:bg-rose-950/40 text-rose-600 dark:text-rose-400 text-xs font-bold transition-colors flex items-center justify-center gap-2"
           >
             <RefreshCw className="w-4 h-4" />
@@ -258,6 +257,20 @@ export const SettingsView: React.FC = () => {
           </button>
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={showResetConfirm}
+        title="Restablecer Datos"
+        message="¿Estás seguro de restablecer todos los datos a la configuración inicial en blanco? Esta acción no se puede deshacer."
+        confirmText="Sí, restablecer"
+        cancelText="Cancelar"
+        variant="danger"
+        onConfirm={() => {
+          resetToDefault();
+          setShowResetConfirm(false);
+        }}
+        onCancel={() => setShowResetConfirm(false)}
+      />
     </div>
   );
 };

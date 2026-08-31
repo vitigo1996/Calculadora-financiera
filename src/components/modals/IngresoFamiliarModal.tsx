@@ -1,15 +1,11 @@
 import React, { useState } from 'react';
 import { useFinance } from '../../context/FinanceContext';
-import { StorageService } from '../../services/storageService';
 import { formatCurrency } from '../../services/financeCalculations';
 import { PersonProfile, ExpenseSplitMethod } from '../../models/finance';
 import {
   Users,
-  Download,
-  RefreshCw,
   Save,
   CheckCircle2,
-  FileSpreadsheet,
   Percent,
   Sliders,
   X
@@ -21,7 +17,7 @@ interface IngresoFamiliarModalProps {
 }
 
 export const IngresoFamiliarModal: React.FC<IngresoFamiliarModalProps> = ({ isOpen, onClose }) => {
-  const { data, updatePeople, updateExpenseSplitMethod, resetToDefault } = useFinance();
+  const { data, updatePeople, updateExpenseSplitMethod } = useFinance();
 
   // Number of contributors dropdown: 1 to 4 max
   const [personCount, setPersonCount] = useState<number>(Math.min(4, Math.max(1, data.people?.length || 2)));
@@ -254,38 +250,6 @@ export const IngresoFamiliarModal: React.FC<IngresoFamiliarModalProps> = ({ isOp
             </button>
           </div>
         </form>
-
-        {/* Zona de Exportación / Mantenimiento */}
-        <div className="pt-2 border-t border-slate-200 dark:border-slate-800 space-y-3">
-          <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 flex items-center gap-1.5">
-            <FileSpreadsheet className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" /> Copia de Seguridad & Datos
-          </h4>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-            <button
-              type="button"
-              onClick={() => StorageService.exportJSON(data)}
-              className="w-full py-2.5 px-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold transition-colors flex items-center justify-center gap-1.5"
-            >
-              <Download className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-              Descargar Copia (.json)
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                if (confirm('¿Restablecer todos los datos a la configuración inicial por defecto?')) {
-                  resetToDefault();
-                  onClose();
-                }
-              }}
-              className="w-full py-2.5 px-3 rounded-xl border border-rose-200 dark:border-rose-900/40 bg-rose-50/50 dark:bg-rose-950/20 hover:bg-rose-100 dark:hover:bg-rose-950/40 text-rose-600 dark:text-rose-400 text-xs font-bold transition-colors flex items-center justify-center gap-1.5"
-            >
-              <RefreshCw className="w-3.5 h-3.5" />
-              Restablecer Fábrica
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   );

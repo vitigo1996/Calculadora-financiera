@@ -38,7 +38,7 @@ interface FinanceContextType {
   updateDeudaItem: (id: string, updated: Partial<DeudaItem>) => void;
   deleteDeudaItem: (id: string) => void;
   moveDeudaItem: (index: number, direction: 'up' | 'down') => void;
-  addPortfolioItem: (item: { nombre: string; moneda: 'COP' | 'USD'; saldo: number; icon?: string }) => void;
+  addPortfolioItem: (item: { nombre: string; moneda: 'COP' | 'USD'; saldo: number; icon?: string; color?: string }) => void;
   updatePortfolioItem: (id: string, updated: Partial<PortfolioAccountItem>) => void;
   deletePortfolioItem: (id: string) => void;
   movePortfolioItem: (index: number, direction: 'up' | 'down') => void;
@@ -361,7 +361,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     });
   };
 
-  const addPortfolioItem = (item: { nombre: string; moneda: 'COP' | 'USD'; saldo: number; icon?: string }) => {
+  const addPortfolioItem = (item: { nombre: string; moneda: 'COP' | 'USD'; saldo: number; icon?: string; color?: string }) => {
     const newItem: PortfolioAccountItem = {
       id: `port-${Date.now()}`,
       ...item
