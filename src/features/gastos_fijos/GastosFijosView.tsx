@@ -14,8 +14,14 @@ import {
   GripVertical,
   CheckCircle2,
   Users,
-  User
+  User,
+  Calendar
 } from 'lucide-react';
+
+const MONTHS = [
+  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+];
 
 export const GastosFijosView: React.FC = () => {
   const {
@@ -53,6 +59,7 @@ export const GastosFijosView: React.FC = () => {
   const [housingName, setHousingName] = useState('');
   const [housingTotal, setHousingTotal] = useState('');
   const [housingPeriod, setHousingPeriod] = useState<PaymentPeriod>('1st_fortnight');
+  const [housingIsShared, setHousingIsShared] = useState(true);
   const [showHousingCalc, setShowHousingCalc] = useState(false);
   const [housingCalcDelta, setHousingCalcDelta] = useState('');
 
@@ -63,6 +70,7 @@ export const GastosFijosView: React.FC = () => {
   const [obligationMonthlyPayment, setObligationMonthlyPayment] = useState('');
   const [obligationTotalDebt, setObligationTotalDebt] = useState('');
   const [obligationPeriod, setObligationPeriod] = useState<PaymentPeriod>('1st_fortnight');
+  const [obligationIsShared, setObligationIsShared] = useState(true);
   const [showObligationMonthlyCalc, setShowObligationMonthlyCalc] = useState(false);
   const [obligationMonthlyCalcDelta, setObligationMonthlyCalcDelta] = useState('');
   const [showObligationDebtCalc, setShowObligationDebtCalc] = useState(false);
@@ -76,6 +84,7 @@ export const GastosFijosView: React.FC = () => {
   const [subBilling, setSubBilling] = useState<'monthly' | 'yearly'>('monthly');
   const [subMembers, setSubMembers] = useState('1');
   const [subPeriod, setSubPeriod] = useState<PaymentPeriod>('1st_fortnight');
+  const [subMonth, setSubMonth] = useState('Enero');
   const [showSubCalc, setShowSubCalc] = useState(false);
   const [subCalcDelta, setSubCalcDelta] = useState('');
 
@@ -100,6 +109,7 @@ export const GastosFijosView: React.FC = () => {
     setHousingName('');
     setHousingTotal('');
     setHousingPeriod('1st_fortnight');
+    setHousingIsShared(true);
     setHousingCalcDelta('');
     setShowHousingCalc(false);
     setShowHousingModal(true);
@@ -111,6 +121,7 @@ export const GastosFijosView: React.FC = () => {
     setHousingName(h.name);
     setHousingTotal(h.totalAmount.toString());
     setHousingPeriod(h.period);
+    setHousingIsShared(h.isShared !== false);
     setHousingCalcDelta('');
     setShowHousingCalc(false);
     setShowHousingModal(true);
@@ -156,6 +167,7 @@ export const GastosFijosView: React.FC = () => {
     setObligationMonthlyPayment('');
     setObligationTotalDebt('');
     setObligationPeriod('1st_fortnight');
+    setObligationIsShared(true);
     setObligationMonthlyCalcDelta('');
     setShowObligationMonthlyCalc(false);
     setObligationDebtCalcDelta('');
@@ -178,6 +190,7 @@ export const GastosFijosView: React.FC = () => {
     setObligationTotalDebt(debtVal ? debtVal.toString() : '');
 
     setObligationPeriod(ob.period);
+    setObligationIsShared(ob.isShared !== false);
     setObligationMonthlyCalcDelta('');
     setShowObligationMonthlyCalc(false);
     setObligationDebtCalcDelta('');
@@ -230,6 +243,7 @@ export const GastosFijosView: React.FC = () => {
     setSubBilling('monthly');
     setSubMembers('1');
     setSubPeriod('1st_fortnight');
+    setSubMonth('Enero');
     setSubCalcDelta('');
     setShowSubCalc(false);
     setShowSubModal(true);
@@ -243,6 +257,7 @@ export const GastosFijosView: React.FC = () => {
     setSubBilling(sub.billing);
     setSubMembers(sub.members.toString());
     setSubPeriod(sub.period || '1st_fortnight');
+    setSubMonth(sub.billingMonth || 'Enero');
     setSubCalcDelta('');
     setShowSubCalc(false);
     setShowSubModal(true);
@@ -261,7 +276,8 @@ export const GastosFijosView: React.FC = () => {
         totalPrice: price,
         billing: subBilling,
         members,
-        period: subBilling === 'yearly' ? undefined : subPeriod
+        period: subBilling === 'yearly' ? undefined : subPeriod,
+        billingMonth: subBilling === 'yearly' ? subMonth : undefined
       });
     } else {
       addSubscription({
@@ -269,7 +285,8 @@ export const GastosFijosView: React.FC = () => {
         totalPrice: price,
         billing: subBilling,
         members,
-        period: subBilling === 'yearly' ? undefined : subPeriod
+        period: subBilling === 'yearly' ? undefined : subPeriod,
+        billingMonth: subBilling === 'yearly' ? subMonth : undefined
       });
     }
     setShowSubModal(false);
@@ -347,7 +364,7 @@ export const GastosFijosView: React.FC = () => {
 
                   <div>
                     <h4 className="font-bold text-slate-800 dark:text-white text-sm">{item.name}</h4>
-                    {/* Person shares according to settings */}
+                    {/* Reparto proporcional limpio sin texto COP */}
                     {activePeople.length > 1 && isSharedItem && (
                       <div className="flex flex-wrap items-center gap-2 mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
                         {activePeople.map((p, pIdx) => {
@@ -369,10 +386,7 @@ export const GastosFijosView: React.FC = () => {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <div className="text-right flex items-center gap-1.5">
-                    <span className="text-xs font-semibold font-mono text-slate-500 dark:text-slate-400">
-                      COP
-                    </span>
+                  <div className="text-right">
                     <span className="font-mono font-bold text-sm text-slate-800 dark:text-white">
                       {formatCurrency(item.totalAmount, 'COP')}
                     </span>
@@ -462,41 +476,38 @@ export const GastosFijosView: React.FC = () => {
                   </span>
 
                   <div>
-                    <h4 className="font-bold text-slate-800 dark:text-white text-sm">{ob.name}</h4>
-                    {/* Valor /mensual debajo del nombre con reparto si está compartido sin el texto COP */}
-                    <div className="flex flex-wrap items-center gap-2 mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
-                      <span>
-                        <strong className="text-slate-700 dark:text-slate-300 font-mono">{formatCurrency(monthlyPayment, 'COP')}</strong>
-                        <span className="text-slate-500 dark:text-slate-400 font-normal"> /mensual</span>
+                    {/* Nombre y al frente el valor de la cuota mensual */}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h4 className="font-bold text-slate-800 dark:text-white text-sm">{ob.name}</h4>
+                      <span className="text-xs font-bold text-slate-500 dark:text-slate-400 font-mono">
+                        ({formatCurrency(monthlyPayment, 'COP')}/mes)
                       </span>
-                      {activePeople.length > 1 && isSharedOb && (
-                        <>
-                          <span className="opacity-40">•</span>
-                          {activePeople.map((p, pIdx) => {
-                            const ratio = getPersonRatio(p.monthlyIncome);
-                            const share = monthlyPayment * ratio;
-                            return (
-                              <span key={p.id || pIdx}>
-                                {pIdx > 0 && <span className="mr-2 opacity-40">•</span>}
-                                <strong className={pIdx === 0 ? 'text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-300'}>
-                                  {p.name}:
-                                </strong>{' '}
-                                {formatCurrency(share, 'COP')}
-                              </span>
-                            );
-                          })}
-                        </>
-                      )}
                     </div>
+
+                    {/* Distribución proporcional debajo del nombre */}
+                    {activePeople.length > 1 && isSharedOb && (
+                      <div className="flex flex-wrap items-center gap-2 mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+                        {activePeople.map((p, pIdx) => {
+                          const ratio = getPersonRatio(p.monthlyIncome);
+                          const share = monthlyPayment * ratio;
+                          return (
+                            <span key={p.id || pIdx}>
+                              {pIdx > 0 && <span className="mr-2 opacity-40">•</span>}
+                              <strong className={pIdx === 0 ? 'text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-300'}>
+                                {p.name}:
+                              </strong>{' '}
+                              {formatCurrency(share, 'COP')}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 </div>
 
                 {/* Total de la deuda a la derecha */}
                 <div className="flex items-center gap-2">
-                  <div className="text-right flex items-center gap-1.5">
-                    <span className="text-xs font-semibold font-mono text-slate-500 dark:text-slate-400">
-                      COP
-                    </span>
+                  <div className="text-right">
                     <span className="font-mono font-bold text-sm text-slate-800 dark:text-white">
                       {formatCurrency(totalDebt, 'COP')}
                     </span>
@@ -548,7 +559,7 @@ export const GastosFijosView: React.FC = () => {
             </button>
 
             <span className="text-xs text-slate-500 dark:text-slate-400">
-              Total: <strong className="text-blue-600 dark:text-blue-400 font-mono font-bold">COP {formatCurrency(summary.suscripciones.totalMonthly, 'COP')}</strong>
+              Total: <strong className="text-blue-600 dark:text-blue-400 font-mono font-bold">{formatCurrency(summary.suscripciones.totalMonthly, 'COP')}</strong>
             </span>
           </div>
         </div>
@@ -595,8 +606,12 @@ export const GastosFijosView: React.FC = () => {
                     <CheckCircle2 className="w-4 h-4" />
                   </button>
 
-                  {/* Quincena solo si es mensual */}
-                  {!isYearly && (
+                  {/* Quincena si es mensual, o Mes si es anual */}
+                  {isYearly ? (
+                    <span className="px-2.5 py-1 rounded-xl text-[10px] font-bold bg-amber-100 dark:bg-amber-950/70 border border-amber-300 dark:border-amber-800/40 text-amber-700 dark:text-amber-300 whitespace-nowrap flex items-center gap-1">
+                      <Calendar className="w-3 h-3" /> {sub.billingMonth || 'Anual'}
+                    </span>
+                  ) : (
                     <span className="px-2.5 py-1 rounded-xl text-[10px] font-bold bg-blue-100 dark:bg-blue-950/70 border border-blue-300 dark:border-blue-800/40 text-blue-700 dark:text-blue-300 whitespace-nowrap">
                       {sub.period === '2nd_fortnight' ? '2ª Quincena' : '1ª Quincena'}
                     </span>
@@ -612,10 +627,7 @@ export const GastosFijosView: React.FC = () => {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <div className="text-right flex items-center gap-1.5">
-                    <span className="text-xs font-semibold font-mono text-slate-500 dark:text-slate-400">
-                      COP
-                    </span>
+                  <div className="text-right">
                     <span className="font-mono font-bold text-sm text-slate-800 dark:text-white">
                       {formatCurrency(monthlyCost, 'COP')}
                     </span>
@@ -667,7 +679,7 @@ export const GastosFijosView: React.FC = () => {
               {/* Valor Total con Calculadora */}
               <div>
                 <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                  Valor Total (COP)
+                  Valor Total
                 </label>
                 <div className="relative">
                   <input
@@ -835,7 +847,7 @@ export const GastosFijosView: React.FC = () => {
               {/* Cuota Mensual con Calculadora */}
               <div>
                 <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                  Cuota Mensual (COP)
+                  Cuota Mensual
                 </label>
                 <div className="relative">
                   <input
@@ -927,7 +939,7 @@ export const GastosFijosView: React.FC = () => {
               {/* Total de la Deuda con Calculadora */}
               <div>
                 <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                  Total de la Deuda (COP) <span className="text-[11px] font-normal text-slate-400">(Opcional)</span>
+                  Total de la Deuda <span className="text-[11px] font-normal text-slate-400">(Opcional)</span>
                 </label>
                 <div className="relative">
                   <input
@@ -1094,7 +1106,7 @@ export const GastosFijosView: React.FC = () => {
               {/* Precio con Calculadora */}
               <div>
                 <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                  Precio Total (COP)
+                  Precio Total
                 </label>
                 <div className="relative">
                   <input
@@ -1215,8 +1227,8 @@ export const GastosFijosView: React.FC = () => {
                 </div>
               </div>
 
-              {/* Quincena solo si es cobro Mensual */}
-              {subBilling === 'monthly' && (
+              {/* Quincena si es Mensual, o Selección de Mes si es Anual */}
+              {subBilling === 'monthly' ? (
                 <div>
                   <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
                     Quincena de Pago
@@ -1228,6 +1240,21 @@ export const GastosFijosView: React.FC = () => {
                   >
                     <option value="1st_fortnight">1ª Quincena (Mitad de mes)</option>
                     <option value="2nd_fortnight">2ª Quincena (Fin de mes)</option>
+                  </select>
+                </div>
+              ) : (
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                    Mes de Cobro / Renovación
+                  </label>
+                  <select
+                    value={subMonth}
+                    onChange={e => setSubMonth(e.target.value)}
+                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
+                  >
+                    {MONTHS.map(m => (
+                      <option key={m} value={m}>{m}</option>
+                    ))}
                   </select>
                 </div>
               )}

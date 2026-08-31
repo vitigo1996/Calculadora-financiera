@@ -316,7 +316,7 @@ export const BilleteraView: React.FC = () => {
                       <h4 className="font-bold text-slate-800 dark:text-white text-sm">{item.nombre}</h4>
                       {isUSD && equivalentCOP !== null && (
                         <span className="text-xs font-mono text-slate-500 dark:text-slate-400">
-                          {formatCurrency(equivalentCOP, 'COP')} COP
+                          {formatCurrency(equivalentCOP, 'COP')}
                         </span>
                       )}
                     </div>
@@ -324,10 +324,7 @@ export const BilleteraView: React.FC = () => {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <div className="text-right flex items-center gap-1.5">
-                    <span className="text-xs font-semibold font-mono text-slate-500 dark:text-slate-400">
-                      {item.moneda}
-                    </span>
+                  <div className="text-right">
                     <span className="font-mono font-bold text-sm text-slate-800 dark:text-white">
                       {formatCurrency(item.saldo, item.moneda)}
                     </span>
@@ -420,10 +417,7 @@ export const BilleteraView: React.FC = () => {
 
                 <div className="flex items-center gap-2">
                   {hasAmount ? (
-                    <div className="text-right flex items-center gap-1.5">
-                      <span className="text-xs font-semibold font-mono text-slate-500 dark:text-slate-400">
-                        {moneda}
-                      </span>
+                    <div className="text-right">
                       <span className="font-mono font-bold text-sm text-slate-800 dark:text-white">
                         {formatCurrency(item.monto || 0, moneda)}
                       </span>
@@ -489,7 +483,7 @@ export const BilleteraView: React.FC = () => {
               {/* Saldo con botón de calculadora integrado dentro del input */}
               <div>
                 <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                  Saldo {billeteraCurrency === 'USD' ? '(USD)' : '(COP)'}
+                  Saldo
                 </label>
 
                 <div className="relative">
@@ -676,7 +670,7 @@ export const BilleteraView: React.FC = () => {
               {/* Monto con botón de calculadora integrado dentro del input */}
               <div>
                 <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                  Monto {deudaCurrency === 'USD' ? '(USD)' : '(COP)'}
+                  Monto
                 </label>
 
                 <div className="relative">

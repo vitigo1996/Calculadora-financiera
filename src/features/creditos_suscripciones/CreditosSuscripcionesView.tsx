@@ -116,7 +116,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
       alert('No hay compras registradas para hacer corte.');
       return;
     }
-    if (confirm(`¿Hacer corte en "${card.name}" por COP ${formatCurrency(totalCurrent, 'COP')}? Este será el pago fijado del mes. Las compras que agregues después seguirán restando cupo pero no alterarán este pago.`)) {
+    if (confirm(`¿Hacer corte en "${card.name}" por ${formatCurrency(totalCurrent, 'COP')}? Este será el pago fijado del mes. Las compras que agregues después seguirán restando cupo pero no alterarán este pago.`)) {
       performCardCutoff(card.id);
     }
   };
@@ -124,7 +124,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
   // Pagar Corte
   const handlePayCutoff = (card: CreditCardItem) => {
     const payAmount = card.billingCutoffAmount || 0;
-    if (confirm(`¿Registrar pago del corte por COP ${formatCurrency(payAmount, 'COP')} en "${card.name}"? Las compras posteriores al corte se convertirán en el saldo del siguiente periodo.`)) {
+    if (confirm(`¿Registrar pago del corte por ${formatCurrency(payAmount, 'COP')} en "${card.name}"? Las compras posteriores al corte se convertirán en el saldo del siguiente periodo.`)) {
       payCardCutoff(card.id);
     }
   };
@@ -249,7 +249,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
                     )}
                   </div>
                   <div className="text-xl font-black font-mono text-blue-700 dark:text-blue-400">
-                    COP {formatCurrency(pagoDelMes, 'COP')}
+                    {formatCurrency(pagoDelMes, 'COP')}
                   </div>
                 </div>
 
@@ -257,13 +257,13 @@ export const CreditosSuscripcionesView: React.FC = () => {
                   <div className="flex justify-between text-slate-600 dark:text-slate-400">
                     <span>Cupo Total:</span>
                     <span className="font-mono font-bold text-slate-800 dark:text-slate-200">
-                      COP {formatCurrency(cc.creditLimit, 'COP')}
+                      {formatCurrency(cc.creditLimit, 'COP')}
                     </span>
                   </div>
                   <div className="flex justify-between text-slate-600 dark:text-slate-400">
                     <span>Cupo Disponible:</span>
                     <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                      COP {formatCurrency(cupoDisponible, 'COP')}
+                      {formatCurrency(cupoDisponible, 'COP')}
                     </span>
                   </div>
                 </div>
@@ -293,7 +293,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
                 Pago en {selectedCard.period === '1st_fortnight' ? '1ª Quincena' : '2ª Quincena'}
                 {selectedCard.billingCutoffAmount !== undefined && (
                   <strong className="text-amber-600 dark:text-amber-400 ml-1.5 font-mono">
-                    • Corte: COP {formatCurrency(selectedCard.billingCutoffAmount, 'COP')}
+                    • Corte: {formatCurrency(selectedCard.billingCutoffAmount, 'COP')}
                   </strong>
                 )}
               </span>
@@ -362,10 +362,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <div className="text-right flex items-center gap-1.5">
-                      <span className="text-xs font-semibold font-mono text-slate-500 dark:text-slate-400">
-                        COP
-                      </span>
+                    <div className="text-right">
                       <span className="font-mono font-bold text-xs text-slate-800 dark:text-white">
                         {formatCurrency(p.amount, 'COP')}
                       </span>
@@ -383,7 +380,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
               ))}
             </div>
           ) : (
-            <div className="text-center py-6 text-xs text-slate-400">
+            <div className="text-center py-8 text-slate-400 dark:text-slate-500 text-xs">
               No hay compras registradas en esta tarjeta
             </div>
           )}
@@ -408,14 +405,12 @@ export const CreditosSuscripcionesView: React.FC = () => {
 
             <form onSubmit={handleSaveCard} className="space-y-4">
               <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                  Nombre de la Tarjeta
-                </label>
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">Nombre</label>
                 <input
                   type="text"
                   value={cardName}
                   onChange={e => setCardName(e.target.value)}
-                  placeholder="Ej. Nu, Bancolombia, Falabella, Mastercard"
+                  placeholder="Ej. Tarjeta Bancolombia, Nu, RappiCard"
                   className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
                   required
                 />
@@ -424,7 +419,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
               {/* Cupo Total con Calculadora */}
               <div>
                 <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                  Cupo Total (COP)
+                  Cupo Total
                 </label>
                 <div className="relative">
                   <input
@@ -450,7 +445,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
                     <Calculator className="w-4 h-4" />
                   </button>
 
-                  {/* Pop-up Calculadora */}
+                  {/* Pop-up Calculadora Cupo */}
                   {showLimitCalcPopup && (
                     <div className="absolute right-0 top-full mt-2 z-30 p-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-2xl shadow-xl space-y-2.5 w-64 animate-scaleUp">
                       <div className="flex items-center justify-between">
@@ -566,7 +561,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
           <div className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl animate-scaleUp">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold text-slate-800 dark:text-white">
-                Registrar Compra: {selectedCard?.name}
+                Registrar Compra ({selectedCard?.name})
               </h3>
               <button
                 onClick={() => setShowAddPurchaseModal(false)}
@@ -578,14 +573,12 @@ export const CreditosSuscripcionesView: React.FC = () => {
 
             <form onSubmit={handleAddPurchase} className="space-y-4">
               <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                  Concepto de la Compra
-                </label>
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">Concepto</label>
                 <input
                   type="text"
                   value={purchaseConcept}
                   onChange={e => setPurchaseConcept(e.target.value)}
-                  placeholder="Ej. Supermercado, Gasolina, Cena, Ropa"
+                  placeholder="Ej. Supermercado, Gasolina, Restaurante"
                   className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
                   required
                   autoFocus
@@ -594,7 +587,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
 
               <div>
                 <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                  Monto (COP)
+                  Monto
                 </label>
                 <input
                   type="number"

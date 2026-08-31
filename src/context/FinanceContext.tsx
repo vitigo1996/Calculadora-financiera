@@ -56,7 +56,7 @@ interface FinanceContextType {
   deleteObligation: (id: string) => void;
   moveObligation: (index: number, direction: 'up' | 'down') => void;
   toggleObligationShared: (id: string) => void;
-  addSubscription: (item: { name: string; totalPrice: number; members: number; billing: 'monthly' | 'yearly'; period?: PaymentPeriod; icon?: string }) => void;
+  addSubscription: (item: { name: string; totalPrice: number; members: number; billing: 'monthly' | 'yearly'; period?: PaymentPeriod; billingMonth?: string; icon?: string }) => void;
   updateSubscription: (id: string, updated: Partial<SubscriptionItem>) => void;
   deleteSubscription: (id: string) => void;
   moveSubscription: (index: number, direction: 'up' | 'down') => void;
@@ -464,11 +464,12 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   // Subscriptions CRUD
-  const addSubscription = (item: { name: string; totalPrice: number; members: number; billing: 'monthly' | 'yearly'; period?: PaymentPeriod; icon?: string }) => {
+  const addSubscription = (item: { name: string; totalPrice: number; members: number; billing: 'monthly' | 'yearly'; period?: PaymentPeriod; billingMonth?: string; icon?: string }) => {
     const newSub: SubscriptionItem = {
       id: `sub-${Date.now()}`,
       active: true,
       period: item.period || '1st_fortnight',
+      billingMonth: item.billingMonth,
       ...item
     };
     setData(prev => ({

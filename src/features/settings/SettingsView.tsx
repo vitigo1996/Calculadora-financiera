@@ -162,7 +162,7 @@ export const SettingsView: React.FC = () => {
                   {/* Ingreso Mensual */}
                   <div>
                     <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 block mb-1">
-                      Ingreso (COP)
+                      Ingreso Mensual
                     </label>
                     <input
                       type="number"
@@ -198,7 +198,7 @@ export const SettingsView: React.FC = () => {
               Ingreso Total
             </span>
             <span className="font-mono font-black text-lg text-blue-700 dark:text-blue-400">
-              COP {formatCurrency(totalCombinedIncome, 'COP')}
+              {formatCurrency(totalCombinedIncome, 'COP')}
             </span>
           </div>
 

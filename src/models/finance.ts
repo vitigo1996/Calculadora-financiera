@@ -84,6 +84,7 @@ export interface SubscriptionItem {
   members: number;
   billing: 'monthly' | 'yearly';
   period?: PaymentPeriod;
+  billingMonth?: string;
   active: boolean;
   icon?: string;
 }

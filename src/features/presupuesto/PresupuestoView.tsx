@@ -26,7 +26,7 @@ export const PresupuestoView: React.FC = () => {
         <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-300 dark:border-blue-500/30 shadow-sm transition-colors">
           <span className="text-xs font-semibold text-blue-700 dark:text-blue-400 block">Disponible del Mes</span>
           <div className="text-2xl sm:text-3xl font-black text-slate-800 dark:text-white mt-1 font-mono">
-            COP {formatCurrency(pres.m11_disponible, 'COP')}
+            {formatCurrency(pres.m11_disponible, 'COP')}
           </div>
           <span className="text-[11px] text-slate-500 dark:text-slate-400 block mt-1">
             Ingreso neto menos el total de gastos
@@ -37,7 +37,7 @@ export const PresupuestoView: React.FC = () => {
         <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm transition-colors">
           <span className="text-xs font-semibold text-blue-700 dark:text-blue-400 block">Mitad de Mes (1ª Quincena)</span>
           <div className="text-2xl sm:text-3xl font-black text-blue-700 dark:text-blue-400 mt-1 font-mono">
-            COP {formatCurrency(pres.m9_mitadDeMes, 'COP')}
+            {formatCurrency(pres.m9_mitadDeMes, 'COP')}
           </div>
           <span className="text-[11px] text-slate-500 dark:text-slate-400 block mt-1">
             Servicios, Falabella, Addi, Carro, Icetex y Salud
@@ -48,7 +48,7 @@ export const PresupuestoView: React.FC = () => {
         <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm transition-colors">
           <span className="text-xs font-semibold text-blue-700 dark:text-blue-400 block">Fin de Mes (2ª Quincena)</span>
           <div className="text-2xl sm:text-3xl font-black text-blue-700 dark:text-blue-400 mt-1 font-mono">
-            COP {formatCurrency(pres.m10_finDeMes, 'COP')}
+            {formatCurrency(pres.m10_finDeMes, 'COP')}
           </div>
           <span className="text-[11px] text-slate-500 dark:text-slate-400 block mt-1">
             Arriendo, Tarjeta Nu y Salud
@@ -61,7 +61,7 @@ export const PresupuestoView: React.FC = () => {
         <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
           <h3 className="font-bold text-slate-800 dark:text-white text-sm">Resumen de Gastos Mensuales</h3>
           <span className="text-xs font-mono text-blue-700 dark:text-blue-400">
-            Ingreso {p1.name}: COP {formatCurrency(p1.income, 'COP')}
+            Ingreso {p1.name}: {formatCurrency(p1.income, 'COP')}
           </span>
         </div>
 
@@ -78,7 +78,7 @@ export const PresupuestoView: React.FC = () => {
               </div>
             </div>
             <span className="font-bold text-blue-700 dark:text-blue-400 font-mono">
-              COP {formatCurrency(pres.m3_saludPension, 'COP')}
+              {formatCurrency(pres.m3_saludPension, 'COP')}
             </span>
           </div>
 
@@ -94,7 +94,7 @@ export const PresupuestoView: React.FC = () => {
               </div>
             </div>
             <span className="font-bold text-blue-700 dark:text-blue-400 font-mono">
-              COP {formatCurrency(pres.m4_vivienda, 'COP')}
+              {formatCurrency(pres.m4_vivienda, 'COP')}
             </span>
           </div>
 
@@ -110,7 +110,7 @@ export const PresupuestoView: React.FC = () => {
               </div>
             </div>
             <span className="font-bold text-blue-700 dark:text-blue-400 font-mono">
-              COP {formatCurrency(pres.m5_tarjetas, 'COP')}
+              {formatCurrency(pres.m5_tarjetas, 'COP')}
             </span>
           </div>
 
@@ -126,7 +126,7 @@ export const PresupuestoView: React.FC = () => {
               </div>
             </div>
             <span className="font-bold text-blue-700 dark:text-blue-400 font-mono">
-              COP {formatCurrency(pres.m6_obligaciones, 'COP')}
+              {formatCurrency(pres.m6_obligaciones, 'COP')}
             </span>
           </div>
 
@@ -142,7 +142,7 @@ export const PresupuestoView: React.FC = () => {
               </div>
             </div>
             <span className="font-black text-base text-slate-800 dark:text-slate-100 font-mono">
-              COP {formatCurrency(pres.m7_totalGastos, 'COP')}
+              {formatCurrency(pres.m7_totalGastos, 'COP')}
             </span>
           </div>
 
@@ -158,7 +158,7 @@ export const PresupuestoView: React.FC = () => {
               </div>
             </div>
             <span className="font-bold text-blue-700 dark:text-blue-400 font-mono">
-              COP {formatCurrency(pres.m9_mitadDeMes, 'COP')}
+              {formatCurrency(pres.m9_mitadDeMes, 'COP')}
             </span>
           </div>
 
@@ -174,7 +174,7 @@ export const PresupuestoView: React.FC = () => {
               </div>
             </div>
             <span className="font-bold text-blue-700 dark:text-blue-400 font-mono">
-              COP {formatCurrency(pres.m10_finDeMes, 'COP')}
+              {formatCurrency(pres.m10_finDeMes, 'COP')}
             </span>
           </div>
 
@@ -190,7 +190,7 @@ export const PresupuestoView: React.FC = () => {
               </div>
             </div>
             <span className="font-black text-lg text-blue-700 dark:text-blue-400 font-mono">
-              COP {formatCurrency(pres.m11_disponible, 'COP')}
+              {formatCurrency(pres.m11_disponible, 'COP')}
             </span>
           </div>
         </div>

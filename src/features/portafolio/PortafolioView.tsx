@@ -191,7 +191,7 @@ export const PortafolioView: React.FC = () => {
 
         <div className="text-left sm:text-right bg-blue-50/80 dark:bg-blue-950/40 p-3 sm:p-0 rounded-2xl sm:bg-transparent border sm:border-0 border-blue-200 dark:border-blue-800/40">
           <span className="text-2xl sm:text-3xl font-black text-blue-600 dark:text-blue-400 font-mono tracking-tight">
-            COP {formatCurrency(port.totalPortafolio, 'COP')}
+            {formatCurrency(port.totalPortafolio, 'COP')}
           </span>
         </div>
       </div>
@@ -243,7 +243,7 @@ export const PortafolioView: React.FC = () => {
                       <h4 className="font-bold text-slate-800 dark:text-white text-sm">{item.nombre}</h4>
                       {isUSD && equivalentCOP !== null && (
                         <span className="text-xs font-mono text-slate-500 dark:text-slate-400">
-                          {formatCurrency(equivalentCOP, 'COP')} COP
+                          {formatCurrency(equivalentCOP, 'COP')}
                         </span>
                       )}
                     </div>
@@ -252,9 +252,6 @@ export const PortafolioView: React.FC = () => {
 
                 <div className="flex items-center gap-2">
                   <div className="text-right flex items-center gap-1.5">
-                    <span className="text-xs font-semibold font-mono text-slate-500 dark:text-slate-400">
-                      {item.moneda}
-                    </span>
                     <span className="font-mono font-bold text-sm text-slate-800 dark:text-white">
                       {formatCurrency(item.saldo, item.moneda)}
                     </span>
@@ -306,7 +303,7 @@ export const PortafolioView: React.FC = () => {
 
                     <div className="text-right flex items-center gap-2 flex-shrink-0">
                       <span className="text-xs font-mono text-slate-500 dark:text-slate-400 hidden sm:inline">
-                        COP {formatCurrency(item.valorCOP, 'COP')}
+                        {formatCurrency(item.valorCOP, 'COP')}
                       </span>
                       <span
                         className="font-bold text-xs font-mono px-2 py-0.5 rounded-lg text-white"
@@ -339,7 +336,7 @@ export const PortafolioView: React.FC = () => {
                     ))}
                   </Pie>
                   <Tooltip
-                    formatter={(value: any, name: any) => [`COP ${formatCurrency(Number(value), 'COP')}`, `${name}`]}
+                    formatter={(value: any, name: any) => [`${formatCurrency(Number(value), 'COP')}`, `${name}`]}
                     contentStyle={{
                       backgroundColor: '#0f172a',
                       borderColor: '#334155',
@@ -452,15 +449,15 @@ export const PortafolioView: React.FC = () => {
                   onChange={e => setItemCurrency(e.target.value as 'COP' | 'USD')}
                   className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
                 >
-                  <option value="COP">Pesos (COP)</option>
-                  <option value="USD">Dólares (USD)</option>
+                  <option value="COP">Pesos ($)</option>
+                  <option value="USD">Dólares ($)</option>
                 </select>
               </div>
 
               {/* Saldo con botón de calculadora integrado dentro del input */}
               <div>
                 <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                  Saldo {itemCurrency === 'USD' ? '(USD)' : '(COP)'}
+                  Saldo
                 </label>
 
                 <div className="relative">
