@@ -1,29 +1,22 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { AppFinanceData, PersonProfile, HousingExpense, SubscriptionItem, CreditCardItem, ObligationItem, InvestmentAsset } from '../models/finance';
+import { AppFinanceData, PersonProfile, HousingExpense, SubscriptionItem, CreditCardItem, ObligationItem, BilleteraSaldos } from '../models/finance';
 import { StorageService } from '../services/storageService';
-import { calculateFinanceSummary, FinanceSummary } from '../services/financeCalculations';
+import { calculateAllFinances, CalculatedSummary } from '../services/financeCalculations';
 
 interface FinanceContextType {
   data: AppFinanceData;
-  summary: FinanceSummary;
+  summary: CalculatedSummary;
   setMode: (mode: 'single' | 'shared') => void;
   updatePeople: (people: [PersonProfile, PersonProfile]) => void;
-  updateCurrencyRate: (rate: number) => void;
-  updateDeudaAutofinanciera: (amount: number) => void;
-  // Housing
-  updateHousingExpense: (id: string, expense: Partial<HousingExpense>) => void;
-  // Subscriptions
-  updateSubscription: (id: string, sub: Partial<SubscriptionItem>) => void;
-  toggleSubscription: (id: string) => void;
-  // Credit Cards
+  updateBilletera: (billetera: Partial<BilleteraSaldos>) => void;
+  updateAutofinanciera: (amount: number) => void;
+  updateHousingExpense: (id: string, updated: Partial<HousingExpense>) => void;
+  updateObligation: (id: string, updated: Partial<ObligationItem>) => void;
   addCardPurchase: (cardId: string, purchase: { concept: string; amount: number }) => void;
   deleteCardPurchase: (cardId: string, purchaseId: string) => void;
   updateCreditCard: (id: string, updated: Partial<CreditCardItem>) => void;
-  // Obligations
-  updateObligation: (id: string, ob: Partial<ObligationItem>) => void;
-  // Portfolio
-  updateAsset: (id: string, asset: Partial<InvestmentAsset>) => void;
-  // Global
+  toggleSubscription: (id: string) => void;
+  updatePortfolioExtras: (extras: Partial<AppFinanceData['portfolioExtras']>) => void;
   resetToDefault: () => void;
   importData: (imported: AppFinanceData) => void;
 }
@@ -37,7 +30,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     StorageService.saveData(data);
   }, [data]);
 
-  const summary = calculateFinanceSummary(data);
+  const summary = calculateAllFinances(data);
 
   const setMode = (mode: 'single' | 'shared') => {
     setData(prev => ({
@@ -54,12 +47,18 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setData(prev => ({ ...prev, people }));
   };
 
-  const updateCurrencyRate = (rate: number) => {
-    setData(prev => ({ ...prev, currencyRateUSD: rate }));
+  const updateBilletera = (billetera: Partial<BilleteraSaldos>) => {
+    setData(prev => ({
+      ...prev,
+      billetera: { ...prev.billetera, ...billetera }
+    }));
   };
 
-  const updateDeudaAutofinanciera = (amount: number) => {
-    setData(prev => ({ ...prev, deudaAutofinanciera: amount }));
+  const updateAutofinanciera = (amount: number) => {
+    setData(prev => ({
+      ...prev,
+      deudas: { ...prev.deudas, autofinancieraMonto: amount }
+    }));
   };
 
   const updateHousingExpense = (id: string, updated: Partial<HousingExpense>) => {
@@ -69,17 +68,10 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }));
   };
 
-  const updateSubscription = (id: string, updated: Partial<SubscriptionItem>) => {
+  const updateObligation = (id: string, updated: Partial<ObligationItem>) => {
     setData(prev => ({
       ...prev,
-      subscriptions: prev.subscriptions.map(s => s.id === id ? { ...s, ...updated } : s)
-    }));
-  };
-
-  const toggleSubscription = (id: string) => {
-    setData(prev => ({
-      ...prev,
-      subscriptions: prev.subscriptions.map(s => s.id === id ? { ...s, active: !s.active } : s)
+      obligations: prev.obligations.map(o => o.id === id ? { ...o, ...updated } : o)
     }));
   };
 
@@ -105,17 +97,17 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }));
   };
 
-  const updateObligation = (id: string, updated: Partial<ObligationItem>) => {
+  const toggleSubscription = (id: string) => {
     setData(prev => ({
       ...prev,
-      obligations: prev.obligations.map(o => o.id === id ? { ...o, ...updated } : o)
+      subscriptions: prev.subscriptions.map(s => s.id === id ? { ...s, active: !s.active } : s)
     }));
   };
 
-  const updateAsset = (id: string, updated: Partial<InvestmentAsset>) => {
+  const updatePortfolioExtras = (extras: Partial<AppFinanceData['portfolioExtras']>) => {
     setData(prev => ({
       ...prev,
-      portfolio: prev.portfolio.map(a => a.id === id ? { ...a, ...updated } : a)
+      portfolioExtras: { ...prev.portfolioExtras, ...extras }
     }));
   };
 
@@ -134,16 +126,15 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       summary,
       setMode,
       updatePeople,
-      updateCurrencyRate,
-      updateDeudaAutofinanciera,
+      updateBilletera,
+      updateAutofinanciera,
       updateHousingExpense,
-      updateSubscription,
-      toggleSubscription,
+      updateObligation,
       addCardPurchase,
       deleteCardPurchase,
       updateCreditCard,
-      updateObligation,
-      updateAsset,
+      toggleSubscription,
+      updatePortfolioExtras,
       resetToDefault,
       importData
     }}>

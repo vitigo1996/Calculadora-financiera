@@ -1,7 +1,7 @@
 import React from 'react';
-import { LayoutDashboard, Receipt, CreditCard, Sparkles, PieChart, Settings } from 'lucide-react';
+import { Wallet, Home, CreditCard, Receipt, PieChart, Settings } from 'lucide-react';
 
-export type TabType = 'dashboard' | 'budget' | 'cards' | 'subscriptions' | 'portfolio' | 'settings';
+export type TabType = 'billetera' | 'gastos_fijos' | 'creditos_suscripciones' | 'presupuesto' | 'portafolio' | 'ajustes';
 
 interface BottomNavProps {
   activeTab: TabType;
@@ -10,12 +10,12 @@ interface BottomNavProps {
 
 export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab }) => {
   const tabs = [
-    { id: 'dashboard', label: 'Presupuesto', icon: LayoutDashboard },
-    { id: 'budget', label: 'Vivienda & Quincenas', icon: Receipt },
-    { id: 'cards', label: 'Tarjetas', icon: CreditCard },
-    { id: 'subscriptions', label: 'Suscripciones', icon: Sparkles },
-    { id: 'portfolio', label: 'Portafolio', icon: PieChart },
-    { id: 'settings', label: 'Ajustes', icon: Settings },
+    { id: 'billetera', label: 'Billetera', icon: Wallet },
+    { id: 'gastos_fijos', label: 'Gastos fijos', icon: Home },
+    { id: 'creditos_suscripciones', label: 'Créditos & Sus.', icon: CreditCard },
+    { id: 'presupuesto', label: 'Presupuesto', icon: Receipt },
+    { id: 'portafolio', label: 'Portafolio', icon: PieChart },
+    { id: 'ajustes', label: 'Ajustes', icon: Settings },
   ] as const;
 
   return (
@@ -28,7 +28,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab })
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as TabType)}
-              className={`flex flex-col items-center justify-center py-1 px-2 rounded-xl transition-all duration-200 ${
+              className={`flex flex-col items-center justify-center py-1 px-1.5 rounded-xl transition-all duration-200 ${
                 isActive
                   ? 'text-emerald-400 font-semibold scale-105'
                   : 'text-slate-400 hover:text-slate-200'
@@ -37,7 +37,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab })
               <div className={`p-1 rounded-xl transition-colors ${isActive ? 'bg-emerald-500/15' : 'bg-transparent'}`}>
                 <Icon className={`w-5 h-5 ${isActive ? 'stroke-[2.5]' : 'stroke-[1.75]'}`} />
               </div>
-              <span className="text-[10px] tracking-tight mt-0.5">{tab.label}</span>
+              <span className="text-[9.5px] tracking-tight mt-0.5 whitespace-nowrap">{tab.label}</span>
             </button>
           );
         })}

@@ -2,32 +2,32 @@ import React, { useState } from 'react';
 import { FinanceProvider } from './context/FinanceContext';
 import { Navbar } from './components/ui/Navbar';
 import { BottomNav, TabType } from './components/ui/BottomNav';
-import { DashboardView } from './features/dashboard/DashboardView';
-import { BudgetView } from './features/budget/BudgetView';
-import { CreditCardsView } from './features/cards/CreditCardsView';
-import { SubscriptionsView } from './features/subscriptions/SubscriptionsView';
-import { PortfolioView } from './features/portfolio/PortfolioView';
+import { BilleteraView } from './features/billetera/BilleteraView';
+import { GastosFijosView } from './features/gastos_fijos/GastosFijosView';
+import { CreditosSuscripcionesView } from './features/creditos_suscripciones/CreditosSuscripcionesView';
+import { PresupuestoView } from './features/presupuesto/PresupuestoView';
+import { PortafolioView } from './features/portafolio/PortafolioView';
 import { SettingsView } from './features/settings/SettingsView';
 
 export const AppContent: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<TabType>('dashboard');
+  const [activeTab, setActiveTab] = useState<TabType>('billetera');
 
   const renderActiveView = () => {
     switch (activeTab) {
-      case 'dashboard':
-        return <DashboardView onNavigate={(tab) => setActiveTab(tab)} />;
-      case 'budget':
-        return <BudgetView />;
-      case 'cards':
-        return <CreditCardsView />;
-      case 'subscriptions':
-        return <SubscriptionsView />;
-      case 'portfolio':
-        return <PortfolioView />;
-      case 'settings':
+      case 'billetera':
+        return <BilleteraView />;
+      case 'gastos_fijos':
+        return <GastosFijosView />;
+      case 'creditos_suscripciones':
+        return <CreditosSuscripcionesView />;
+      case 'presupuesto':
+        return <PresupuestoView />;
+      case 'portafolio':
+        return <PortafolioView />;
+      case 'ajustes':
         return <SettingsView />;
       default:
-        return <DashboardView onNavigate={(tab) => setActiveTab(tab)} />;
+        return <BilleteraView />;
     }
   };
 

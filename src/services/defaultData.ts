@@ -1,44 +1,56 @@
 import { AppFinanceData } from '../models/finance';
 
 export const initialFinanceData: AppFinanceData = {
-  currencyRateUSD: 3600, // Dólar TRM
-  mode: 'shared', // 'single' o 'shared'
+  mode: 'shared',
   people: [
     {
-      id: 'person-1',
+      id: 'p-1',
       name: 'David',
-      monthlyIncome: 4400000,
+      monthlyIncome: 4400000, // H3
       healthPensionRate: 0.08,
       enabled: true
     },
     {
-      id: 'person-2',
+      id: 'p-2',
       name: 'Daniela',
-      monthlyIncome: 8500000,
+      monthlyIncome: 8500000, // I3
       healthPensionRate: 0.0,
       enabled: true
     }
   ],
+  billetera: {
+    dolar: 3600, // C2 (Dólar TRM)
+    etoroUSD: 5037.0, // C3 (Etoro)
+    plentiUSD: 1500.0, // C4 (Plenti)
+    efectivoCOP: 130000.0, // C5 (Efectivo)
+    bancolombiaCOP: 350000.0 // C6 (Bancolombia)
+  },
+  deudas: {
+    autofinancieraMonto: 24166570.0, // B18, C18
+    multas: 'Multas y Contingencias', // B22
+    soatTecno: 'SOAT y Tecnomecánica', // B23
+    declaracion: 'Declaración de Renta' // B24
+  },
   housingExpenses: [
     {
       id: 'house-1',
       name: 'Servicios (3628)',
       referenceCode: '3628',
       period: '1st_fortnight',
-      totalAmount: 251239
+      totalAmount: 251239.0 // G7
     },
     {
       id: 'house-2',
       name: 'Internet (07409278)',
       referenceCode: '07409278',
       period: '1st_fortnight',
-      totalAmount: 91521
+      totalAmount: 91521.0 // G8
     },
     {
       id: 'house-3',
       name: 'Arriendo',
       period: '2nd_fortnight',
-      totalAmount: 1367600
+      totalAmount: 1367600.0 // G9
     }
   ],
   obligations: [
@@ -46,54 +58,54 @@ export const initialFinanceData: AppFinanceData = {
       id: 'ob-1',
       name: 'Carro',
       period: '1st_fortnight',
-      totalAmount: 1521807,
-      person1Amount: 519000, // G12 * H4
-      person2Amount: 1521807
+      totalAmount: 1521807.0, // G12
+      davidAmount: 519000.0, // H12 = G12 * H4
+      danielaAmount: 1521807.0 // I12
     },
     {
       id: 'ob-2',
       name: 'Icetex',
       period: '1st_fortnight',
-      totalAmount: 49719,
-      person1Amount: 49719,
-      person2Amount: 0,
-      totalDebtBalance: 3471648
+      totalAmount: 3471648.0, // G13 (saldo deuda)
+      davidAmount: 49719.0, // H13 (pago David)
+      danielaAmount: 0.0, // I13
+      totalDebtBalance: 3471648.0
     }
   ],
   creditCards: [
     {
       id: 'cc-1',
       name: 'Nu',
-      creditLimit: 5000000,
       period: '2nd_fortnight',
+      creditLimit: 5000000,
       purchases: [
-        { id: 'p-1', concept: 'Gasto Nu 1', amount: 233378 },
-        { id: 'p-2', concept: 'Gasto Nu 2', amount: 982900 },
-        { id: 'p-3', concept: 'Gasto Nu 3', amount: 19200 },
-        { id: 'p-4', concept: 'Gasto Nu 4', amount: 25500 },
-        { id: 'p-5', concept: 'Gasto Nu 5', amount: 20000 },
-        { id: 'p-6', concept: 'Gasto Nu 6', amount: 16500 },
-        { id: 'p-7', concept: 'Gasto Nu 7', amount: 129900 },
-        { id: 'p-8', concept: 'Gasto Nu 8', amount: 226586 },
-        { id: 'p-9', concept: 'Gasto Nu 9', amount: 82207 },
-        { id: 'p-10', concept: 'Gasto Nu 10', amount: 51900 }
+        { id: 'p-1', concept: 'Compra 1', amount: 233378 },
+        { id: 'p-2', concept: 'Compra Mayor', amount: 982900 },
+        { id: 'p-3', concept: 'Servicios Streaming', amount: 19200 },
+        { id: 'p-4', concept: 'Restaurante', amount: 25500 },
+        { id: 'p-5', concept: 'App', amount: 20000 },
+        { id: 'p-6', concept: 'Farmacia', amount: 16500 },
+        { id: 'p-7', concept: 'Ropa', amount: 129900 },
+        { id: 'p-8', concept: 'Supermercado', amount: 226586 },
+        { id: 'p-9', concept: 'Combustible', amount: 82207 },
+        { id: 'p-10', concept: 'Varios', amount: 51900 }
       ]
     },
     {
       id: 'cc-2',
       name: 'Falabella',
-      creditLimit: 4400000,
       period: '1st_fortnight',
+      creditLimit: 4400000,
       purchases: []
     },
     {
       id: 'cc-3',
       name: 'Addi',
-      creditLimit: 8000000,
       period: '1st_fortnight',
-      minPaymentOverride: 41650,
+      creditLimit: 8000000,
+      minPaymentOverride: 41650, // H18
       purchases: [
-        { id: 'p-addi', concept: 'Deuda Addi', amount: 124950 }
+        { id: 'p-addi', concept: 'Deuda Addi', amount: 124950 } // G18
       ]
     }
   ],
@@ -155,61 +167,10 @@ export const initialFinanceData: AppFinanceData = {
       active: true
     }
   ],
-  deudaAutofinanciera: 24166570,
-  portfolio: [
-    {
-      id: 'port-1',
-      name: 'ETF',
-      institution: 'Etoro',
-      type: 'Inversión',
-      currency: 'USD',
-      balance: 5037 // C3
-    },
-    {
-      id: 'port-2',
-      name: 'USDt',
-      institution: 'Plenti',
-      type: 'Cripto / Dólar',
-      currency: 'USD',
-      balance: 1500 // C4
-    },
-    {
-      id: 'port-3',
-      name: 'Nu',
-      institution: 'Emergencia',
-      type: 'Emergencia',
-      currency: 'COP',
-      balance: 24001919 // L16
-    },
-    {
-      id: 'port-4',
-      name: 'Comfama',
-      institution: 'Casa',
-      type: 'Ahorro Casa',
-      currency: 'COP',
-      balance: 2812407 // L17
-    },
-    {
-      id: 'port-5',
-      name: 'Bancolombia',
-      institution: 'Ahorro',
-      type: 'Ahorro',
-      currency: 'COP',
-      balance: 350000 // C6
-    },
-    {
-      id: 'port-6',
-      name: 'Efectivo',
-      institution: 'Efectivo',
-      type: 'Efectivo',
-      currency: 'COP',
-      balance: 130000 // C5
-    }
-  ],
-  annualExpenses: [
-    { id: 'ann-1', name: 'Multas' },
-    { id: 'ann-2', name: 'Soat y Tecno' },
-    { id: 'ann-3', name: 'Declaracion' }
-  ],
+  portfolioExtras: {
+    nuEmergenciaCOP: 24001919.0, // L16 / M16
+    comfamaCasaCOP: 2812407.0, // L17 / M17
+    bancolombiaAhorroCOP: 0.0 // L18 / M18
+  },
   lastUpdated: new Date().toISOString()
 };
