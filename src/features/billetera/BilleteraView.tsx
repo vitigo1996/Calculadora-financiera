@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useFinance } from '../../context/FinanceContext';
 import { formatCurrency, convertToBase } from '../../services/financeCalculations';
-import { BilleteraAccountItem, DeudaItem, ExpenseMovement } from '../../models/finance';
+import { BilleteraAccountItem, DeudaItem } from '../../models/finance';
 import { getIconComponent, IconPicker } from '../../components/ui/IconPicker';
 import {
   Wallet,
@@ -16,7 +16,7 @@ import {
   GripVertical,
   History,
   CreditCard,
-  Layers,
+  Home,
   ShoppingBag,
   Calendar
 } from 'lucide-react';
@@ -73,7 +73,6 @@ export const BilleteraView: React.FC = () => {
   const [showAddMovementModal, setShowAddMovementModal] = useState(false);
   const [movementName, setMovementName] = useState('');
   const [movementAmount, setMovementAmount] = useState('');
-  const [movementCurrency, setMovementCurrency] = useState<'COP' | 'USD'>('COP');
   const [movementSourceId, setMovementSourceId] = useState('');
   const [movementDestType, setMovementDestType] = useState<'none' | 'card' | 'obligation'>('none');
   const [movementDestId, setMovementDestId] = useState('');
@@ -273,7 +272,6 @@ export const BilleteraView: React.FC = () => {
   const openCreateMovement = () => {
     setMovementName('');
     setMovementAmount('');
-    setMovementCurrency(baseCurrency);
     setMovementSourceId(data.billeteraItems[0]?.id || '');
     setMovementDestType('none');
     setMovementDestId('');
@@ -289,20 +287,37 @@ export const BilleteraView: React.FC = () => {
     const amount = parseFloat(movementAmount) || 0;
     if (amount <= 0) return;
 
+    const sourceAcc = (data.billeteraItems || []).find(b => b.id === movementSourceId) || data.billeteraItems[0];
+    const sourceCurrency = sourceAcc?.moneda || 'COP';
+
     let destName: string | undefined = undefined;
     if (movementDestType === 'card') {
-      const card = (data.creditCards || []).find(c => c.id === movementDestId);
+      const card = (data.creditCards || []).find(c => c.id === movementDestId) || data.creditCards[0];
       destName = card ? card.name : undefined;
     } else if (movementDestType === 'obligation') {
-      const ob = (data.obligations || []).find(o => o.id === movementDestId);
-      destName = ob ? ob.name : undefined;
+      if (movementDestId.startsWith('h-')) {
+        const rawId = movementDestId.replace('h-', '');
+        const h = (data.housingExpenses || []).find(item => item.id === rawId);
+        destName = h ? h.name : undefined;
+      } else if (movementDestId.startsWith('o-')) {
+        const rawId = movementDestId.replace('o-', '');
+        const ob = (data.obligations || []).find(item => item.id === rawId);
+        destName = ob ? ob.name : undefined;
+      } else if (movementDestId.startsWith('d-')) {
+        const rawId = movementDestId.replace('d-', '');
+        const d = (data.deudaItems || []).find(item => item.id === rawId);
+        destName = d ? d.nombre : undefined;
+      } else {
+        const ob = (data.obligations || []).find(item => item.id === movementDestId);
+        destName = ob ? ob.name : undefined;
+      }
     }
 
     addExpenseMovement({
       name: movementName.trim(),
       amount,
-      moneda: movementCurrency,
-      sourceAccountId: movementSourceId,
+      moneda: sourceCurrency,
+      sourceAccountId: movementSourceId || (data.billeteraItems[0]?.id || ''),
       destinationType: movementDestType,
       destinationId: movementDestId || undefined,
       destinationName: destName
@@ -519,11 +534,11 @@ export const BilleteraView: React.FC = () => {
         </div>
       </div>
 
-      {/* SECCIÓN 3: HISTORIAL DE GASTOS / MOVIMIENTOS */}
+      {/* SECCIÓN 3: REGISTRO (Movimientos / Gastos) */}
       <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
         <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between flex-wrap gap-2">
           <h3 className="font-bold text-slate-800 dark:text-white text-sm flex items-center gap-2">
-            <History className="w-4 h-4 text-blue-600 dark:text-blue-400" /> Historial de Gastos
+            <History className="w-4 h-4 text-blue-600 dark:text-blue-400" /> Registro
           </h3>
 
           <div className="flex items-center gap-2">
@@ -552,7 +567,7 @@ export const BilleteraView: React.FC = () => {
         <div className="divide-y divide-slate-200 dark:divide-slate-800">
           {movements.length === 0 ? (
             <div className="p-8 text-center text-slate-400 dark:text-slate-500 text-xs">
-              No hay gastos registrados en el historial. Haz clic en <strong>Registrar Gasto</strong> para añadir uno.
+              No hay movimientos registrados. Haz clic en <strong>Registrar Gasto</strong> para añadir uno.
             </div>
           ) : (
             movements.map(mov => {
@@ -594,17 +609,17 @@ export const BilleteraView: React.FC = () => {
                         <span className="font-medium text-slate-600 dark:text-slate-300">
                           De: <strong className="text-blue-600 dark:text-blue-400">{mov.sourceAccountName}</strong>
                         </span>
-                        {mov.destinationType !== 'none' && (
-                          <>
-                            <span>•</span>
-                            <span className="font-medium text-slate-600 dark:text-slate-300">
-                              Hacia:{' '}
-                              <strong className="text-slate-800 dark:text-slate-200">
-                                {mov.destinationType === 'card' ? `💳 ${mov.destinationName || 'Tarjeta'}` : `🏦 ${mov.destinationName || 'Deuda'}`}
-                              </strong>
-                            </span>
-                          </>
-                        )}
+                        <span>•</span>
+                        <span className="font-medium text-slate-600 dark:text-slate-300">
+                          Hacia:{' '}
+                          <strong className="text-slate-800 dark:text-slate-200">
+                            {mov.destinationType === 'none'
+                              ? 'Compra/Pago'
+                              : mov.destinationType === 'card'
+                              ? `💳 ${mov.destinationName || 'Tarjeta'}`
+                              : `🏠 ${mov.destinationName || 'Vivienda/Obligaciones'}`}
+                          </strong>
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -653,39 +668,26 @@ export const BilleteraView: React.FC = () => {
             </div>
 
             <form onSubmit={handleSaveMovement} className="space-y-4">
-              {/* Nombre del gasto */}
+              {/* Concepto */}
               <div>
                 <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                  Nombre / Concepto del Gasto
+                  Concepto
                 </label>
                 <input
                   type="text"
                   value={movementName}
                   onChange={e => setMovementName(e.target.value)}
-                  placeholder="Ej. Mercado, Gasolina, Almuerzo, Pago Tarjeta"
+                  placeholder="Ej. Mercado, Gasolina, Almuerzo, Cuota Icetex"
                   className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
                   required
                   autoFocus
                 />
               </div>
 
-              {/* Selector de Moneda */}
-              <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">Moneda</label>
-                <select
-                  value={movementCurrency}
-                  onChange={e => setMovementCurrency(e.target.value as 'COP' | 'USD')}
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
-                >
-                  <option value="COP">Pesos (COP)</option>
-                  <option value="USD">Dólares (USD)</option>
-                </select>
-              </div>
-
               {/* Monto con Calculadora */}
               <div>
                 <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                  Monto a Gastar
+                  Monto
                 </label>
                 <div className="relative">
                   <input
@@ -774,10 +776,10 @@ export const BilleteraView: React.FC = () => {
                 </div>
               </div>
 
-              {/* De dónde saldrá el dinero (Cuenta de la Billetera) */}
+              {/* Origen */}
               <div>
                 <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                  ¿De dónde saldrá el dinero? (Cuenta origen)
+                  Origen
                 </label>
                 <select
                   value={movementSourceId}
@@ -793,10 +795,10 @@ export const BilleteraView: React.FC = () => {
                 </select>
               </div>
 
-              {/* Hacia dónde se irá el gasto */}
+              {/* Destino */}
               <div>
                 <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
-                  ¿Hacia dónde se irá el gasto?
+                  Destino
                 </label>
                 <div className="grid grid-cols-3 gap-2">
                   <button
@@ -812,7 +814,7 @@ export const BilleteraView: React.FC = () => {
                     }`}
                   >
                     <ShoppingBag className="w-3.5 h-3.5" />
-                    <span>Ninguno (Compra)</span>
+                    <span>Compra/Pago</span>
                   </button>
 
                   <button
@@ -828,14 +830,16 @@ export const BilleteraView: React.FC = () => {
                     }`}
                   >
                     <CreditCard className="w-3.5 h-3.5" />
-                    <span>Tarjeta Crédito</span>
+                    <span>Tarjetas</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => {
                       setMovementDestType('obligation');
-                      setMovementDestId(data.obligations[0]?.id || '');
+                      const firstHousing = data.housingExpenses[0]?.id ? `h-${data.housingExpenses[0].id}` : '';
+                      const firstOb = data.obligations[0]?.id ? `o-${data.obligations[0].id}` : '';
+                      setMovementDestId(firstHousing || firstOb || '');
                     }}
                     className={`py-2 px-1.5 rounded-2xl text-[11px] font-bold border flex flex-col items-center justify-center gap-1 transition-all ${
                       movementDestType === 'obligation'
@@ -843,8 +847,8 @@ export const BilleteraView: React.FC = () => {
                         : 'bg-slate-50 dark:bg-slate-950/40 border-slate-300 dark:border-slate-800 text-slate-600 dark:text-slate-400'
                     }`}
                   >
-                    <Layers className="w-3.5 h-3.5" />
-                    <span>Deuda / Obligación</span>
+                    <Home className="w-3.5 h-3.5" />
+                    <span>Vivienda/Obligaciones</span>
                   </button>
                 </div>
               </div>
@@ -853,7 +857,7 @@ export const BilleteraView: React.FC = () => {
               {movementDestType === 'card' && (
                 <div>
                   <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                    Selecciona la Tarjeta de Crédito
+                    Selecciona la Tarjeta
                   </label>
                   <select
                     value={movementDestId}
@@ -870,11 +874,11 @@ export const BilleteraView: React.FC = () => {
                 </div>
               )}
 
-              {/* Sub-selector de Obligación */}
+              {/* Sub-selector de Vivienda / Obligaciones */}
               {movementDestType === 'obligation' && (
                 <div>
                   <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                    Selecciona la Obligación / Deuda
+                    Selecciona Vivienda u Obligación
                   </label>
                   <select
                     value={movementDestId}
@@ -882,11 +886,33 @@ export const BilleteraView: React.FC = () => {
                     className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
                     required
                   >
-                    {data.obligations.map(ob => (
-                      <option key={ob.id} value={ob.id}>
-                        {ob.name}
-                      </option>
-                    ))}
+                    {data.housingExpenses.length > 0 && (
+                      <optgroup label="Vivienda">
+                        {data.housingExpenses.map(h => (
+                          <option key={h.id} value={`h-${h.id}`}>
+                            {h.name}
+                          </option>
+                        ))}
+                      </optgroup>
+                    )}
+                    {data.obligations.length > 0 && (
+                      <optgroup label="Obligaciones">
+                        {data.obligations.map(ob => (
+                          <option key={ob.id} value={`o-${ob.id}`}>
+                            {ob.name}
+                          </option>
+                        ))}
+                      </optgroup>
+                    )}
+                    {data.deudaItems.length > 0 && (
+                      <optgroup label="Otras Deudas">
+                        {data.deudaItems.map(d => (
+                          <option key={d.id} value={`d-${d.id}`}>
+                            {d.nombre}
+                          </option>
+                        ))}
+                      </optgroup>
+                    )}
                   </select>
                 </div>
               )}
