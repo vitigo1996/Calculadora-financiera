@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useFinance } from '../../context/FinanceContext';
 import { StorageService } from '../../services/storageService';
 import { formatCurrency } from '../../services/financeCalculations';
@@ -11,8 +11,7 @@ import {
   Save,
   CheckCircle2,
   FileSpreadsheet,
-  Percent,
-  TrendingUp
+  Percent
 } from 'lucide-react';
 
 export const SettingsView: React.FC = () => {
@@ -27,8 +26,8 @@ export const SettingsView: React.FC = () => {
       return data.people;
     }
     return [
-      { id: 'p-1', name: 'David', monthlyIncome: 4400000, healthPensionRate: 0.08, enabled: true },
-      { id: 'p-2', name: 'Daniela', monthlyIncome: 8500000, healthPensionRate: 0.0, enabled: true }
+      { id: 'p-1', name: 'Yo', monthlyIncome: 4400000, healthPensionRate: 0.08, enabled: true },
+      { id: 'p-2', name: 'Persona 2', monthlyIncome: 8500000, healthPensionRate: 0.0, enabled: true }
     ];
   });
 
@@ -44,7 +43,7 @@ export const SettingsView: React.FC = () => {
           updated.push({
             id: `p-${Date.now()}-${i + 1}`,
             name: `Persona ${i + 1}`,
-            monthlyIncome: 1000000,
+            monthlyIncome: 0,
             healthPensionRate: 0.0,
             enabled: true
           });
@@ -91,63 +90,49 @@ export const SettingsView: React.FC = () => {
         </div>
       )}
 
-      {/* Formulario de Aportantes & Presupuesto */}
-      <form onSubmit={handleSave} className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-300 dark:border-slate-800 shadow-sm space-y-6 transition-colors">
-        {/* Selector de Cantidad de Personas */}
+      {/* Formulario de Aportantes */}
+      <form onSubmit={handleSave} className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-300 dark:border-slate-800 shadow-sm space-y-5 transition-colors">
+        {/* Selector de Cantidad de Personas (1 a 5 personas limpio) */}
         <div>
           <label className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 block mb-2 flex items-center gap-1.5">
-            <Users className="w-4 h-4 text-blue-600 dark:text-blue-400" /> Cantidad de Personas que Ingresan Dinero
+            <Users className="w-4 h-4 text-blue-600 dark:text-blue-400" /> Cantidad de Personas
           </label>
           <select
             value={personCount}
             onChange={e => handlePersonCountChange(parseInt(e.target.value))}
             className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-4 py-3 text-sm font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
           >
-            <option value={1}>1 Persona (Individual / Estoy solo)</option>
-            <option value={2}>2 Personas (Pareja / David & Daniela)</option>
-            <option value={3}>3 Personas (Familia / Hogar de 3)</option>
-            <option value={4}>4 Personas (Hogar de 4)</option>
-            <option value={5}>5 Personas (Hogar de 5)</option>
+            <option value={1}>1 Persona</option>
+            <option value={2}>2 Personas</option>
+            <option value={3}>3 Personas</option>
+            <option value={4}>4 Personas</option>
+            <option value={5}>5 Personas</option>
           </select>
         </div>
 
-        {/* Resumen Total Combinado */}
+        {/* Resumen Ingreso Total (sin subtítulo) */}
         <div className="bg-blue-50/70 dark:bg-blue-950/40 p-4 rounded-2xl border border-blue-200 dark:border-blue-800/50 flex items-center justify-between">
-          <div>
-            <span className="text-xs text-blue-700 dark:text-blue-300 font-semibold block">Ingreso Total Combinado</span>
-            <span className="text-[11px] text-slate-500 dark:text-slate-400">Base para el cálculo de porcentaje de aporte</span>
-          </div>
+          <span className="text-xs text-blue-700 dark:text-blue-300 font-bold block">
+            Ingreso Total
+          </span>
           <span className="font-mono font-black text-base sm:text-lg text-blue-700 dark:text-blue-400">
             COP {formatCurrency(totalCombinedIncome, 'COP')}
           </span>
         </div>
 
-        {/* Secciones Dinámicas de Aportantes */}
-        <div className="space-y-4">
+        {/* Secciones de Personas: Solo Nombre, Ingreso y Porcentaje */}
+        <div className="space-y-3">
           {localPeople.map((person, idx) => {
             const ratio = totalCombinedIncome > 0 ? (person.monthlyIncome / totalCombinedIncome) * 100 : 0;
+            const defaultName = idx === 0 ? 'Yo' : `Persona ${idx + 1}`;
 
             return (
               <div
                 key={person.id || idx}
                 className="bg-slate-50 dark:bg-slate-950/70 p-4 rounded-2xl border border-slate-300 dark:border-slate-800 space-y-3"
               >
-                {/* Header del Aportante con su porcentaje calculado al frente */}
-                <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
-                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
-                    Aportante #{idx + 1}: <strong className="text-blue-600 dark:text-blue-400">{person.name || `Persona ${idx + 1}`}</strong>
-                  </span>
-
-                  {/* Porcentaje de aporte correspondiente calculado al frente */}
-                  <div className="flex items-center gap-1.5 bg-blue-100 dark:bg-blue-950/70 px-2.5 py-1 rounded-xl border border-blue-200 dark:border-blue-800/40">
-                    <Percent className="w-3 h-3 text-blue-600 dark:text-blue-400" />
-                    <span className="text-xs font-bold font-mono text-blue-700 dark:text-blue-300">
-                      Aporte: {ratio.toFixed(1)}%
-                    </span>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+                  {/* Nombre */}
                   <div>
                     <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 block mb-1">
                       Nombre
@@ -156,15 +141,16 @@ export const SettingsView: React.FC = () => {
                       type="text"
                       value={person.name}
                       onChange={e => updatePersonField(idx, 'name', e.target.value)}
-                      placeholder={`Nombre Persona ${idx + 1}`}
+                      placeholder={defaultName}
                       className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
                       required
                     />
                   </div>
 
+                  {/* Ingreso Mensual */}
                   <div>
                     <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 block mb-1">
-                      Ingreso Mensual (COP)
+                      Ingreso (COP)
                     </label>
                     <input
                       type="number"
@@ -176,18 +162,15 @@ export const SettingsView: React.FC = () => {
                     />
                   </div>
 
-                  <div>
-                    <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 block mb-1">
-                      % Salud & Pensión
-                    </label>
-                    <input
-                      type="number"
-                      step="0.5"
-                      value={((person.healthPensionRate || 0) * 100).toString()}
-                      onChange={e => updatePersonField(idx, 'healthPensionRate', (parseFloat(e.target.value) || 0) / 100)}
-                      placeholder="8"
-                      className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 font-mono"
-                    />
+                  {/* Porcentaje calculado al frente */}
+                  <div className="bg-blue-100/80 dark:bg-blue-950/70 px-3 py-2 rounded-xl border border-blue-200 dark:border-blue-800/40 flex items-center justify-between">
+                    <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-400">
+                      Porcentaje:
+                    </span>
+                    <div className="flex items-center gap-1 font-mono font-bold text-xs text-blue-700 dark:text-blue-300">
+                      <Percent className="w-3 h-3 text-blue-600 dark:text-blue-400" />
+                      {ratio.toFixed(1)}%
+                    </div>
                   </div>
                 </div>
               </div>
@@ -236,7 +219,7 @@ export const SettingsView: React.FC = () => {
             </div>
             <div>
               <span className="font-bold text-xs block text-slate-800 dark:text-white">Restablecer Datos</span>
-              <span className="text-[11px] text-slate-500 dark:text-slate-400">Valores iniciales de David y Daniela</span>
+              <span className="text-[11px] text-slate-500 dark:text-slate-400">Valores iniciales predeterminados</span>
             </div>
           </button>
         </div>
