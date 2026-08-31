@@ -131,7 +131,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
     addCardPurchase(selectedCard.id, {
       concept: purchaseConcept.trim(),
       amount,
-      moneda: purchaseCurrency
+      moneda: selectedCard.moneda || 'COP'
     });
 
     setPurchaseConcept('');
@@ -581,19 +581,6 @@ export const CreditosSuscripcionesView: React.FC = () => {
                   required
                   autoFocus
                 />
-              </div>
-
-              {/* Selector de Moneda de la Compra */}
-              <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">Moneda</label>
-                <select
-                  value={purchaseCurrency}
-                  onChange={e => setPurchaseCurrency(e.target.value as 'COP' | 'USD')}
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
-                >
-                  <option value="COP">Pesos (COP)</option>
-                  <option value="USD">Dólares (USD)</option>
-                </select>
               </div>
 
               <div>
