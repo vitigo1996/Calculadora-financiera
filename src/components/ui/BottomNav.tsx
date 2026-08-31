@@ -11,7 +11,7 @@ interface BottomNavProps {
 export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab }) => {
   const tabs = [
     { id: 'billetera', label: 'Billetera', icon: Wallet },
-    { id: 'gastos_fijos', label: 'Gastos Fijos', icon: Home },
+    { id: 'gastos_fijos', label: 'Gastos', icon: Home },
     { id: 'creditos_suscripciones', label: 'Tarjetas', icon: CreditCard },
     { id: 'presupuesto', label: 'Presupuesto', icon: Receipt },
     { id: 'portafolio', label: 'Portafolio', icon: PieChart },

@@ -46,8 +46,18 @@ interface FinanceContextType {
   cancelCardCutoff: (cardId: string) => void;
   addCardPurchase: (cardId: string, purchase: { concept: string; amount: number }) => void;
   deleteCardPurchase: (cardId: string, purchaseId: string) => void;
+  addHousingExpense: (item: { name: string; period: PaymentPeriod; totalAmount: number; icon?: string }) => void;
   updateHousingExpense: (id: string, updated: Partial<HousingExpense>) => void;
+  deleteHousingExpense: (id: string) => void;
+  moveHousingExpense: (index: number, direction: 'up' | 'down') => void;
+  addObligation: (item: { name: string; period: PaymentPeriod; totalAmount: number; icon?: string }) => void;
   updateObligation: (id: string, updated: Partial<ObligationItem>) => void;
+  deleteObligation: (id: string) => void;
+  moveObligation: (index: number, direction: 'up' | 'down') => void;
+  addSubscription: (item: { name: string; totalPrice: number; members: number; billing: 'monthly' | 'yearly'; period?: PaymentPeriod; icon?: string }) => void;
+  updateSubscription: (id: string, updated: Partial<SubscriptionItem>) => void;
+  deleteSubscription: (id: string) => void;
+  moveSubscription: (index: number, direction: 'up' | 'down') => void;
   toggleSubscription: (id: string) => void;
   resetToDefault: () => void;
   importData: (imported: AppFinanceData) => void;
@@ -123,7 +133,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     };
     setData(prev => ({
       ...prev,
-      billeteraItems: [newItem, ...prev.billeteraItems] // Added at TOP
+      billeteraItems: [newItem, ...prev.billeteraItems]
     }));
   };
 
@@ -160,7 +170,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     };
     setData(prev => ({
       ...prev,
-      deudaItems: [newItem, ...prev.deudaItems] // Added at TOP
+      deudaItems: [newItem, ...prev.deudaItems]
     }));
   };
 
@@ -197,7 +207,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     };
     setData(prev => ({
       ...prev,
-      portfolioItems: [newItem, ...(prev.portfolioItems || [])] // Added at TOP
+      portfolioItems: [newItem, ...(prev.portfolioItems || [])]
     }));
   };
 
@@ -238,7 +248,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     };
     setData(prev => ({
       ...prev,
-      creditCards: [newCard, ...prev.creditCards] // Added at TOP
+      creditCards: [newCard, ...prev.creditCards]
     }));
   };
 
@@ -268,7 +278,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     });
   };
 
-  // Realizar Corte de Tarjeta: Congela las compras actuales en billingCutoffAmount
+  // Realizar Corte de Tarjeta
   const performCardCutoff = (cardId: string) => {
     setData(prev => ({
       ...prev,
@@ -287,13 +297,12 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }));
   };
 
-  // Pagar Corte de Tarjeta: Liquida el saldo de corte y lo que resta queda para el siguiente periodo
+  // Pagar Corte de Tarjeta
   const payCardCutoff = (cardId: string) => {
     setData(prev => ({
       ...prev,
       creditCards: prev.creditCards.map(c => {
         if (c.id === cardId) {
-          // Keep only purchases made after the cutoff, and clear isAfterCutoff flag
           const remainingPurchases = (c.purchases || [])
             .filter(p => p.isAfterCutoff === true)
             .map(p => ({ ...p, isAfterCutoff: false }));
@@ -327,7 +336,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }));
   };
 
-  // Add Card Purchase (prepended to the TOP of purchases list)
+  // Add Card Purchase (inserted at TOP)
   const addCardPurchase = (cardId: string, purchase: { concept: string; amount: number }) => {
     const targetCard = data.creditCards.find(c => c.id === cardId);
     const hasActiveCutoff = targetCard?.billingCutoffAmount !== undefined;
@@ -342,7 +351,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setData(prev => ({
       ...prev,
       creditCards: prev.creditCards.map(c =>
-        c.id === cardId ? { ...c, purchases: [newP, ...c.purchases] } : c // Added at TOP
+        c.id === cardId ? { ...c, purchases: [newP, ...c.purchases] } : c
       )
     }));
   };
@@ -356,10 +365,53 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }));
   };
 
+  // Housing CRUD
+  const addHousingExpense = (item: { name: string; period: PaymentPeriod; totalAmount: number; icon?: string }) => {
+    const newH: HousingExpense = {
+      id: `house-${Date.now()}`,
+      ...item
+    };
+    setData(prev => ({
+      ...prev,
+      housingExpenses: [newH, ...prev.housingExpenses]
+    }));
+  };
+
   const updateHousingExpense = (id: string, updated: Partial<HousingExpense>) => {
     setData(prev => ({
       ...prev,
       housingExpenses: prev.housingExpenses.map(h => (h.id === id ? { ...h, ...updated } : h))
+    }));
+  };
+
+  const deleteHousingExpense = (id: string) => {
+    setData(prev => ({
+      ...prev,
+      housingExpenses: prev.housingExpenses.filter(h => h.id !== id)
+    }));
+  };
+
+  const moveHousingExpense = (index: number, direction: 'up' | 'down') => {
+    setData(prev => {
+      const list = [...prev.housingExpenses];
+      const targetIndex = direction === 'up' ? index - 1 : index + 1;
+      if (targetIndex < 0 || targetIndex >= list.length) return prev;
+      const temp = list[index];
+      list[index] = list[targetIndex];
+      list[targetIndex] = temp;
+      return { ...prev, housingExpenses: list };
+    });
+  };
+
+  // Obligations CRUD
+  const addObligation = (item: { name: string; period: PaymentPeriod; totalAmount: number; icon?: string }) => {
+    const newOb: ObligationItem = {
+      id: `ob-${Date.now()}`,
+      ...item
+    };
+    setData(prev => ({
+      ...prev,
+      obligations: [newOb, ...prev.obligations]
     }));
   };
 
@@ -368,6 +420,65 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       ...prev,
       obligations: prev.obligations.map(o => (o.id === id ? { ...o, ...updated } : o))
     }));
+  };
+
+  const deleteObligation = (id: string) => {
+    setData(prev => ({
+      ...prev,
+      obligations: prev.obligations.filter(o => o.id !== id)
+    }));
+  };
+
+  const moveObligation = (index: number, direction: 'up' | 'down') => {
+    setData(prev => {
+      const list = [...prev.obligations];
+      const targetIndex = direction === 'up' ? index - 1 : index + 1;
+      if (targetIndex < 0 || targetIndex >= list.length) return prev;
+      const temp = list[index];
+      list[index] = list[targetIndex];
+      list[targetIndex] = temp;
+      return { ...prev, obligations: list };
+    });
+  };
+
+  // Subscriptions CRUD
+  const addSubscription = (item: { name: string; totalPrice: number; members: number; billing: 'monthly' | 'yearly'; period?: PaymentPeriod; icon?: string }) => {
+    const newSub: SubscriptionItem = {
+      id: `sub-${Date.now()}`,
+      active: true,
+      period: item.period || '1st_fortnight',
+      ...item
+    };
+    setData(prev => ({
+      ...prev,
+      subscriptions: [newSub, ...prev.subscriptions]
+    }));
+  };
+
+  const updateSubscription = (id: string, updated: Partial<SubscriptionItem>) => {
+    setData(prev => ({
+      ...prev,
+      subscriptions: prev.subscriptions.map(s => (s.id === id ? { ...s, ...updated } : s))
+    }));
+  };
+
+  const deleteSubscription = (id: string) => {
+    setData(prev => ({
+      ...prev,
+      subscriptions: prev.subscriptions.filter(s => s.id !== id)
+    }));
+  };
+
+  const moveSubscription = (index: number, direction: 'up' | 'down') => {
+    setData(prev => {
+      const list = [...prev.subscriptions];
+      const targetIndex = direction === 'up' ? index - 1 : index + 1;
+      if (targetIndex < 0 || targetIndex >= list.length) return prev;
+      const temp = list[index];
+      list[index] = list[targetIndex];
+      list[targetIndex] = temp;
+      return { ...prev, subscriptions: list };
+    });
   };
 
   const toggleSubscription = (id: string) => {
@@ -418,8 +529,18 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         cancelCardCutoff,
         addCardPurchase,
         deleteCardPurchase,
+        addHousingExpense,
         updateHousingExpense,
+        deleteHousingExpense,
+        moveHousingExpense,
+        addObligation,
         updateObligation,
+        deleteObligation,
+        moveObligation,
+        addSubscription,
+        updateSubscription,
+        deleteSubscription,
+        moveSubscription,
         toggleSubscription,
         resetToDefault,
         importData

@@ -42,6 +42,7 @@ export interface HousingExpense {
   referenceCode?: string;
   period: PaymentPeriod;
   totalAmount: number;
+  icon?: string;
 }
 
 export interface ObligationItem {
@@ -52,6 +53,7 @@ export interface ObligationItem {
   davidAmount?: number;
   danielaAmount?: number;
   totalDebtBalance?: number;
+  icon?: string;
 }
 
 export interface CreditCardPurchase {
@@ -79,7 +81,9 @@ export interface SubscriptionItem {
   totalPrice: number;
   members: number;
   billing: 'monthly' | 'yearly';
+  period?: PaymentPeriod;
   active: boolean;
+  icon?: string;
 }
 
 export interface AppFinanceData {
