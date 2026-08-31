@@ -44,8 +44,8 @@ export const PortafolioView: React.FC = () => {
   // Drag and Drop state
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
-  // Active item ID for the 4x4 color palette popover
-  const [activeColorPickerItemId, setActiveColorPickerItemId] = useState<string | null>(null);
+  // Active item for the 4x4 color palette popover
+  const [colorPickerTarget, setColorPickerTarget] = useState<{ id: string; label: string; currentColor: string } | null>(null);
 
   // Modal states for Portafolio item (Create / Edit)
   const [showAddModal, setShowAddModal] = useState(false);
@@ -166,6 +166,14 @@ export const PortafolioView: React.FC = () => {
     setDraggedIndex(null);
   };
 
+  // Handle selecting a color from the 4x4 grid
+  const handleSelectColor = (colorHex: string) => {
+    if (colorPickerTarget) {
+      updatePortfolioItem(colorPickerTarget.id, { color: colorHex });
+      setColorPickerTarget(null);
+    }
+  };
+
   return (
     <div className="space-y-6 pb-24 animate-fadeIn">
       {/* Título Principal: Total Activos */}
@@ -279,59 +287,17 @@ export const PortafolioView: React.FC = () => {
                 {port.items.map((item, i) => (
                   <div
                     key={item.id || i}
-                    className="relative flex items-center justify-between p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 transition-colors"
+                    className="flex items-center justify-between p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 transition-colors"
                   >
-                    <div className="flex items-center gap-2.5 truncate">
-                      {/* Círculo de color interactivo con popover 4x4 */}
-                      <div className="relative flex-shrink-0">
-                        <button
-                          type="button"
-                          onClick={() => setActiveColorPickerItemId(activeColorPickerItemId === item.id ? null : item.id)}
-                          title="Click para elegir color (malla 4x4)"
-                          className="w-5 h-5 rounded-full shadow-sm ring-2 ring-white dark:ring-slate-800 hover:scale-110 active:scale-95 transition-transform flex items-center justify-center cursor-pointer"
-                          style={{ backgroundColor: item.color }}
-                        />
-
-                        {/* Malla de 4x4 Colores Pop-up */}
-                        {activeColorPickerItemId === item.id && (
-                          <div className="absolute left-0 top-full mt-2 z-30 p-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-2xl shadow-2xl w-48 animate-scaleUp">
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
-                                Elegir Color
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() => setActiveColorPickerItemId(null)}
-                                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-                              >
-                                <X className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-
-                            {/* Cuadrícula de 4x4 (16 colores) */}
-                            <div className="grid grid-cols-4 gap-2">
-                              {PRESET_COLORS_4X4.map(colorHex => {
-                                const isSelected = (item.color || '').toLowerCase() === colorHex.toLowerCase();
-                                return (
-                                  <button
-                                    key={colorHex}
-                                    type="button"
-                                    onClick={() => {
-                                      updatePortfolioItem(item.id, { color: colorHex });
-                                      setActiveColorPickerItemId(null);
-                                    }}
-                                    className="w-7 h-7 rounded-xl flex items-center justify-center hover:scale-110 active:scale-95 transition-transform shadow-sm ring-1 ring-black/10"
-                                    style={{ backgroundColor: colorHex }}
-                                    title={colorHex}
-                                  >
-                                    {isSelected && <Check className="w-3.5 h-3.5 text-white drop-shadow" />}
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        )}
-                      </div>
+                    <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                      {/* Círculo de color interactivo */}
+                      <button
+                        type="button"
+                        onClick={() => setColorPickerTarget({ id: item.id, label: item.label, currentColor: item.color })}
+                        title="Click para cambiar color"
+                        className="w-5 h-5 rounded-full shadow-sm ring-2 ring-white dark:ring-slate-800 hover:scale-110 active:scale-95 transition-transform flex-shrink-0 cursor-pointer"
+                        style={{ backgroundColor: item.color }}
+                      />
 
                       <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
                         {item.label}
@@ -389,6 +355,62 @@ export const PortafolioView: React.FC = () => {
                 </PieChart>
               </ResponsiveContainer>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Emergente de Selección de Color (Malla 4x4) */}
+      {colorPickerTarget && (
+        <div
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setColorPickerTarget(null)}
+        >
+          <div
+            className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-3xl p-5 max-w-xs w-full shadow-2xl animate-scaleUp space-y-4"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
+              <div>
+                <h4 className="text-sm font-bold text-slate-800 dark:text-white">
+                  Color para: <span className="text-blue-600 dark:text-blue-400">{colorPickerTarget.label}</span>
+                </h4>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">Selecciona un color para este activo</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setColorPickerTarget(null)}
+                className="p-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-800 dark:hover:text-white"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Malla de 4x4 (16 colores) */}
+            <div className="grid grid-cols-4 gap-3 p-2 bg-slate-50 dark:bg-slate-950/80 rounded-2xl border border-slate-200 dark:border-slate-800">
+              {PRESET_COLORS_4X4.map(colorHex => {
+                const isSelected = (colorPickerTarget.currentColor || '').toLowerCase() === colorHex.toLowerCase();
+                return (
+                  <button
+                    key={colorHex}
+                    type="button"
+                    onClick={() => handleSelectColor(colorHex)}
+                    className="h-10 rounded-2xl flex items-center justify-center hover:scale-105 active:scale-95 transition-transform shadow-md ring-2 ring-white/30 cursor-pointer"
+                    style={{ backgroundColor: colorHex }}
+                    title={colorHex}
+                  >
+                    {isSelected && <Check className="w-5 h-5 text-white drop-shadow-md stroke-[3]" />}
+                  </button>
+                );
+              })}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setColorPickerTarget(null)}
+              className="w-full py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-xs transition-colors text-center"
+            >
+              Cerrar
+            </button>
           </div>
         </div>
       )}
