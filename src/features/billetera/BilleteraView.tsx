@@ -362,7 +362,7 @@ export const BilleteraView: React.FC = () => {
                 }}
                 onDragEnd={() => setDraggedBilleteraIdx(null)}
                 className={`p-4 bg-white dark:bg-slate-900 transition-all flex items-center justify-between cursor-grab active:cursor-grabbing ${
-                  isDragging ? 'opacity-40 scale-[0.99] bg-blue-50/50 dark:bg-blue-950/30' : 'hover:bg-slate-50/70 dark:hover:bg-slate-850/50'
+                  isDragging ? 'opacity-40 scale-[0.99] bg-blue-50/50 dark:bg-blue-950/30' : ''
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -454,7 +454,7 @@ export const BilleteraView: React.FC = () => {
                 }}
                 onDragEnd={() => setDraggedDeudaIdx(null)}
                 className={`p-4 bg-white dark:bg-slate-900 transition-all flex items-center justify-between cursor-grab active:cursor-grabbing ${
-                  isDragging ? 'opacity-40 scale-[0.99] bg-blue-50/50 dark:bg-blue-950/30' : 'hover:bg-slate-50/70 dark:hover:bg-slate-850/50'
+                  isDragging ? 'opacity-40 scale-[0.99] bg-blue-50/50 dark:bg-blue-950/30' : ''
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -570,7 +570,7 @@ export const BilleteraView: React.FC = () => {
               return (
                 <div
                   key={mov.id}
-                  className="p-4 hover:bg-slate-50/70 dark:hover:bg-slate-850/50 transition-colors flex items-center justify-between"
+                  className="p-4 transition-colors flex items-center justify-between"
                 >
                   <div className="flex items-center gap-3">
                     <div
@@ -610,7 +610,7 @@ export const BilleteraView: React.FC = () => {
                               <strong className="text-slate-800 dark:text-slate-200">
                                 {mov.destinationType === 'card'
                                   ? `Tarjeta ${mov.destinationName || ''}`
-                                  : 'Compra'}
+                                  : 'Pagos'}
                               </strong>
                             </span>
                           </>
@@ -831,7 +831,7 @@ export const BilleteraView: React.FC = () => {
                     Destino
                   </label>
                   <div className="grid grid-cols-2 gap-2">
-                    {/* 1. Compra */}
+                    {/* 1. Pagos */}
                     <button
                       type="button"
                       onClick={() => {
@@ -845,7 +845,7 @@ export const BilleteraView: React.FC = () => {
                       }`}
                     >
                       <ShoppingBag className="w-4 h-4" />
-                      <span>Compra</span>
+                      <span>Pagos</span>
                     </button>
 
                     {/* 2. Tarjetas */}

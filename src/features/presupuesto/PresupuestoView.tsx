@@ -49,7 +49,7 @@ export const PresupuestoView: React.FC = () => {
           <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
             <div className="divide-y divide-slate-200 dark:divide-slate-800 text-sm">
               {/* 1. Deducciones de ley */}
-              <div className="p-4 hover:bg-slate-50 dark:hover:bg-slate-850/50 transition-colors flex items-center justify-between">
+              <div className="p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/40 flex items-center justify-center font-bold text-xs">
                     <ShieldCheck className="w-4 h-4" />
@@ -62,7 +62,7 @@ export const PresupuestoView: React.FC = () => {
               </div>
 
               {/* 2. Vivienda */}
-              <div className="p-4 hover:bg-slate-50 dark:hover:bg-slate-850/50 transition-colors flex items-center justify-between">
+              <div className="p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/40 flex items-center justify-center font-bold text-xs">
                     <Home className="w-4 h-4" />
@@ -75,7 +75,7 @@ export const PresupuestoView: React.FC = () => {
               </div>
 
               {/* 3. Obligaciones */}
-              <div className="p-4 hover:bg-slate-50 dark:hover:bg-slate-850/50 transition-colors flex items-center justify-between">
+              <div className="p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/40 flex items-center justify-center font-bold text-xs">
                     <Layers className="w-4 h-4" />
@@ -88,7 +88,7 @@ export const PresupuestoView: React.FC = () => {
               </div>
 
               {/* 4. Tarjetas */}
-              <div className="p-4 hover:bg-slate-50 dark:hover:bg-slate-850/50 transition-colors flex items-center justify-between">
+              <div className="p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/40 flex items-center justify-center font-bold text-xs">
                     <CreditCard className="w-4 h-4" />

@@ -365,7 +365,7 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
                 }}
                 onDragEnd={() => setDraggedHousingIdx(null)}
                 className={`p-4 bg-white dark:bg-slate-900 transition-all flex items-center justify-between cursor-grab active:cursor-grabbing ${
-                  isDragging ? 'opacity-40 scale-[0.99]' : 'hover:bg-slate-50/70 dark:hover:bg-slate-850/50'
+                  isDragging ? 'opacity-40 scale-[0.99]' : ''
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -493,7 +493,7 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
                 }}
                 onDragEnd={() => setDraggedObligationIdx(null)}
                 className={`p-4 bg-white dark:bg-slate-900 transition-all flex items-center justify-between cursor-grab active:cursor-grabbing ${
-                  isDragging ? 'opacity-40 scale-[0.99]' : 'hover:bg-slate-50/70 dark:hover:bg-slate-850/50'
+                  isDragging ? 'opacity-40 scale-[0.99]' : ''
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -626,7 +626,7 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
                 }}
                 onDragEnd={() => setDraggedSubIdx(null)}
                 className={`p-4 bg-white dark:bg-slate-900 transition-all flex items-center justify-between cursor-grab active:cursor-grabbing ${
-                  isDragging ? 'opacity-40 scale-[0.99]' : 'hover:bg-slate-50/70 dark:hover:bg-slate-850/50'
+                  isDragging ? 'opacity-40 scale-[0.99]' : ''
                 }`}
               >
                 <div className="flex items-center gap-3">

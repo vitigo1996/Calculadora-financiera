@@ -228,7 +228,7 @@ export const PortafolioView: React.FC = () => {
                 onDrop={e => handleDrop(e, idx)}
                 onDragEnd={() => setDraggedIndex(null)}
                 className={`p-4 bg-white dark:bg-slate-900 transition-all flex items-center justify-between cursor-grab active:cursor-grabbing ${
-                  isDragging ? 'opacity-40 scale-[0.99] bg-blue-50/50 dark:bg-blue-950/30' : 'hover:bg-slate-50/70 dark:hover:bg-slate-850/50'
+                  isDragging ? 'opacity-40 scale-[0.99] bg-blue-50/50 dark:bg-blue-950/30' : ''
                 }`}
               >
                 <div className="flex items-center gap-3">
