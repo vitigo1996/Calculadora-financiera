@@ -259,7 +259,7 @@ export const PortafolioView: React.FC = () => {
                     </span>
                     {isDiff && (
                       <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 block">
-                        (≈ {formatCurrency(equivalentInBase, baseCurrency)})
+                        {formatCurrency(equivalentInBase, baseCurrency)} COP
                       </span>
                     )}
                   </div>
