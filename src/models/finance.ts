@@ -1,10 +1,12 @@
 export type PaymentPeriod = '1st_fortnight' | '2nd_fortnight';
 
+export type ExpenseSplitMethod = 'proportional' | 'equal' | 'equal_remaining';
+
 export interface PersonProfile {
   id: string;
   name: string;
   monthlyIncome: number;
-  healthPensionRate: number; // e.g. 0.08
+  healthPensionRate: number;
   enabled: boolean;
 }
 
@@ -63,6 +65,7 @@ export interface SubscriptionItem {
 
 export interface AppFinanceData {
   mode: 'single' | 'shared';
+  expenseSplitMethod?: ExpenseSplitMethod;
   people: PersonProfile[];
   dolarRate: number; // Tasa USD/COP
   dolarRateLiveUpdated?: string;

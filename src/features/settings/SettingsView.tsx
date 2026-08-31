@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useFinance } from '../../context/FinanceContext';
 import { StorageService } from '../../services/storageService';
 import { formatCurrency } from '../../services/financeCalculations';
-import { PersonProfile } from '../../models/finance';
+import { PersonProfile, ExpenseSplitMethod } from '../../models/finance';
 import {
   Settings as SettingsIcon,
   Users,
@@ -11,19 +11,20 @@ import {
   Save,
   CheckCircle2,
   FileSpreadsheet,
-  Percent
+  Percent,
+  Sliders
 } from 'lucide-react';
 
 export const SettingsView: React.FC = () => {
-  const { data, updatePeople, resetToDefault } = useFinance();
+  const { data, updatePeople, updateExpenseSplitMethod, resetToDefault } = useFinance();
 
-  // Number of contributors dropdown: 1 to 5
-  const [personCount, setPersonCount] = useState<number>(data.people?.length || 2);
+  // Number of contributors dropdown: 1 to 4 max
+  const [personCount, setPersonCount] = useState<number>(Math.min(4, Math.max(1, data.people?.length || 2)));
 
   // Dynamic people list
   const [localPeople, setLocalPeople] = useState<PersonProfile[]>(() => {
     if (data.people && data.people.length > 0) {
-      return data.people;
+      return data.people.slice(0, 4);
     }
     return [
       { id: 'p-1', name: 'Yo', monthlyIncome: 4400000, healthPensionRate: 0.08, enabled: true },
@@ -31,15 +32,19 @@ export const SettingsView: React.FC = () => {
     ];
   });
 
+  // Expense split method
+  const [splitMethod, setLocalSplitMethod] = useState<ExpenseSplitMethod>(data.expenseSplitMethod || 'proportional');
+
   const [savedSuccess, setSavedSuccess] = useState(false);
 
-  // Handle changing number of people
+  // Handle changing number of people (1 to 4)
   const handlePersonCountChange = (count: number) => {
-    setPersonCount(count);
+    const validCount = Math.min(4, Math.max(1, count));
+    setPersonCount(validCount);
     setLocalPeople(prev => {
       const updated = [...prev];
-      if (count > updated.length) {
-        for (let i = updated.length; i < count; i++) {
+      if (validCount > updated.length) {
+        for (let i = updated.length; i < validCount; i++) {
           updated.push({
             id: `p-${Date.now()}-${i + 1}`,
             name: `Persona ${i + 1}`,
@@ -48,8 +53,8 @@ export const SettingsView: React.FC = () => {
             enabled: true
           });
         }
-      } else if (count < updated.length) {
-        return updated.slice(0, count);
+      } else if (validCount < updated.length) {
+        return updated.slice(0, validCount);
       }
       return updated;
     });
@@ -67,10 +72,28 @@ export const SettingsView: React.FC = () => {
   // Calculate real-time total income
   const totalCombinedIncome = localPeople.reduce((sum, p) => sum + (p.monthlyIncome || 0), 0);
 
+  // Calculate real-time percentage according to selected split method
+  const getPersonRatio = (person: PersonProfile) => {
+    if (localPeople.length <= 1) return 100;
+    if (splitMethod === 'equal') {
+      return 100 / localPeople.length;
+    }
+    if (splitMethod === 'equal_remaining') {
+      const avg = totalCombinedIncome / localPeople.length;
+      const ratio = totalCombinedIncome > 0
+        ? Math.max(0, Math.min(1, 0.5 + (person.monthlyIncome - avg) / (totalCombinedIncome || 1))) * 100
+        : 100 / localPeople.length;
+      return ratio;
+    }
+    // 'proportional' (default)
+    return totalCombinedIncome > 0 ? (person.monthlyIncome / totalCombinedIncome) * 100 : 0;
+  };
+
   // Save changes
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     updatePeople(localPeople);
+    updateExpenseSplitMethod(splitMethod);
     setSavedSuccess(true);
     setTimeout(() => setSavedSuccess(false), 3000);
   };
@@ -92,10 +115,10 @@ export const SettingsView: React.FC = () => {
 
       {/* Formulario de Aportantes */}
       <form onSubmit={handleSave} className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-300 dark:border-slate-800 shadow-sm space-y-5 transition-colors">
-        {/* Selector de Cantidad de Personas (1 a 5 personas limpio) */}
+        {/* 1. Selector de Ingresos Familiares (1 a 4 personas) */}
         <div>
           <label className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 block mb-2 flex items-center gap-1.5">
-            <Users className="w-4 h-4 text-blue-600 dark:text-blue-400" /> Cantidad de Personas
+            <Users className="w-4 h-4 text-blue-600 dark:text-blue-400" /> Ingresos Familiares
           </label>
           <select
             value={personCount}
@@ -106,24 +129,13 @@ export const SettingsView: React.FC = () => {
             <option value={2}>2 Personas</option>
             <option value={3}>3 Personas</option>
             <option value={4}>4 Personas</option>
-            <option value={5}>5 Personas</option>
           </select>
         </div>
 
-        {/* Resumen Ingreso Total (sin subtítulo) */}
-        <div className="bg-blue-50/70 dark:bg-blue-950/40 p-4 rounded-2xl border border-blue-200 dark:border-blue-800/50 flex items-center justify-between">
-          <span className="text-xs text-blue-700 dark:text-blue-300 font-bold block">
-            Ingreso Total
-          </span>
-          <span className="font-mono font-black text-base sm:text-lg text-blue-700 dark:text-blue-400">
-            COP {formatCurrency(totalCombinedIncome, 'COP')}
-          </span>
-        </div>
-
-        {/* Secciones de Personas: Solo Nombre, Ingreso y Porcentaje */}
+        {/* 2. Lista de Personas: Solo Nombre, Ingreso y Porcentaje */}
         <div className="space-y-3">
           {localPeople.map((person, idx) => {
-            const ratio = totalCombinedIncome > 0 ? (person.monthlyIncome / totalCombinedIncome) * 100 : 0;
+            const ratio = getPersonRatio(person);
             const defaultName = idx === 0 ? 'Yo' : `Persona ${idx + 1}`;
 
             return (
@@ -162,7 +174,7 @@ export const SettingsView: React.FC = () => {
                     />
                   </div>
 
-                  {/* Porcentaje calculado al frente */}
+                  {/* Porcentaje calculado */}
                   <div className="bg-blue-100/80 dark:bg-blue-950/70 px-3 py-2 rounded-xl border border-blue-200 dark:border-blue-800/40 flex items-center justify-between">
                     <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-400">
                       Porcentaje:
@@ -176,6 +188,35 @@ export const SettingsView: React.FC = () => {
               </div>
             );
           })}
+        </div>
+
+        {/* 3. Sección Inferior: Ingreso Total (izquierda) y Método de Reparto (derecha) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+          {/* Izquierda: Ingreso Total */}
+          <div className="bg-blue-50/70 dark:bg-blue-950/40 p-4 rounded-2xl border border-blue-200 dark:border-blue-800/50 flex flex-col justify-center">
+            <span className="text-xs text-blue-700 dark:text-blue-300 font-bold block mb-1">
+              Ingreso Total
+            </span>
+            <span className="font-mono font-black text-lg text-blue-700 dark:text-blue-400">
+              COP {formatCurrency(totalCombinedIncome, 'COP')}
+            </span>
+          </div>
+
+          {/* Derecha: Método para Compartir Gastos */}
+          <div className="bg-slate-50 dark:bg-slate-950/70 p-4 rounded-2xl border border-slate-300 dark:border-slate-800 flex flex-col justify-center">
+            <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1.5 flex items-center gap-1">
+              <Sliders className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" /> Método de Reparto
+            </label>
+            <select
+              value={splitMethod}
+              onChange={e => setLocalSplitMethod(e.target.value as ExpenseSplitMethod)}
+              className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
+            >
+              <option value="proportional">Proporcional a Ingresos (% según gana cada uno)</option>
+              <option value="equal">Partes Iguales (50/50 o en partes iguales)</option>
+              <option value="equal_remaining">Remanente Igual (Mismo dinero libre restante)</option>
+            </select>
+          </div>
         </div>
 
         <button

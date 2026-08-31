@@ -98,20 +98,37 @@ export function calculateCardPurchasesTotal(cc: CreditCardItem): number {
 }
 
 export function calculateAllFinances(data: AppFinanceData): CalculatedSummary {
-  const isShared = data.mode === 'shared' && data.people[1]?.enabled;
-  const p1 = data.people[0];
-  const p2 = data.people[1];
+  const activePeople = (data.people || []).filter(p => p.enabled);
+  const isShared = data.mode === 'shared' && activePeople.length > 1;
+  const p1 = activePeople[0] || { name: 'Yo', monthlyIncome: 0, healthPensionRate: 0.08, enabled: true };
+  const p2 = activePeople[1] || { name: 'Persona 2', monthlyIncome: 0, healthPensionRate: 0.0, enabled: false };
 
-  const h3 = p1.monthlyIncome;
-  const i3 = isShared ? p2.monthlyIncome : 0;
-  const totalIncome = h3 + i3;
+  const totalIncome = activePeople.reduce((sum, p) => sum + (p.monthlyIncome || 0), 0);
+  const splitMethod = data.expenseSplitMethod || 'proportional';
 
-  // H4, I4 Proportions
-  const h4 = totalIncome > 0 ? (isShared ? h3 / totalIncome : 1.0) : 1.0;
-  const i4 = totalIncome > 0 ? (isShared ? i3 / totalIncome : 0.0) : 0.0;
+  // Calculate H4 (p1 ratio) and I4 (p2 ratio) based on selected split method
+  let h4 = 1.0;
+  let i4 = 0.0;
+
+  if (isShared && activePeople.length >= 2) {
+    if (splitMethod === 'equal') {
+      // 50/50 o 1/N
+      h4 = 1.0 / activePeople.length;
+      i4 = 1.0 / activePeople.length;
+    } else if (splitMethod === 'equal_remaining') {
+      // Remanente igual
+      const avgIncome = totalIncome / activePeople.length;
+      h4 = totalIncome > 0 ? Math.max(0, Math.min(1, 0.5 + (p1.monthlyIncome - avgIncome) / (totalIncome || 1))) : 0.5;
+      i4 = Math.max(0, 1.0 - h4);
+    } else {
+      // 'proportional': Proporcional a ingresos
+      h4 = totalIncome > 0 ? p1.monthlyIncome / totalIncome : 1.0;
+      i4 = totalIncome > 0 ? p2.monthlyIncome / totalIncome : 0.0;
+    }
+  }
 
   // M3: Salud / Pension = H3 * 0.08
-  const m3_saludPension = h3 * (p1.healthPensionRate || 0.08);
+  const m3_saludPension = p1.monthlyIncome * (p1.healthPensionRate || 0.08);
 
   // Vivienda
   const servObj = data.housingExpenses.find(h => h.referenceCode === '3628') || data.housingExpenses[0];
@@ -158,140 +175,174 @@ export function calculateAllFinances(data: AppFinanceData): CalculatedSummary {
   const g16 = nuPurchasesSum;
   const h16 = nuPurchasesSum;
   const nuCupo = nuObj?.creditLimit || 5000000;
-  const i16 = nuCupo - g16;
+  const nuDisponible = nuCupo - g16;
 
   const falaPurchasesSum = falaObj ? calculateCardPurchasesTotal(falaObj) : 0;
   const g17 = falaPurchasesSum;
   const h17 = falaPurchasesSum;
   const falaCupo = falaObj?.creditLimit || 4400000;
-  const i17 = falaCupo - g17;
+  const falaDisponible = falaCupo - g17;
 
-  const addiPurchasesSum = addiObj ? calculateCardPurchasesTotal(addiObj) : 124950;
-  const g18 = addiPurchasesSum;
-  const h18 = addiObj?.minPaymentOverride !== undefined ? addiObj.minPaymentOverride : 41650;
+  const addiPurchasesSum = addiObj ? calculateCardPurchasesTotal(addiObj) : 0;
+  const g18_deuda = addiPurchasesSum > 0 ? addiPurchasesSum : 124950;
+  const h18_pago = addiObj?.minPaymentOverride || 41650;
   const addiCupo = addiObj?.creditLimit || 8000000;
-  const i18 = addiCupo - g18;
+  const addiDisponible = addiCupo - g18_deuda;
 
-  const m5_tarjetas = h16 + h17 + h18;
-  const m7_totalGastos = m3_saludPension + m4_vivienda + m5_tarjetas + m6_obligaciones;
-
-  const m9_mitadDeMes = h7 + h8 + h17 + h18 + h12 + h13 + (m3_saludPension / 2);
-  const m10_finDeMes = h9 + h16 + (m3_saludPension / 2);
-  const m11_disponible = h3 - m7_totalGastos;
+  const m5_tarjetas = h16 + h17 + h18_pago;
 
   // Suscripciones
-  const subItems = data.subscriptions.map(s => ({
-    id: s.id,
-    name: s.name,
-    totalPrice: s.totalPrice,
-    members: s.members,
-    billing: s.billing,
-    monthlyCost: calculateSubscriptionMonthlyCost(s),
-    active: s.active
+  const processedSubs = (data.subscriptions || []).map(sub => ({
+    id: sub.id,
+    name: sub.name,
+    totalPrice: sub.totalPrice,
+    members: sub.members,
+    billing: sub.billing,
+    monthlyCost: calculateSubscriptionMonthlyCost(sub),
+    active: sub.active
   }));
-  const totalSubMonthly = subItems.reduce((acc, s) => acc + (s.active ? s.monthlyCost : 0), 0);
+  const totalMonthlySubs = processedSubs.reduce((sum, s) => sum + s.monthlyCost, 0);
+
+  // M7: Total Gastos
+  const m7_totalGastos = m3_saludPension + m4_vivienda + m5_tarjetas + m6_obligaciones;
+
+  // M9: Mitad de mes (1st fortnight)
+  const m9_mitadDeMes = (m3_saludPension / 2) + h7 + h8 + h17 + h18_pago + h12 + h13;
+
+  // M10: Fin de mes (2nd fortnight)
+  const m10_finDeMes = (m3_saludPension / 2) + h9 + h16;
+
+  // M11: Disponible
+  const m11_disponible = p1.monthlyIncome - m7_totalGastos;
 
   // Portafolio
-  const c2 = data.dolarRate || 3600;
-  const etoroAccount = data.billeteraItems.find(b => b.nombre.toLowerCase().includes('etoro'));
-  const plentiAccount = data.billeteraItems.find(b => b.nombre.toLowerCase().includes('plenti'));
+  const dolarRate = data.dolarRate || 3600;
+  const etoroAccount = data.billeteraItems?.find(b => b.nombre.toLowerCase().includes('etoro'));
+  const plentiAccount = data.billeteraItems?.find(b => b.nombre.toLowerCase().includes('plenti'));
 
-  const etoroUSD = etoroAccount ? etoroAccount.saldo : 5037;
-  const plentiUSD = plentiAccount ? plentiAccount.saldo : 1500;
+  const etoroUSD = etoroAccount ? etoroAccount.saldo : 5037.0;
+  const plentiUSD = plentiAccount ? plentiAccount.saldo : 1500.0;
 
-  const m14 = c2 * etoroUSD; // ETF
-  const m15 = c2 * plentiUSD; // USDt
-  const m16 = data.portfolioExtras.nuEmergenciaCOP; // Nu Emergencia
-  const m17 = data.portfolioExtras.comfamaCasaCOP; // Comfama Casa
-  const m18 = data.portfolioExtras.bancolombiaAhorroCOP; // Bancolombia
+  const etoroCOP = etoroUSD * dolarRate;
+  const plentiCOP = plentiUSD * dolarRate;
+  const nuEmergenciaCOP = data.portfolioExtras?.nuEmergenciaCOP || 24001919.0;
+  const comfamaCasaCOP = data.portfolioExtras?.comfamaCasaCOP || 2812407.0;
+  const bancolombiaAhorroCOP = data.portfolioExtras?.bancolombiaAhorroCOP || 0.0;
 
-  const totalPortafolio = m14 + m15 + m16 + m17 + m18;
+  const totalPortafolio = etoroCOP + plentiCOP + nuEmergenciaCOP + comfamaCasaCOP + bancolombiaAhorroCOP;
 
-  const portItems = [
+  const portfolioItems = [
     {
       key: 'etoro',
-      label: 'ETF',
-      category: 'Inversión Global (eToro)',
-      valorCOP: m14,
-      valorOriginal: `${etoroUSD.toLocaleString('en-US')} USD`,
-      percentage: totalPortafolio > 0 ? (m14 / totalPortafolio) * 100 : 0,
-      color: '#10b981'
-    },
-    {
-      key: 'plenti',
-      label: 'USDt',
-      category: 'Dólar Digital (Plenti)',
-      valorCOP: m15,
-      valorOriginal: `${plentiUSD.toLocaleString('en-US')} USD`,
-      percentage: totalPortafolio > 0 ? (m15 / totalPortafolio) * 100 : 0,
-      color: '#3b82f6'
+      label: 'Etoro ETF',
+      category: 'Inversión USD',
+      valorCOP: etoroCOP,
+      valorOriginal: `$${etoroUSD.toLocaleString('es-CO')} USD`,
+      percentage: totalPortafolio > 0 ? (etoroCOP / totalPortafolio) * 100 : 0,
+      color: '#2563eb'
     },
     {
       key: 'nu',
-      label: 'Nu',
-      category: 'Emergencia',
-      valorCOP: m16,
-      percentage: totalPortafolio > 0 ? (m16 / totalPortafolio) * 100 : 0,
-      color: '#8b5cf6'
+      label: 'Nu Emergencia',
+      category: 'Fondo de Emergencia',
+      valorCOP: nuEmergenciaCOP,
+      percentage: totalPortafolio > 0 ? (nuEmergenciaCOP / totalPortafolio) * 100 : 0,
+      color: '#3b82f6'
+    },
+    {
+      key: 'plenti',
+      label: 'Plenti USDt',
+      category: 'Dólares Digitales',
+      valorCOP: plentiCOP,
+      valorOriginal: `$${plentiUSD.toLocaleString('es-CO')} USD`,
+      percentage: totalPortafolio > 0 ? (plentiCOP / totalPortafolio) * 100 : 0,
+      color: '#60a5fa'
     },
     {
       key: 'comfama',
-      label: 'Comfama',
-      category: 'Casa',
-      valorCOP: m17,
-      percentage: totalPortafolio > 0 ? (m17 / totalPortafolio) * 100 : 0,
-      color: '#f59e0b'
+      label: 'Comfama Casa',
+      category: 'Ahorro Vivienda',
+      valorCOP: comfamaCasaCOP,
+      percentage: totalPortafolio > 0 ? (comfamaCasaCOP / totalPortafolio) * 100 : 0,
+      color: '#93c5fd'
     },
     {
       key: 'bancolombia',
       label: 'Bancolombia',
-      category: 'Ahorro',
-      valorCOP: m18,
-      percentage: totalPortafolio > 0 ? (m18 / totalPortafolio) * 100 : 0,
-      color: '#06b6d4'
+      category: 'Ahorro a la mano',
+      valorCOP: bancolombiaAhorroCOP,
+      percentage: totalPortafolio > 0 ? (bancolombiaAhorroCOP / totalPortafolio) * 100 : 0,
+      color: '#64748b'
     }
   ];
 
   return {
     mode: data.mode,
-    dolar: c2,
-    billeteraItems: data.billeteraItems,
+    dolar: dolarRate,
+    billeteraItems: data.billeteraItems || [],
     p1: {
       name: p1.name,
-      income: h3,
+      income: p1.monthlyIncome,
       ratio: h4,
       healthPension: m3_saludPension
     },
     p2: {
       name: p2.name,
-      income: i3,
+      income: isShared ? p2.monthlyIncome : 0,
       ratio: i4,
       enabled: isShared
     },
     totalIncome,
     vivienda: {
-      servicios: { total: g7, david: h7, daniela: i7, ref: servObj?.referenceCode || '3628', period: '1ª Quincena' },
-      internet: { total: g8, david: h8, daniela: i8, ref: netObj?.referenceCode || '07409278', period: '1ª Quincena' },
-      arriendo: { total: g9, david: h9, daniela: i9, period: '2ª Quincena' },
+      servicios: {
+        total: g7,
+        david: h7,
+        daniela: i7,
+        ref: servObj?.referenceCode || '',
+        period: servObj?.period || '1st_fortnight'
+      },
+      internet: {
+        total: g8,
+        david: h8,
+        daniela: i8,
+        ref: netObj?.referenceCode || '',
+        period: netObj?.period || '1st_fortnight'
+      },
+      arriendo: {
+        total: g9,
+        david: h9,
+        daniela: i9,
+        period: arrObj?.period || '2nd_fortnight'
+      },
       totalDavid: m4_vivienda,
       totalDaniela: viviendaDaniela,
       totalHogar: viviendaHogar
     },
     obligaciones: {
-      carro: { total: g12, david: h12, daniela: i12, period: '1ª Quincena' },
-      icetex: { totalDebt: g13, david: h13, daniela: i13, period: '1ª Quincena' },
+      carro: {
+        total: g12,
+        david: h12,
+        daniela: i12,
+        period: carroObj?.period || '1st_fortnight'
+      },
+      icetex: {
+        totalDebt: icetexObj?.totalDebtBalance || g13,
+        david: h13,
+        daniela: i13,
+        period: icetexObj?.period || '1st_fortnight'
+      },
       totalDavid: m6_obligaciones,
       totalDaniela: obligacionesDaniela
     },
     tarjetas: {
-      nu: { deuda: g16, pagoMinimo: h16, cupoTotal: nuCupo, cupoDisponible: i16, period: '2ª Quincena' },
-      falabella: { deuda: g17, pagoMinimo: h17, cupoTotal: falaCupo, cupoDisponible: i17, period: '1ª Quincena' },
-      addi: { deuda: g18, pagoMinimo: h18, cupoTotal: addiCupo, cupoDisponible: i18, period: '1ª Quincena' },
+      nu: { deuda: g16, pagoMinimo: h16, cupoTotal: nuCupo, cupoDisponible: nuDisponible, period: nuObj?.period || '2nd_fortnight' },
+      falabella: { deuda: g17, pagoMinimo: h17, cupoTotal: falaCupo, cupoDisponible: falaDisponible, period: falaObj?.period || '1st_fortnight' },
+      addi: { deuda: g18_deuda, pagoMinimo: h18_pago, cupoTotal: addiCupo, cupoDisponible: addiDisponible, period: addiObj?.period || '1st_fortnight' },
       totalPagoDavid: m5_tarjetas
     },
     suscripciones: {
-      items: subItems,
-      totalMonthly: totalSubMonthly
+      items: processedSubs,
+      totalMonthly: totalMonthlySubs
     },
     presupuesto: {
       m3_saludPension,
@@ -304,28 +355,20 @@ export function calculateAllFinances(data: AppFinanceData): CalculatedSummary {
       m11_disponible
     },
     portafolio: {
-      etoroCOP: m14,
-      plentiCOP: m15,
-      nuEmergenciaCOP: m16,
-      comfamaCasaCOP: m17,
-      bancolombiaAhorroCOP: m18,
+      etoroCOP,
+      plentiCOP,
+      nuEmergenciaCOP,
+      comfamaCasaCOP,
+      bancolombiaAhorroCOP,
       totalPortafolio,
-      items: portItems
+      items: portfolioItems
     }
   };
 }
 
 export function formatCurrency(amount: number, currency: 'COP' | 'USD' = 'COP'): string {
   if (currency === 'USD') {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      maximumFractionDigits: 2
-    }).format(amount);
+    return `$${amount.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
   }
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    maximumFractionDigits: 0
-  }).format(amount);
+  return `$${Math.round(amount).toLocaleString('es-CO')}`;
 }

@@ -7,7 +7,8 @@ import {
   CreditCardItem,
   ObligationItem,
   BilleteraAccountItem,
-  DeudaItem
+  DeudaItem,
+  ExpenseSplitMethod
 } from '../models/finance';
 import { StorageService } from '../services/storageService';
 import { CurrencyService } from '../services/currencyService';
@@ -20,6 +21,7 @@ interface FinanceContextType {
   refreshLiveDolarRate: () => Promise<boolean>;
   setMode: (mode: 'single' | 'shared') => void;
   updatePeople: (people: PersonProfile[]) => void;
+  updateExpenseSplitMethod: (method: ExpenseSplitMethod) => void;
   updateDolarRate: (rate: number) => void;
   addBilleteraItem: (item: { nombre: string; moneda: 'COP' | 'USD'; saldo: number; icon?: string }) => void;
   updateBilleteraItem: (id: string, updated: Partial<BilleteraAccountItem>) => void;
@@ -87,6 +89,13 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       ...prev,
       people,
       mode: people.length > 1 ? 'shared' : 'single'
+    }));
+  };
+
+  const updateExpenseSplitMethod = (method: ExpenseSplitMethod) => {
+    setData(prev => ({
+      ...prev,
+      expenseSplitMethod: method
     }));
   };
 
@@ -214,6 +223,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         refreshLiveDolarRate,
         setMode,
         updatePeople,
+        updateExpenseSplitMethod,
         updateDolarRate,
         addBilleteraItem,
         updateBilleteraItem,
