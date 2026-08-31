@@ -1,14 +1,31 @@
 @echo off
-title Finanzas Personales - Servidor Local
-echo ========================================================
-echo   Iniciando App de Finanzas Personales en tu Navegador
-echo ========================================================
-echo.
+title Finanzas Personales
 cd /d "%~dp0"
-echo Abriendo navegador en http://localhost:3000 ...
-start http://localhost:3000
+
+echo ========================================================
+echo        Iniciando App de Finanzas Personales...
+echo ========================================================
 echo.
-echo Presiona Ctrl + C para detener el servidor en cualquier momento.
-echo.
-npm run dev
-pause
+
+where python >nul 2>nul
+if %ERRORLEVEL% EQU 0 (
+    python abrir_app.py
+    goto end
+)
+
+where py >nul 2>nul
+if %ERRORLEVEL% EQU 0 (
+    py abrir_app.py
+    goto end
+)
+
+echo Iniciando via Vite/NPM...
+call npm.cmd run dev -- --open
+
+:end
+if %ERRORLEVEL% NEQ 0 (
+    echo.
+    echo Ocurrio un inconveniente al abrir la app.
+    echo Presiona cualquier tecla para cerrar.
+    pause
+)
