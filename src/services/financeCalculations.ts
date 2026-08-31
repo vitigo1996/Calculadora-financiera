@@ -1,58 +1,51 @@
-import { AppFinanceData, SubscriptionItem, CreditCardItem, BilleteraAccountItem } from '../models/finance';
+import {
+  AppFinanceData,
+  HousingExpense,
+  ObligationItem,
+  CreditCardItem,
+  SubscriptionItem
+} from '../models/finance';
 
 export interface CalculatedSummary {
-  mode: 'single' | 'shared';
-  dolar: number;
-  billeteraItems: BilleteraAccountItem[];
-
-  // Ingresos
-  p1: {
-    name: string;
-    income: number;
-    ratio: number;
-    healthPension: number;
+  ingresos: {
+    p1Income: number;
+    p2Income: number;
+    totalIncome: number;
+    ratioYo: number;
+    ratioDaniela: number;
+    isShared: boolean;
   };
-  p2: {
-    name: string;
-    income: number;
-    ratio: number;
-    enabled: boolean;
+  gastosFijos: {
+    viviendaDaniela: number;
+    viviendaHogar: number;
+    obligacionesDaniela: number;
+    firstFortnightHousing: number;
+    secondFortnightHousing: number;
+    firstFortnightObligations: number;
+    secondFortnightObligations: number;
+    firstFortnightCards: number;
+    secondFortnightCards: number;
+    totalMonthlyGastosFijos: number;
   };
-  totalIncome: number;
-
-  // Vivienda
   vivienda: {
-    servicios: { total: number; david: number; daniela: number; ref: string; period: string };
-    internet: { total: number; david: number; daniela: number; ref: string; period: string };
-    arriendo: { total: number; david: number; daniela: number; period: string };
-    totalDavid: number;
-    totalDaniela: number;
-    totalHogar: number;
+    totalMonth: number;
+    totalYear: number;
+    items: HousingExpense[];
   };
-
-  // Obligaciones
   obligaciones: {
-    carro: { total: number; david: number; daniela: number; period: string };
-    icetex: { totalDebt: number; david: number; daniela: number; period: string };
-    totalDavid: number;
-    totalDaniela: number;
+    totalMonthly: number;
+    totalDebtBalance: number;
+    items: ObligationItem[];
   };
-
-  // Tarjetas de Crédito
-  tarjetas: {
-    nu: { deuda: number; pagoMinimo: number; cupoTotal: number; cupoDisponible: number; period: string };
-    falabella: { deuda: number; pagoMinimo: number; cupoTotal: number; cupoDisponible: number; period: string };
-    addi: { deuda: number; pagoMinimo: number; cupoTotal: number; cupoDisponible: number; period: string };
-    totalPagoDavid: number;
+  tarjetasCredito: {
+    totalCreditLimit: number;
+    totalDueThisMonth: number;
+    cards: CreditCardItem[];
   };
-
-  // Suscripciones
   suscripciones: {
-    items: { id: string; name: string; totalPrice: number; members: number; billing: string; monthlyCost: number; active: boolean }[];
+    items: any[];
     totalMonthly: number;
   };
-
-  // Presupuesto
   presupuesto: {
     m3_saludPension: number;
     m4_vivienda: number;
@@ -63,39 +56,29 @@ export interface CalculatedSummary {
     m10_finDeMes: number;
     m11_disponible: number;
   };
-
-  // Portafolio
   portafolio: {
     totalPortafolio: number;
-    items: {
-      id: string;
-      label: string;
-      moneda: 'COP' | 'USD';
-      saldoOriginal: number;
-      valorCOP: number;
-      percentage: number;
-      icon?: string;
-      color: string;
-    }[];
+    items: any[];
   };
 }
 
 export function calculateSubscriptionMonthlyCost(sub: SubscriptionItem): number {
-  const base = sub.totalPrice / (sub.members > 0 ? sub.members : 1);
-  return base;
+  const members = Math.max(1, sub.members || 1);
+  const dividedPrice = sub.totalPrice / members;
+  if (sub.billing === 'yearly') {
+    return dividedPrice / 12;
+  }
+  return dividedPrice;
 }
 
 export function calculateCardPurchasesTotal(cc: CreditCardItem): number {
-  if (cc.purchases && cc.purchases.length > 0) {
-    return cc.purchases.reduce((sum, p) => sum + p.amount, 0);
-  }
-  return 0;
-}
-
-export function calculateCardPaymentDue(cc: CreditCardItem): number {
   if (cc.billingCutoffAmount !== undefined) {
     return cc.billingCutoffAmount;
   }
+  return (cc.purchases || []).reduce((sum, p) => sum + (p.amount || 0), 0);
+}
+
+export function calculateCardPaymentDue(cc: CreditCardItem): number {
   if (cc.minPaymentOverride !== undefined && cc.minPaymentOverride > 0) {
     return cc.minPaymentOverride;
   }
@@ -103,21 +86,14 @@ export function calculateCardPaymentDue(cc: CreditCardItem): number {
 }
 
 export function calculateAllFinances(data: AppFinanceData): CalculatedSummary {
-  const baseCurrency = data.baseCurrency || 'COP';
-  const dolarRate = data.dolarRate || 3600;
-
   const activePeople = (data.people || []).filter(p => p.enabled);
   const isShared = data.mode === 'shared' && activePeople.length > 1;
   const p1 = activePeople[0] || { name: 'Yo', monthlyIncome: 0, healthPensionRate: 0.08, enabled: true };
   const p2 = activePeople[1] || { name: 'Persona 2', monthlyIncome: 0, healthPensionRate: 0.0, enabled: false };
 
-  const totalIncome = activePeople.reduce((sum, p) => {
-    const pInBase = convertToBase(p.monthlyIncome || 0, p.moneda || 'COP', baseCurrency, dolarRate);
-    return sum + pInBase;
-  }, 0);
-
-  const p1IncomeBase = convertToBase(p1.monthlyIncome || 0, p1.moneda || 'COP', baseCurrency, dolarRate);
-  const p2IncomeBase = convertToBase(p2.monthlyIncome || 0, p2.moneda || 'COP', baseCurrency, dolarRate);
+  const totalIncome = activePeople.reduce((sum, p) => sum + (p.monthlyIncome || 0), 0);
+  const p1Income = p1.monthlyIncome || 0;
+  const p2Income = p2.monthlyIncome || 0;
 
   const splitMethod = data.expenseSplitMethod || 'proportional';
 
@@ -131,16 +107,16 @@ export function calculateAllFinances(data: AppFinanceData): CalculatedSummary {
       i4 = 1.0 / activePeople.length;
     } else if (splitMethod === 'equal_remaining') {
       const avgIncome = totalIncome / activePeople.length;
-      h4 = totalIncome > 0 ? Math.max(0, Math.min(1, 0.5 + (p1IncomeBase - avgIncome) / (totalIncome || 1))) : 0.5;
+      h4 = totalIncome > 0 ? Math.max(0, Math.min(1, 0.5 + (p1Income - avgIncome) / (totalIncome || 1))) : 0.5;
       i4 = Math.max(0, 1.0 - h4);
     } else {
-      h4 = totalIncome > 0 ? p1IncomeBase / totalIncome : 1.0;
-      i4 = totalIncome > 0 ? p2IncomeBase / totalIncome : 0.0;
+      h4 = totalIncome > 0 ? p1Income / totalIncome : 1.0;
+      i4 = totalIncome > 0 ? p2Income / totalIncome : 0.0;
     }
   }
 
   // M3: Salud / Pensión (Deducciones de ley sobre ingreso de Yo)
-  const m3_saludPension = p1IncomeBase * (p1.healthPensionRate || 0.08);
+  const m3_saludPension = p1Income * (p1.healthPensionRate || 0.08);
 
   // 1. Vivienda (Dinámica sumando cada registro según su quincena y distribución)
   let m4_vivienda = 0;
@@ -150,14 +126,14 @@ export function calculateAllFinances(data: AppFinanceData): CalculatedSummary {
   let secondFortnightHousing = 0;
 
   (data.housingExpenses || []).forEach(item => {
-    const itemAmountBase = convertToBase(item.totalAmount || 0, item.moneda || 'COP', baseCurrency, dolarRate);
+    const itemAmount = item.totalAmount || 0;
     const isItemShared = item.isShared !== false && isShared;
-    const myShare = isItemShared ? itemAmountBase * h4 : itemAmountBase;
-    const partnerShare = isItemShared ? itemAmountBase * i4 : 0;
+    const myShare = isItemShared ? itemAmount * h4 : itemAmount;
+    const partnerShare = isItemShared ? itemAmount * i4 : 0;
 
     m4_vivienda += myShare;
     viviendaDaniela += partnerShare;
-    viviendaHogar += itemAmountBase;
+    viviendaHogar += itemAmount;
 
     if (item.period === '2nd_fortnight') {
       secondFortnightHousing += myShare;
@@ -176,10 +152,10 @@ export function calculateAllFinances(data: AppFinanceData): CalculatedSummary {
     const monthlyVal = ob.davidAmount !== undefined && ob.davidAmount !== ob.totalAmount && ob.totalDebtBalance
       ? ob.davidAmount
       : ob.totalAmount;
-    const obAmountBase = convertToBase(monthlyVal || 0, ob.moneda || 'COP', baseCurrency, dolarRate);
+    const obAmount = monthlyVal || 0;
     const isObShared = ob.isShared !== false && isShared;
-    const myShare = isObShared ? obAmountBase * h4 : obAmountBase;
-    const partnerShare = isObShared ? obAmountBase * i4 : 0;
+    const myShare = isObShared ? obAmount * h4 : obAmount;
+    const partnerShare = isObShared ? obAmount * i4 : 0;
 
     m6_obligaciones += myShare;
     obligacionesDaniela += partnerShare;
@@ -197,15 +173,14 @@ export function calculateAllFinances(data: AppFinanceData): CalculatedSummary {
   let secondFortnightCards = 0;
 
   (data.creditCards || []).forEach(cc => {
-    const dueAmount = calculateCardPaymentDue(cc);
-    const dueAmountBase = convertToBase(dueAmount || 0, cc.moneda || 'COP', baseCurrency, dolarRate);
+    const dueAmount = calculateCardPaymentDue(cc) || 0;
 
-    m5_tarjetas += dueAmountBase;
+    m5_tarjetas += dueAmount;
 
     if (cc.period === '2nd_fortnight') {
-      secondFortnightCards += dueAmountBase;
+      secondFortnightCards += dueAmount;
     } else {
-      firstFortnightCards += dueAmountBase;
+      firstFortnightCards += dueAmount;
     }
   });
 
@@ -219,10 +194,7 @@ export function calculateAllFinances(data: AppFinanceData): CalculatedSummary {
     monthlyCost: calculateSubscriptionMonthlyCost(sub),
     active: sub.active
   }));
-  const totalMonthlySubs = processedSubs.reduce((sum, s) => {
-    const subCostBase = convertToBase(s.monthlyCost, (data.subscriptions?.find(sub => sub.id === s.id)?.moneda) || 'COP', baseCurrency, dolarRate);
-    return sum + subCostBase;
-  }, 0);
+  const totalMonthlySubs = processedSubs.reduce((sum, s) => sum + s.monthlyCost, 0);
 
   // M7: Total Gastos del Mes
   const m7_totalGastos = m3_saludPension + m4_vivienda + m6_obligaciones + m5_tarjetas;
@@ -234,7 +206,7 @@ export function calculateAllFinances(data: AppFinanceData): CalculatedSummary {
   const m10_finDeMes = (m3_saludPension / 2) + secondFortnightHousing + secondFortnightObligations + secondFortnightCards;
 
   // M11: Disponible del Mes
-  const m11_disponible = p1IncomeBase - m7_totalGastos;
+  const m11_disponible = p1Income - m7_totalGastos;
 
   // Portafolio Dinámico
   const distinctPalette = [
@@ -244,13 +216,13 @@ export function calculateAllFinances(data: AppFinanceData): CalculatedSummary {
 
   const rawPortItems = data.portfolioItems || [];
   const calculatedPortItems = rawPortItems.map((item, idx) => {
-    const valorBase = convertToBase(item.saldo || 0, item.moneda || 'COP', baseCurrency, dolarRate);
+    const valor = item.saldo || 0;
     return {
       id: item.id,
       label: item.nombre,
-      moneda: item.moneda,
+      moneda: item.moneda || 'COP',
       saldoOriginal: item.saldo,
-      valorCOP: valorBase,
+      valorCOP: valor,
       icon: item.icon,
       color: item.color || distinctPalette[idx % distinctPalette.length]
     };
@@ -258,104 +230,61 @@ export function calculateAllFinances(data: AppFinanceData): CalculatedSummary {
 
   const totalPortafolio = calculatedPortItems.reduce((sum, item) => sum + item.valorCOP, 0);
 
-  const portfolioItemsWithPercentages = calculatedPortItems.map(item => ({
-    ...item,
-    percentage: totalPortafolio > 0 ? (item.valorCOP / totalPortafolio) * 100 : 0
-  }));
+  const portfolioItemsWithPercentages = calculatedPortItems.map(item => {
+    const percentage = totalPortafolio > 0 ? (item.valorCOP / totalPortafolio) * 100 : 0;
+    return {
+      ...item,
+      percentage
+    };
+  });
 
-  // Backward compatibility objects for summary
-  const nuObj = data.creditCards.find(c => c.name.toLowerCase().includes('nu'));
-  const falaObj = data.creditCards.find(c => c.name.toLowerCase().includes('falabella'));
-  const addiObj = data.creditCards.find(c => c.name.toLowerCase().includes('addi'));
+  // Totales de vivienda
+  const totalHousingMonth = (data.housingExpenses || []).reduce((acc, h) => acc + (h.totalAmount || 0), 0);
+  const totalHousingYear = totalHousingMonth * 12;
 
-  const servObj = data.housingExpenses[0];
-  const netObj = data.housingExpenses[1];
-  const arrObj = data.housingExpenses[2];
+  // Totales de obligaciones
+  const totalMonthlyObligations = (data.obligations || []).reduce((acc, ob) => acc + (ob.totalAmount || 0), 0);
+  const totalDebtBalance = (data.obligations || []).reduce((acc, ob) => acc + (ob.totalDebtBalance || 0), 0);
 
-  const carroObj = data.obligations[0];
-  const icetexObj = data.obligations[1];
+  // Totales de tarjetas
+  const totalCreditLimit = (data.creditCards || []).reduce((acc, c) => acc + (c.creditLimit || 0), 0);
+  const totalCreditCardDue = m5_tarjetas;
 
   return {
-    mode: data.mode,
-    dolar: dolarRate,
-    billeteraItems: data.billeteraItems || [],
-    p1: {
-      name: p1.name,
-      income: p1IncomeBase,
-      ratio: h4,
-      healthPension: m3_saludPension
+    ingresos: {
+      p1Income,
+      p2Income,
+      totalIncome,
+      ratioYo: h4,
+      ratioDaniela: i4,
+      isShared
     },
-    p2: {
-      name: p2.name,
-      income: isShared ? p2IncomeBase : 0,
-      ratio: i4,
-      enabled: isShared
+    gastosFijos: {
+      viviendaDaniela,
+      viviendaHogar,
+      obligacionesDaniela,
+      firstFortnightHousing,
+      secondFortnightHousing,
+      firstFortnightObligations,
+      secondFortnightObligations,
+      firstFortnightCards,
+      secondFortnightCards,
+      totalMonthlyGastosFijos: m4_vivienda + m6_obligaciones
     },
-    totalIncome,
     vivienda: {
-      servicios: {
-        total: servObj?.totalAmount || 0,
-        david: (servObj?.totalAmount || 0) * h4,
-        daniela: (servObj?.totalAmount || 0) * i4,
-        ref: servObj?.referenceCode || '',
-        period: servObj?.period || '1st_fortnight'
-      },
-      internet: {
-        total: netObj?.totalAmount || 0,
-        david: (netObj?.totalAmount || 0) * h4,
-        daniela: (netObj?.totalAmount || 0) * i4,
-        ref: netObj?.referenceCode || '',
-        period: netObj?.period || '1st_fortnight'
-      },
-      arriendo: {
-        total: arrObj?.totalAmount || 0,
-        david: (arrObj?.totalAmount || 0) * h4,
-        daniela: (arrObj?.totalAmount || 0) * i4,
-        period: arrObj?.period || '2nd_fortnight'
-      },
-      totalDavid: m4_vivienda,
-      totalDaniela: viviendaDaniela,
-      totalHogar: viviendaHogar
+      totalMonth: totalHousingMonth,
+      totalYear: totalHousingYear,
+      items: data.housingExpenses || []
     },
     obligaciones: {
-      carro: {
-        total: carroObj?.totalAmount || 0,
-        david: (carroObj?.totalAmount || 0) * h4,
-        daniela: (carroObj?.totalAmount || 0) * i4,
-        period: carroObj?.period || '1st_fortnight'
-      },
-      icetex: {
-        totalDebt: icetexObj?.totalDebtBalance || 0,
-        david: icetexObj?.davidAmount !== undefined ? icetexObj.davidAmount : 0,
-        daniela: icetexObj?.danielaAmount !== undefined ? icetexObj.danielaAmount : 0,
-        period: icetexObj?.period || '1st_fortnight'
-      },
-      totalDavid: m6_obligaciones,
-      totalDaniela: obligacionesDaniela
+      totalMonthly: totalMonthlyObligations,
+      totalDebtBalance,
+      items: data.obligations || []
     },
-    tarjetas: {
-      nu: {
-        deuda: nuObj ? calculateCardPurchasesTotal(nuObj) : 0,
-        pagoMinimo: nuObj ? calculateCardPaymentDue(nuObj) : 0,
-        cupoTotal: nuObj?.creditLimit || 0,
-        cupoDisponible: nuObj ? nuObj.creditLimit - calculateCardPurchasesTotal(nuObj) : 0,
-        period: nuObj?.period || '2nd_fortnight'
-      },
-      falabella: {
-        deuda: falaObj ? calculateCardPurchasesTotal(falaObj) : 0,
-        pagoMinimo: falaObj ? calculateCardPaymentDue(falaObj) : 0,
-        cupoTotal: falaObj?.creditLimit || 0,
-        cupoDisponible: falaObj ? falaObj.creditLimit - calculateCardPurchasesTotal(falaObj) : 0,
-        period: falaObj?.period || '1st_fortnight'
-      },
-      addi: {
-        deuda: addiObj ? calculateCardPurchasesTotal(addiObj) : 0,
-        pagoMinimo: addiObj ? calculateCardPaymentDue(addiObj) : 0,
-        cupoTotal: addiObj?.creditLimit || 0,
-        cupoDisponible: addiObj ? addiObj.creditLimit - calculateCardPurchasesTotal(addiObj) : 0,
-        period: addiObj?.period || '1st_fortnight'
-      },
-      totalPagoDavid: m5_tarjetas
+    tarjetasCredito: {
+      totalCreditLimit,
+      totalDueThisMonth: totalCreditCardDue,
+      cards: data.creditCards || []
     },
     suscripciones: {
       items: processedSubs,
@@ -380,37 +309,29 @@ export function calculateAllFinances(data: AppFinanceData): CalculatedSummary {
 
 export function convertToBase(
   amount: number,
-  itemCurrency: 'COP' | 'USD' = 'COP',
-  baseCurrency: 'COP' | 'USD' = 'COP',
-  dolarRate: number = 3600
+  _itemCurrency?: string,
+  _baseCurrency?: string,
+  _dolarRate?: number
 ): number {
-  if (itemCurrency === baseCurrency) return amount;
-  if (itemCurrency === 'USD' && baseCurrency === 'COP') return amount * dolarRate;
-  if (itemCurrency === 'COP' && baseCurrency === 'USD') return dolarRate > 0 ? amount / dolarRate : 0;
   return amount;
 }
 
 export function formatWithEquivalence(
   amount: number,
-  itemCurrency: 'COP' | 'USD' = 'COP',
-  baseCurrency: 'COP' | 'USD' = 'COP',
-  dolarRate: number = 3600
+  _itemCurrency?: string,
+  _baseCurrency?: string,
+  _dolarRate?: number
 ) {
-  const isDifferent = itemCurrency !== baseCurrency;
-  const equivalent = convertToBase(amount, itemCurrency, baseCurrency, dolarRate);
   return {
-    isDifferent,
-    itemCurrency,
-    baseCurrency,
-    equivalentAmount: equivalent,
-    formattedOriginal: formatCurrency(amount, itemCurrency),
-    formattedEquivalent: formatCurrency(equivalent, baseCurrency)
+    isDifferent: false,
+    itemCurrency: 'COP',
+    baseCurrency: 'COP',
+    equivalentAmount: amount,
+    formattedOriginal: formatCurrency(amount),
+    formattedEquivalent: formatCurrency(amount)
   };
 }
 
-export function formatCurrency(amount: number, currency: 'COP' | 'USD' = 'COP'): string {
-  if (currency === 'USD') {
-    return `$${amount.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
-  }
-  return `$${Math.round(amount).toLocaleString('es-CO')}`;
+export function formatCurrency(amount: number, _currency?: string): string {
+  return `$${Math.round(amount || 0).toLocaleString('es-CO')}`;
 }

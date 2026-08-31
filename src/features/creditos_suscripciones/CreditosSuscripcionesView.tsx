@@ -3,8 +3,7 @@ import { useFinance } from '../../context/FinanceContext';
 import {
   formatCurrency,
   calculateCardPurchasesTotal,
-  calculateCardPaymentDue,
-  convertToBase
+  calculateCardPaymentDue
 } from '../../services/financeCalculations';
 import { CreditCardItem, PaymentPeriod } from '../../models/finance';
 import {
@@ -21,7 +20,6 @@ import {
 export const CreditosSuscripcionesView: React.FC = () => {
   const {
     data,
-    baseCurrency,
     addCreditCard,
     updateCreditCard,
     deleteCreditCard,
@@ -32,8 +30,6 @@ export const CreditosSuscripcionesView: React.FC = () => {
     deleteCardPurchase
   } = useFinance();
 
-  const dolarRate = data.dolarRate || 3600;
-
   const [selectedCardId, setSelectedCardId] = useState<string>(data.creditCards[0]?.id || '');
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
@@ -42,24 +38,22 @@ export const CreditosSuscripcionesView: React.FC = () => {
   const [editingCardObj, setEditingCardObj] = useState<CreditCardItem | null>(null);
   const [cardName, setCardName] = useState('');
   const [cardLimit, setCardLimit] = useState('');
-  const [cardCurrency, setCardCurrency] = useState<'COP' | 'USD'>('COP');
   const [cardPeriod, setCardPeriod] = useState<PaymentPeriod>('1st_fortnight');
 
   // Modal: Add Purchase
   const [showAddPurchaseModal, setShowAddPurchaseModal] = useState(false);
   const [purchaseConcept, setPurchaseConcept] = useState('');
   const [purchaseAmount, setPurchaseAmount] = useState('');
-  const [purchaseCurrency, setPurchaseCurrency] = useState<'COP' | 'USD'>('COP');
 
+  // Selected card reference
   const selectedCard = data.creditCards.find(c => c.id === selectedCardId) || data.creditCards[0];
 
   // Open Create Card Modal
   const openCreateCard = () => {
-    setEditingCardObj(null);
     setCardName('');
     setCardLimit('');
-    setCardCurrency(baseCurrency);
     setCardPeriod('1st_fortnight');
+    setEditingCardObj(null);
     setShowCardModal(true);
   };
 
@@ -68,7 +62,6 @@ export const CreditosSuscripcionesView: React.FC = () => {
     setEditingCardObj(card);
     setCardName(card.name);
     setCardLimit(card.creditLimit.toString());
-    setCardCurrency(card.moneda || 'COP');
     setCardPeriod(card.period);
     setShowCardModal(true);
   };
@@ -83,18 +76,17 @@ export const CreditosSuscripcionesView: React.FC = () => {
       updateCreditCard(editingCardObj.id, {
         name: cardName.trim(),
         creditLimit: limit,
-        moneda: cardCurrency,
-        period: cardPeriod
+        period: cardPeriod,
+        moneda: 'COP'
       });
     } else {
       addCreditCard({
         name: cardName.trim(),
         creditLimit: limit,
-        moneda: cardCurrency,
-        period: cardPeriod
+        period: cardPeriod,
+        moneda: 'COP'
       });
     }
-
     setShowCardModal(false);
     setEditingCardObj(null);
   };
@@ -102,7 +94,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
   // Delete Card
   const handleDeleteCard = () => {
     if (!editingCardObj) return;
-    if (confirm(`¿Eliminar la tarjeta "${editingCardObj.name}" y todas sus compras asociadas?`)) {
+    if (confirm(`¿Eliminar la tarjeta "${editingCardObj.name}"?`)) {
       deleteCreditCard(editingCardObj.id);
       if (selectedCardId === editingCardObj.id) {
         const remaining = data.creditCards.filter(c => c.id !== editingCardObj.id);
@@ -117,7 +109,6 @@ export const CreditosSuscripcionesView: React.FC = () => {
   const openAddPurchase = () => {
     setPurchaseConcept('');
     setPurchaseAmount('');
-    setPurchaseCurrency(selectedCard?.moneda || baseCurrency);
     setShowAddPurchaseModal(true);
   };
 
@@ -131,7 +122,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
     addCardPurchase(selectedCard.id, {
       concept: purchaseConcept.trim(),
       amount,
-      moneda: selectedCard.moneda || 'COP'
+      moneda: 'COP'
     });
 
     setPurchaseConcept('');
@@ -142,8 +133,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
   // Do Cutoff
   const handleDoCutoff = (card: CreditCardItem) => {
     const totalCurrent = calculateCardPurchasesTotal(card);
-    const cardMoneda = card.moneda || 'COP';
-    if (confirm(`¿Hacer corte en "${card.name}" por ${formatCurrency(totalCurrent, cardMoneda)}? Este será el pago fijado del mes. Las compras que agregues después seguirán restando cupo pero no alterarán este pago.`)) {
+    if (confirm(`¿Hacer corte en "${card.name}" por ${formatCurrency(totalCurrent)}? Este será el pago fijado del mes. Las compras que agregues después seguirán restando cupo pero no alterarán este pago.`)) {
       performCardCutoff(card.id);
     }
   };
@@ -173,7 +163,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
 
   return (
     <div className="space-y-6 pb-24 animate-fadeIn">
-      {/* Header: Título y Botón Agregar Tarjeta Alineados */}
+      {/* Header Principal de Tarjetas Alineado */}
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
           <CreditCard className="w-5 h-5 text-blue-600 dark:text-blue-400" /> Tarjetas
@@ -197,9 +187,6 @@ export const CreditosSuscripcionesView: React.FC = () => {
             const cupoDisponible = cc.creditLimit - totalDeuda;
             const hasCutoff = cc.billingCutoffAmount !== undefined;
             const isDragging = draggedIndex === idx;
-            const cardMoneda = cc.moneda || 'COP';
-            const isDiff = cardMoneda !== baseCurrency;
-            const pagoInBase = convertToBase(pagoDelMes, cardMoneda, baseCurrency, dolarRate);
 
             return (
               <div
@@ -215,35 +202,37 @@ export const CreditosSuscripcionesView: React.FC = () => {
                 } ${
                   isSelected
                     ? 'bg-white dark:bg-slate-900 border-blue-500 shadow-md ring-2 ring-blue-500/20'
-                    : 'bg-white/80 dark:bg-slate-900/80 border-slate-300 dark:border-slate-800 hover:border-slate-400 dark:hover:border-slate-700 shadow-sm'
+                    : 'bg-white/80 dark:bg-slate-900/80 border-slate-300 dark:border-slate-800 shadow-sm'
                 }`}
               >
-                {/* Header de la Tarjeta */}
                 <div>
-                  <div className="flex items-start justify-between gap-2 mb-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-2xl bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/40 flex items-center justify-center font-bold text-sm">
-                        <CreditCard className="w-5 h-5" />
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 cursor-grab active:cursor-grabbing p-0.5">
+                        <GripVertical className="w-3.5 h-3.5" />
+                      </div>
+                      <div className="w-9 h-9 rounded-2xl bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/50 flex items-center justify-center font-bold text-xs shadow-sm">
+                        <CreditCard className="w-4 h-4" />
                       </div>
                       <div>
                         <div className="flex items-center gap-1.5">
                           <h4 className="font-bold text-slate-800 dark:text-white text-sm">{cc.name}</h4>
-                          {isDiff && (
-                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300">
-                              {cardMoneda}
-                            </span>
-                          )}
                         </div>
-                        <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                        <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">
                           {cc.period === '1st_fortnight' ? '1ª Quincena' : '2ª Quincena'}
                         </span>
                       </div>
                     </div>
 
-                    {/* Botón de Editar Tarjeta y Grip en el Recuadro */}
                     <div className="flex items-center gap-1">
+                      {hasCutoff && (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800/50">
+                          Corte
+                        </span>
+                      )}
+
+                      {/* Botón de Editar Tarjeta en el Recuadro */}
                       <button
-                        type="button"
                         onClick={e => {
                           e.stopPropagation();
                           openEditCard(cc);
@@ -251,183 +240,169 @@ export const CreditosSuscripcionesView: React.FC = () => {
                         className="p-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-300/80 dark:border-transparent transition-colors"
                         title="Editar tarjeta"
                       >
-                        <Edit2 className="w-3.5 h-3.5" />
+                        <Edit2 className="w-3 h-3" />
                       </button>
+                    </div>
+                  </div>
 
-                      <div
-                        className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-1 cursor-grab active:cursor-grabbing"
-                        onClick={e => e.stopPropagation()}
-                        title="Arrastrar para reordenar"
-                      >
-                        <GripVertical className="w-4 h-4" />
+                  <div className="space-y-2 text-xs pt-1">
+                    <div className="flex justify-between items-baseline">
+                      <span className="text-slate-500 dark:text-slate-400">Pago del Mes:</span>
+                      <div className="text-right">
+                        <span className="font-bold text-blue-700 dark:text-blue-400 font-mono text-sm block">
+                          {formatCurrency(pagoDelMes)}
+                        </span>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Pago del Mes */}
-                  <div className="my-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[11px] text-slate-500 dark:text-slate-400 block font-semibold">
-                        Pago del Mes
+                    <div className="flex justify-between">
+                      <span className="text-slate-500 dark:text-slate-400">Cupo Total:</span>
+                      <span className="font-mono text-slate-700 dark:text-slate-300 font-medium">
+                        {formatCurrency(cc.creditLimit)}
                       </span>
-                      {hasCutoff && (
-                        <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-950/60 px-2 py-0.5 rounded-full">
-                          Corte Realizado
-                        </span>
-                      )}
                     </div>
-                    <div className="text-xl font-black font-mono text-blue-700 dark:text-blue-400">
-                      {formatCurrency(pagoDelMes, cardMoneda)}
-                    </div>
-                    {isDiff && (
-                      <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 block">
-                        (≈ {formatCurrency(pagoInBase, baseCurrency)})
-                      </span>
-                    )}
-                  </div>
 
-                  {/* Cupos */}
-                  <div className="space-y-1 text-xs">
-                    <div className="flex justify-between text-slate-600 dark:text-slate-400">
-                      <span>Cupo Total:</span>
-                      <span className="font-mono font-bold text-slate-800 dark:text-slate-200">
-                        {formatCurrency(cc.creditLimit, cardMoneda)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-slate-600 dark:text-slate-400">
-                      <span>Cupo Disponible:</span>
-                      <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                        {formatCurrency(cupoDisponible, cardMoneda)}
+                    <div className="flex justify-between">
+                      <span className="text-slate-500 dark:text-slate-400">Disponible:</span>
+                      <span className="font-mono text-emerald-700 dark:text-emerald-400 font-bold">
+                        {formatCurrency(cupoDisponible)}
                       </span>
                     </div>
                   </div>
                 </div>
 
-                {/* Footer de Tarjeta */}
-                <div className="mt-3 pt-2.5 border-t border-slate-200 dark:border-slate-800 flex justify-between items-center text-[11px] text-slate-500 dark:text-slate-400">
-                  <span>{cc.purchases?.length || 0} compras</span>
-                  {isSelected && (
-                    <span className="text-blue-600 dark:text-blue-400 font-bold">Seleccionada ✓</span>
-                  )}
+                {/* Progress bar */}
+                <div className="mt-4">
+                  <div className="w-full bg-slate-200 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full transition-all duration-300 ${
+                        (totalDeuda / (cc.creditLimit || 1)) > 0.8
+                          ? 'bg-rose-500'
+                          : (totalDeuda / (cc.creditLimit || 1)) > 0.5
+                          ? 'bg-amber-500'
+                          : 'bg-blue-600'
+                      }`}
+                      style={{ width: `${Math.min(100, Math.max(0, (totalDeuda / (cc.creditLimit || 1)) * 100))}%` }}
+                    />
+                  </div>
+                  <div className="flex justify-between text-[10px] text-slate-500 dark:text-slate-400 mt-1 font-mono">
+                    <span>Usado: {Math.round((totalDeuda / (cc.creditLimit || 1)) * 100)}%</span>
+                    <span>Deuda: {formatCurrency(totalDeuda)}</span>
+                  </div>
                 </div>
               </div>
             );
           })}
         </div>
-      </div>
 
-      {/* Detalles de la Tarjeta Seleccionada */}
-      {selectedCard && (
-        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm p-6 space-y-4 transition-colors">
-          {/* Header con solo el nombre de la tarjeta */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200 dark:border-slate-800">
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="font-black text-slate-800 dark:text-white text-lg">
-                  {selectedCard.name}
-                </h3>
-                {(selectedCard.moneda || 'COP') !== baseCurrency && (
-                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300">
-                    {selectedCard.moneda || 'COP'}
-                  </span>
-                )}
+        {/* DETALLES DE LA TARJETA SELECCIONADA: Compras y Acciones de Corte */}
+        {selectedCard && (
+          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden p-6 space-y-6 animate-scaleUp transition-colors">
+            <div className="flex items-center justify-between flex-wrap gap-3 border-b border-slate-200 dark:border-slate-800 pb-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-base font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                    <CreditCard className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                    Compras en {selectedCard.name}
+                  </h3>
+                </div>
+
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  {selectedCard.period === '1st_fortnight' ? 'Pago en 1ª Quincena' : 'Pago en 2ª Quincena'} • Cupo: {formatCurrency(selectedCard.creditLimit)}
+                </p>
               </div>
-              <span className="text-xs text-slate-500 dark:text-slate-400">
-                Pago en {selectedCard.period === '1st_fortnight' ? '1ª Quincena' : '2ª Quincena'}
-                {selectedCard.billingCutoffAmount !== undefined && (
-                  <strong className="text-amber-600 dark:text-amber-400 ml-1.5 font-mono">
-                    • Corte: {formatCurrency(selectedCard.billingCutoffAmount, selectedCard.moneda || 'COP')}
-                  </strong>
+
+              {/* Botones de acción: Hacer Corte y Agregar Compra */}
+              <div className="flex items-center gap-2 flex-wrap">
+                {/* Hacer Corte / Deshacer Corte */}
+                {selectedCard.billingCutoffAmount !== undefined ? (
+                  <button
+                    onClick={() => cancelCardCutoff(selectedCard.id)}
+                    className="px-3 py-2 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-400 text-white transition-all flex items-center gap-1.5 shadow-sm"
+                    title="Deshacer corte y volver a cálculo en tiempo real"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" /> Deshacer Corte
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => handleDoCutoff(selectedCard)}
+                    className="px-3 py-2 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300/80 dark:border-transparent transition-all flex items-center gap-1.5 shadow-sm"
+                    title="Fijar corte de facturación actual"
+                  >
+                    <Scissors className="w-3.5 h-3.5" /> Hacer Corte
+                  </button>
                 )}
-              </span>
+
+                {/* Agregar Compra */}
+                <button
+                  onClick={openAddPurchase}
+                  className="px-3 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white transition-all flex items-center gap-1.5 shadow-sm"
+                >
+                  <Plus className="w-3.5 h-3.5" /> Agregar Compra
+                </button>
+              </div>
             </div>
 
-            {/* Acciones: [Corte / Deshacer], [Registrar Compra] */}
-            <div className="flex flex-wrap items-center gap-2">
-              {/* Botón de Corte / Deshacer Corte */}
-              {selectedCard.billingCutoffAmount !== undefined ? (
-                <button
-                  onClick={() => cancelCardCutoff(selectedCard.id)}
-                  className="px-3 py-2 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300/80 dark:border-transparent transition-all flex items-center gap-1.5 shadow-sm"
-                >
-                  <RotateCcw className="w-3.5 h-3.5" /> Deshacer Corte
-                </button>
-              ) : (
-                <button
-                  onClick={() => handleDoCutoff(selectedCard)}
-                  className="px-3 py-2 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-400 text-white transition-all flex items-center gap-1.5 shadow-sm"
-                >
-                  <Scissors className="w-3.5 h-3.5" /> Corte
-                </button>
-              )}
+            {/* Aviso de Corte Activo */}
+            {selectedCard.billingCutoffAmount !== undefined && (
+              <div className="p-3.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/40 rounded-2xl flex items-center justify-between text-xs text-amber-800 dark:text-amber-300">
+                <div className="flex items-center gap-2">
+                  <Scissors className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                  <span>
+                    <strong>Corte de facturación fijado:</strong> El pago fijado para el presupuesto es{' '}
+                    <strong>{formatCurrency(selectedCard.billingCutoffAmount)}</strong>.
+                  </span>
+                </div>
+              </div>
+            )}
 
-              {/* Botón Registrar Compra */}
-              <button
-                onClick={openAddPurchase}
-                className="px-3 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white transition-all flex items-center gap-1.5 shadow-sm"
-              >
-                <Plus className="w-3.5 h-3.5" /> Registrar Compra
-              </button>
+            {/* Lista de Compras */}
+            <div className="space-y-2">
+              {(!selectedCard.purchases || selectedCard.purchases.length === 0) ? (
+                <div className="p-8 text-center text-slate-400 dark:text-slate-500 text-xs">
+                  No hay compras registradas en esta tarjeta. Haz clic en <strong>Agregar Compra</strong> para añadir una.
+                </div>
+              ) : (
+                <div className="divide-y divide-slate-200 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden">
+                  {selectedCard.purchases.map(p => {
+                    return (
+                      <div
+                        key={p.id}
+                        className="p-3 flex items-center justify-between text-xs transition-colors"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <span className="font-semibold text-slate-800 dark:text-white">{p.concept}</span>
+                          {p.isAfterCutoff && (
+                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                              Post-Corte
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                          <div className="text-right">
+                            <span className="font-mono font-bold text-slate-800 dark:text-white">
+                              {formatCurrency(p.amount)}
+                            </span>
+                          </div>
+
+                          <button
+                            onClick={() => deleteCardPurchase(selectedCard.id, p.id)}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors"
+                            title="Eliminar compra"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
-
-          {/* Tabla de Compras */}
-          {selectedCard.purchases && selectedCard.purchases.length > 0 ? (
-            <div className="divide-y divide-slate-200 dark:divide-slate-800">
-              {selectedCard.purchases.map(p => {
-                const pMoneda = p.moneda || selectedCard.moneda || 'COP';
-                const isPDiff = pMoneda !== baseCurrency;
-                const pInBase = convertToBase(p.amount, pMoneda, baseCurrency, dolarRate);
-
-                return (
-                  <div key={p.id} className="py-3 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-medium text-slate-800 dark:text-slate-200">
-                        {p.concept}
-                      </span>
-                      {isPDiff && (
-                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300">
-                          {pMoneda}
-                        </span>
-                      )}
-                      {p.isAfterCutoff && (
-                        <span className="text-[10px] font-semibold bg-blue-100 dark:bg-blue-950/70 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full border border-blue-200 dark:border-blue-800/40">
-                          Post-Corte
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                      <div className="text-right">
-                        <span className="text-xs font-mono font-bold text-slate-800 dark:text-slate-100 block">
-                          {formatCurrency(p.amount, pMoneda)}
-                        </span>
-                        {isPDiff && (
-                          <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400 block">
-                            (≈ {formatCurrency(pInBase, baseCurrency)})
-                          </span>
-                        )}
-                      </div>
-
-                      <button
-                        onClick={() => deleteCardPurchase(selectedCard.id, p.id)}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors"
-                        title="Eliminar compra"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="text-center py-6 text-slate-400 dark:text-slate-500 text-xs">
-              No hay compras registradas en esta tarjeta.
-            </div>
-          )}
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Modal: Crear / Editar Tarjeta */}
       {showCardModal && (
@@ -452,23 +427,10 @@ export const CreditosSuscripcionesView: React.FC = () => {
                   type="text"
                   value={cardName}
                   onChange={e => setCardName(e.target.value)}
-                  placeholder="Ej. Bancolombia Black, Nu, Tuya Éxito"
+                  placeholder="Ej. Nu, Bancolombia Black, RappiCard"
                   className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
                   required
                 />
-              </div>
-
-              {/* Selector de Moneda */}
-              <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">Moneda</label>
-                <select
-                  value={cardCurrency}
-                  onChange={e => setCardCurrency(e.target.value as 'COP' | 'USD')}
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
-                >
-                  <option value="COP">Pesos (COP)</option>
-                  <option value="USD">Dólares (USD)</option>
-                </select>
               </div>
 
               {/* Cupo Total */}
@@ -525,7 +487,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
                     type="button"
                     onClick={handleDeleteCard}
                     className="p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/50 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/50 transition-colors flex items-center justify-center"
-                    title="Eliminar tarjeta"
+                    title="Eliminar esta tarjeta"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -611,7 +573,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
                   type="submit"
                   className="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs py-3 rounded-2xl shadow-sm transition-all text-center"
                 >
-                  Registrar Compra
+                  Guardar Compra
                 </button>
               </div>
             </form>

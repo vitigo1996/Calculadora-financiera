@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useFinance } from '../../context/FinanceContext';
-import { formatCurrency, convertToBase } from '../../services/financeCalculations';
+import { formatCurrency } from '../../services/financeCalculations';
 import { PortfolioAccountItem } from '../../models/finance';
 import { getIconComponent, IconPicker } from '../../components/ui/IconPicker';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
@@ -32,14 +32,12 @@ export const PortafolioView: React.FC = () => {
   const {
     data,
     summary,
-    baseCurrency,
     addPortfolioItem,
     updatePortfolioItem,
     deletePortfolioItem,
     movePortfolioItem
   } = useFinance();
 
-  const dolarRate = data.dolarRate || 3600;
   const port = summary.portafolio;
 
   // Drag and Drop state
@@ -54,7 +52,6 @@ export const PortafolioView: React.FC = () => {
 
   // Form fields
   const [itemName, setItemName] = useState('');
-  const [itemCurrency, setItemCurrency] = useState<'COP' | 'USD'>('COP');
   const [itemBalance, setItemBalance] = useState('');
   const [itemIcon, setItemIcon] = useState('trending_up');
   const [showCalcPopup, setShowCalcPopup] = useState(false);
@@ -68,7 +65,6 @@ export const PortafolioView: React.FC = () => {
   // Open Create Modal
   const openCreateModal = () => {
     setItemName('');
-    setItemCurrency('COP');
     setItemBalance('');
     setItemIcon('trending_up');
     setCalcDelta('');
@@ -81,9 +77,8 @@ export const PortafolioView: React.FC = () => {
   const openEditModal = (p: PortfolioAccountItem) => {
     setEditingItemObj(p);
     setItemName(p.nombre);
-    setItemCurrency(p.moneda);
     setItemBalance(p.saldo.toString());
-    setItemIcon(p.icon || (p.moneda === 'USD' ? 'coins' : 'trending_up'));
+    setItemIcon(p.icon || 'trending_up');
     setCalcDelta('');
     setShowCalcPopup(false);
     setShowAddModal(true);
@@ -101,7 +96,7 @@ export const PortafolioView: React.FC = () => {
     setShowCalcPopup(false);
   };
 
-  // Save (Create or Edit)
+  // Save Item (Create or Edit)
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     if (!itemName.trim()) return;
@@ -110,34 +105,33 @@ export const PortafolioView: React.FC = () => {
     if (editingItemObj) {
       updatePortfolioItem(editingItemObj.id, {
         nombre: itemName.trim(),
-        moneda: itemCurrency,
+        moneda: 'COP',
         saldo,
         icon: itemIcon
       });
     } else {
       addPortfolioItem({
         nombre: itemName.trim(),
-        moneda: itemCurrency,
+        moneda: 'COP',
         saldo,
         icon: itemIcon
       });
     }
-
     setShowAddModal(false);
     setEditingItemObj(null);
   };
 
-  // Delete Item from Modal
+  // Delete Item from inside Edit Modal
   const handleDeleteFromModal = () => {
     if (!editingItemObj) return;
-    if (confirm(`¿Eliminar "${editingItemObj.nombre}" del portafolio?`)) {
+    if (confirm(`¿Eliminar la cuenta "${editingItemObj.nombre}"?`)) {
       deletePortfolioItem(editingItemObj.id);
       setShowAddModal(false);
       setEditingItemObj(null);
     }
   };
 
-  // Drag and Drop handlers
+  // Drag and drop handlers
   const handleDragStart = (e: React.DragEvent, index: number) => {
     setDraggedIndex(index);
     e.dataTransfer.effectAllowed = 'move';
@@ -148,54 +142,111 @@ export const PortafolioView: React.FC = () => {
     e.dataTransfer.dropEffect = 'move';
   };
 
-  const handleDrop = (e: React.DragEvent, targetIndex: number) => {
+  const handleDrop = (e: React.DragEvent, index: number) => {
     e.preventDefault();
-    if (draggedIndex === null || draggedIndex === targetIndex) {
-      setDraggedIndex(null);
-      return;
-    }
-    const diff = targetIndex - draggedIndex;
+    if (draggedIndex === null || draggedIndex === index) return;
+    const diff = index - draggedIndex;
     if (diff > 0) {
-      for (let i = draggedIndex; i < targetIndex; i++) {
-        movePortfolioItem(i, 'down');
-      }
+      for (let i = draggedIndex; i < index; i++) movePortfolioItem(i, 'down');
     } else {
-      for (let i = draggedIndex; i > targetIndex; i--) {
-        movePortfolioItem(i, 'up');
-      }
+      for (let i = draggedIndex; i > index; i--) movePortfolioItem(i, 'up');
     }
     setDraggedIndex(null);
   };
 
   // Handle selecting a color from the 4x4 grid
   const handleSelectColor = (colorHex: string) => {
-    if (colorPickerTarget) {
-      updatePortfolioItem(colorPickerTarget.id, { color: colorHex });
-      setColorPickerTarget(null);
-    }
+    if (!colorPickerTarget) return;
+    updatePortfolioItem(colorPickerTarget.id, { color: colorHex });
+    setColorPickerTarget(null);
   };
 
   return (
     <div className="space-y-6 pb-24 animate-fadeIn">
-      {/* Título Principal: Total Activos */}
-      <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-6 border border-slate-300 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-colors">
-        <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-2xl bg-blue-100 dark:bg-blue-950/70 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-200 dark:border-blue-800/60 shadow-sm">
-            <PieChartIcon className="w-6 h-6" />
-          </div>
-          <div>
-            <h2 className="text-xl sm:text-2xl font-black text-slate-800 dark:text-white leading-tight">
-              Total Activos
-            </h2>
-          </div>
-        </div>
+      {/* Header */}
+      <div>
+        <h2 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
+          <PieChartIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" /> Portafolio
+        </h2>
+      </div>
 
-        <div className="text-left sm:text-right bg-blue-50/80 dark:bg-blue-950/40 p-3 sm:p-0 rounded-2xl sm:bg-transparent border sm:border-0 border-blue-200 dark:border-blue-800/40">
-          <span className="text-2xl sm:text-3xl font-black text-blue-600 dark:text-blue-400 font-mono tracking-tight">
-            {formatCurrency(port.totalPortafolio, 'COP')}
+      {/* Tarjeta de Resumen Global del Portafolio */}
+      <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm transition-colors">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-semibold text-blue-700 dark:text-blue-400 block">
+            Patrimonio Total en Portafolio
+          </span>
+          <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-100 dark:bg-blue-950/70 text-blue-700 dark:text-blue-300">
+            {port.items.length} activos
           </span>
         </div>
+        <div className="text-3xl font-black text-slate-800 dark:text-white mt-1 font-mono">
+          {formatCurrency(port.totalPortafolio)}
+        </div>
       </div>
+
+      {/* Gráfica Circular de Distribución */}
+      {port.items.length > 0 && (
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm transition-colors">
+          <div className="flex items-center justify-between mb-4 border-b border-slate-200 dark:border-slate-800 pb-3">
+            <h3 className="font-bold text-slate-800 dark:text-white text-sm">Distribución del Portafolio</h3>
+            <span className="text-xs text-slate-500 dark:text-slate-400">Haz clic en el color para cambiarlo</span>
+          </div>
+
+          <div className="h-56 w-full flex items-center justify-center">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={port.items}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={55}
+                  outerRadius={85}
+                  paddingAngle={3}
+                  dataKey="valorCOP"
+                  nameKey="label"
+                >
+                  {port.items.map((entry: any) => (
+                    <Cell key={`cell-${entry.id}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  formatter={(value: any) => [
+                    formatCurrency(Number(value) || 0),
+                    'Valor'
+                  ]}
+                  contentStyle={{
+                    backgroundColor: '#0f172a',
+                    border: '1px solid #334155',
+                    borderRadius: '16px',
+                    fontSize: '12px',
+                    color: '#fff'
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Leyenda interactiva de Colores */}
+          <div className="flex flex-wrap items-center justify-center gap-3 pt-3">
+            {port.items.map((item: any) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => setColorPickerTarget({ id: item.id, label: item.label, currentColor: item.color })}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all border border-slate-200 dark:border-slate-700 text-xs font-semibold"
+                title={`Cambiar color de ${item.label}`}
+              >
+                <span className="w-3.5 h-3.5 rounded-full shadow-sm" style={{ backgroundColor: item.color }} />
+                <span className="text-slate-700 dark:text-slate-200">{item.label}</span>
+                <span className="font-mono text-slate-500 dark:text-slate-400 text-[10px]">
+                  ({item.percentage.toFixed(1)}%)
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Recuadro Portafolio con Filas Arrastrables */}
       <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
@@ -214,9 +265,6 @@ export const PortafolioView: React.FC = () => {
         <div className="divide-y divide-slate-200 dark:divide-slate-800">
           {(data.portfolioItems || []).map((item, idx) => {
             const Icon = getIconComponent(item.icon || 'trending_up');
-            const itemMoneda = item.moneda || 'COP';
-            const isDiff = itemMoneda !== baseCurrency;
-            const equivalentInBase = convertToBase(item.saldo, itemMoneda, baseCurrency, dolarRate);
             const isDragging = draggedIndex === idx;
 
             return (
@@ -241,33 +289,21 @@ export const PortafolioView: React.FC = () => {
                     <Icon className="w-5 h-5" />
                   </div>
                   <div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h4 className="font-bold text-slate-800 dark:text-white text-sm">{item.nombre}</h4>
-                      {isDiff && (
-                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300">
-                          {itemMoneda}
-                        </span>
-                      )}
-                    </div>
+                    <h4 className="font-bold text-slate-800 dark:text-white text-sm">{item.nombre}</h4>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2">
                   <div className="text-right">
                     <span className="font-mono font-bold text-sm text-slate-800 dark:text-white block">
-                      {formatCurrency(item.saldo, itemMoneda)}
+                      {formatCurrency(item.saldo)}
                     </span>
-                    {isDiff && (
-                      <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 block">
-                        (≈ {formatCurrency(equivalentInBase, baseCurrency)})
-                      </span>
-                    )}
                   </div>
 
                   <button
                     onClick={() => openEditModal(item)}
                     className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-300/80 dark:border-transparent transition-colors"
-                    title="Editar activo y monto"
+                    title="Editar saldo y cuenta"
                   >
                     <Edit2 className="w-3.5 h-3.5" />
                   </button>
@@ -277,91 +313,6 @@ export const PortafolioView: React.FC = () => {
           })}
         </div>
       </div>
-
-      {/* Gráfico Donut: Etiquetas en columna a la izquierda y Gráfica a la derecha */}
-      {port.items.length > 0 && (
-        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-300 dark:border-slate-800 shadow-sm transition-colors">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-            {/* Columna Izquierda: Etiquetas con Círculo de Color Clickable */}
-            <div className="space-y-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-2">
-                Distribución de Activos
-              </span>
-              <div className="space-y-2">
-                {port.items.map((item, i) => (
-                  <div
-                    key={item.id || i}
-                    className="flex items-center justify-between p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 transition-colors"
-                  >
-                    <div className="flex items-center gap-2.5 min-w-0 pr-2">
-                      {/* Círculo de color interactivo */}
-                      <button
-                        type="button"
-                        onClick={() => setColorPickerTarget({ id: item.id, label: item.label, currentColor: item.color })}
-                        title="Click para cambiar color"
-                        className="w-5 h-5 rounded-full shadow-sm ring-2 ring-white dark:ring-slate-800 hover:scale-110 active:scale-95 transition-transform flex-shrink-0 cursor-pointer"
-                        style={{ backgroundColor: item.color }}
-                      />
-
-                      <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
-                        {item.label}
-                      </span>
-                    </div>
-
-                    <div className="text-right flex items-center gap-2 flex-shrink-0">
-                      <span className="text-xs font-mono text-slate-500 dark:text-slate-400 hidden sm:inline">
-                        {formatCurrency(item.valorCOP, 'COP')}
-                      </span>
-                      <span
-                        className="font-bold text-xs font-mono px-2 py-0.5 rounded-lg text-white"
-                        style={{ backgroundColor: item.color }}
-                      >
-                        {item.percentage.toFixed(1)}%
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Columna Derecha: Gráfica Donut */}
-            <div className="h-56 flex items-center justify-center">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={port.items}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={50}
-                    outerRadius={80}
-                    paddingAngle={3}
-                    dataKey="valorCOP"
-                    nameKey="label"
-                  >
-                    {port.items.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} stroke="#ffffff" strokeWidth={1.5} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    formatter={(value: any, name: any) => [`${formatCurrency(Number(value), 'COP')}`, `${name}`]}
-                    contentStyle={{
-                      backgroundColor: '#0f172a',
-                      borderColor: '#334155',
-                      borderRadius: '16px',
-                      padding: '10px 14px',
-                      color: '#ffffff',
-                      fontWeight: 'bold',
-                      boxShadow: '0 12px 30px -4px rgba(0, 0, 0, 0.4)'
-                    }}
-                    itemStyle={{ color: '#60a5fa', fontSize: '13px', fontWeight: 'bold' }}
-                    labelStyle={{ color: '#f8fafc', fontSize: '13px', fontWeight: 'bold' }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Modal Emergente de Selección de Color (Malla 4x4) */}
       {colorPickerTarget && (
@@ -442,23 +393,10 @@ export const PortafolioView: React.FC = () => {
                   type="text"
                   value={itemName}
                   onChange={e => setItemName(e.target.value)}
-                  placeholder="Ej. Etoro ETF, CDT Bancolombia, Nu Emergencia"
+                  placeholder="Ej. ETF S&P500, CDT Bancolombia, Nu Emergencia"
                   className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
                   required
                 />
-              </div>
-
-              {/* Selector de Moneda en Menú Desplegable */}
-              <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">Moneda</label>
-                <select
-                  value={itemCurrency}
-                  onChange={e => setItemCurrency(e.target.value as 'COP' | 'USD')}
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
-                >
-                  <option value="COP">Pesos (COP)</option>
-                  <option value="USD">Dólares (USD)</option>
-                </select>
               </div>
 
               {/* Saldo con botón de calculadora integrado dentro del input */}
@@ -537,7 +475,7 @@ export const PortafolioView: React.FC = () => {
                 </div>
               </div>
 
-              {/* Icon Picker con Mosaico Compacto y Pequeño */}
+              {/* Icon Picker */}
               <IconPicker selectedIconId={itemIcon} onSelectIcon={setItemIcon} />
 
               <div className="flex items-center gap-2 pt-3">

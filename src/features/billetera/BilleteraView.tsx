@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useFinance } from '../../context/FinanceContext';
-import { formatCurrency, convertToBase } from '../../services/financeCalculations';
+import { formatCurrency } from '../../services/financeCalculations';
 import { BilleteraAccountItem, DeudaItem } from '../../models/finance';
 import { getIconComponent, IconPicker } from '../../components/ui/IconPicker';
 import {
@@ -23,7 +23,6 @@ import {
 export const BilleteraView: React.FC = () => {
   const {
     data,
-    baseCurrency,
     addBilleteraItem,
     updateBilleteraItem,
     deleteBilleteraItem,
@@ -36,8 +35,6 @@ export const BilleteraView: React.FC = () => {
     deleteDeudaItem,
     moveDeudaItem
   } = useFinance();
-
-  const dolarRate = data.dolarRate || 3600;
 
   // Submenu: Billetera vs Registro
   const [subView, setSubView] = useState<'billetera' | 'registro'>('billetera');
@@ -52,7 +49,6 @@ export const BilleteraView: React.FC = () => {
 
   // Form fields for Billetera (Create / Edit)
   const [billeteraName, setBilleteraName] = useState('');
-  const [billeteraCurrency, setBilleteraCurrency] = useState<'COP' | 'USD'>('COP');
   const [billeteraBalance, setBilleteraBalance] = useState('');
   const [billeteraIcon, setBilleteraIcon] = useState('wallet');
   const [showBilleteraCalcPopup, setShowBilleteraCalcPopup] = useState(false);
@@ -64,7 +60,6 @@ export const BilleteraView: React.FC = () => {
 
   // Form fields for Deuda (Create / Edit)
   const [deudaName, setDeudaName] = useState('');
-  const [deudaCurrency, setDeudaCurrency] = useState<'COP' | 'USD'>('COP');
   const [deudaTipo, setDeudaTipo] = useState<'por_cobrar' | 'por_pagar'>('por_pagar');
   const [deudaAmount, setDeudaAmount] = useState('');
   const [deudaIcon, setDeudaIcon] = useState('shield_alert');
@@ -128,7 +123,6 @@ export const BilleteraView: React.FC = () => {
   // Open Create Billetera Modal
   const openCreateBilletera = () => {
     setBilleteraName('');
-    setBilleteraCurrency(baseCurrency);
     setBilleteraBalance('');
     setBilleteraIcon('wallet');
     setBilleteraCalcDelta('');
@@ -141,9 +135,8 @@ export const BilleteraView: React.FC = () => {
   const openEditBilletera = (b: BilleteraAccountItem) => {
     setEditingBilleteraObj(b);
     setBilleteraName(b.nombre);
-    setBilleteraCurrency(b.moneda);
     setBilleteraBalance(b.saldo.toString());
-    setBilleteraIcon(b.icon || (b.moneda === 'USD' ? 'coins' : 'wallet'));
+    setBilleteraIcon(b.icon || 'wallet');
     setBilleteraCalcDelta('');
     setShowBilleteraCalcPopup(false);
     setShowAddBilleteraModal(true);
@@ -170,14 +163,14 @@ export const BilleteraView: React.FC = () => {
     if (editingBilleteraObj) {
       updateBilleteraItem(editingBilleteraObj.id, {
         nombre: billeteraName.trim(),
-        moneda: billeteraCurrency,
+        moneda: 'COP',
         saldo,
         icon: billeteraIcon
       });
     } else {
       addBilleteraItem({
         nombre: billeteraName.trim(),
-        moneda: billeteraCurrency,
+        moneda: 'COP',
         saldo,
         icon: billeteraIcon
       });
@@ -199,7 +192,6 @@ export const BilleteraView: React.FC = () => {
   // Open Create Deuda Modal
   const openCreateDeuda = () => {
     setDeudaName('');
-    setDeudaCurrency(baseCurrency);
     setDeudaTipo('por_pagar');
     setDeudaAmount('');
     setDeudaIcon('shield_alert');
@@ -213,7 +205,6 @@ export const BilleteraView: React.FC = () => {
   const openEditDeuda = (d: DeudaItem) => {
     setEditingDeudaObj(d);
     setDeudaName(d.nombre);
-    setDeudaCurrency(d.moneda);
     setDeudaTipo(d.tipo);
     setDeudaAmount(d.monto !== undefined && d.monto > 0 ? d.monto.toString() : '');
     setDeudaIcon(d.icon || (d.tipo === 'por_cobrar' ? 'arrow_down_left' : 'shield_alert'));
@@ -243,7 +234,7 @@ export const BilleteraView: React.FC = () => {
     if (editingDeudaObj) {
       updateDeudaItem(editingDeudaObj.id, {
         nombre: deudaName.trim(),
-        moneda: deudaCurrency,
+        moneda: 'COP',
         tipo: deudaTipo,
         monto,
         icon: deudaIcon
@@ -251,7 +242,7 @@ export const BilleteraView: React.FC = () => {
     } else {
       addDeudaItem({
         nombre: deudaName.trim(),
-        moneda: deudaCurrency,
+        moneda: 'COP',
         tipo: deudaTipo,
         monto,
         icon: deudaIcon
@@ -291,9 +282,6 @@ export const BilleteraView: React.FC = () => {
     const amount = parseFloat(movementAmount) || 0;
     if (amount <= 0) return;
 
-    const sourceAcc = (data.billeteraItems || []).find(b => b.id === movementSourceId) || data.billeteraItems[0];
-    const sourceCurrency = sourceAcc?.moneda || 'COP';
-
     let destName: string | undefined = undefined;
     if (movementType === 'expense' && movementDestType === 'card') {
       const card = (data.creditCards || []).find(c => c.id === movementDestId) || data.creditCards[0];
@@ -304,7 +292,7 @@ export const BilleteraView: React.FC = () => {
       type: movementType,
       name: movementName.trim(),
       amount,
-      moneda: sourceCurrency,
+      moneda: 'COP',
       sourceAccountId: movementSourceId || (data.billeteraItems[0]?.id || ''),
       destinationType: movementType === 'expense' ? movementDestType : undefined,
       destinationId: (movementType === 'expense' && movementDestType === 'card') ? movementDestId : undefined,
@@ -367,9 +355,6 @@ export const BilleteraView: React.FC = () => {
               {data.billeteraItems.map((item, idx) => {
                 const isDragging = draggedBilleteraIdx === idx;
                 const Icon = getIconComponent(item.icon);
-                const itemMoneda = item.moneda || 'COP';
-                const isDiff = itemMoneda !== baseCurrency;
-                const equivalentInBase = convertToBase(item.saldo, itemMoneda, baseCurrency, dolarRate);
 
                 return (
                   <div
@@ -402,27 +387,15 @@ export const BilleteraView: React.FC = () => {
                         <Icon className="w-5 h-5" />
                       </div>
                       <div>
-                        <div className="flex items-center gap-2">
-                          <h4 className="font-bold text-slate-800 dark:text-white text-sm">{item.nombre}</h4>
-                          {isDiff && (
-                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300">
-                              {itemMoneda}
-                            </span>
-                          )}
-                        </div>
+                        <h4 className="font-bold text-slate-800 dark:text-white text-sm">{item.nombre}</h4>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-2">
                       <div className="text-right">
                         <span className="font-mono font-bold text-sm text-slate-800 dark:text-white block">
-                          {formatCurrency(item.saldo, itemMoneda)}
+                          {formatCurrency(item.saldo)}
                         </span>
-                        {isDiff && (
-                          <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 block">
-                            (≈ {formatCurrency(equivalentInBase, baseCurrency)})
-                          </span>
-                        )}
                       </div>
 
                       <button
@@ -459,9 +432,6 @@ export const BilleteraView: React.FC = () => {
                 const Icon = getIconComponent(item.icon);
                 const isPorCobrar = item.tipo === 'por_cobrar';
                 const hasAmount = item.monto !== undefined && item.monto > 0;
-                const itemMoneda = item.moneda || 'COP';
-                const isDiff = itemMoneda !== baseCurrency;
-                const equivalentInBase = convertToBase(item.monto || 0, itemMoneda, baseCurrency, dolarRate);
 
                 return (
                   <div
@@ -497,12 +467,6 @@ export const BilleteraView: React.FC = () => {
                         <div className="flex items-center gap-2">
                           <h4 className="font-bold text-slate-800 dark:text-white text-sm">{item.nombre}</h4>
 
-                          {isDiff && hasAmount && (
-                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300">
-                              {itemMoneda}
-                            </span>
-                          )}
-
                           {isPorCobrar ? (
                             <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50">
                               <ArrowDownLeft className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
@@ -522,13 +486,8 @@ export const BilleteraView: React.FC = () => {
                       {hasAmount ? (
                         <div className="text-right">
                           <span className="font-mono font-bold text-sm text-slate-800 dark:text-white block">
-                            {formatCurrency(item.monto || 0, itemMoneda)}
+                            {formatCurrency(item.monto || 0)}
                           </span>
-                          {isDiff && (
-                            <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 block">
-                              (≈ {formatCurrency(equivalentInBase, baseCurrency)})
-                            </span>
-                          )}
                         </div>
                       ) : null}
 
@@ -585,9 +544,6 @@ export const BilleteraView: React.FC = () => {
             ) : (
               movements.map(mov => {
                 const isIncome = mov.type === 'income';
-                const movMoneda = mov.moneda || 'COP';
-                const isDiff = movMoneda !== baseCurrency;
-                const equivalentInBase = convertToBase(mov.amount, movMoneda, baseCurrency, dolarRate);
                 const formattedDate = new Date(mov.date).toLocaleDateString('es-CO', {
                   day: '2-digit',
                   month: 'short',
@@ -614,11 +570,6 @@ export const BilleteraView: React.FC = () => {
                       <div>
                         <div className="flex items-center gap-2">
                           <h4 className="font-bold text-slate-800 dark:text-white text-sm">{mov.name}</h4>
-                          {isDiff && (
-                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300">
-                              {movMoneda}
-                            </span>
-                          )}
                         </div>
 
                         {/* Sin emojis: solo De y Hacia */}
@@ -654,13 +605,8 @@ export const BilleteraView: React.FC = () => {
                             isIncome ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
                           }`}
                         >
-                          {isIncome ? '+' : '-'}{formatCurrency(mov.amount, movMoneda)}
+                          {isIncome ? '+' : '-'}{formatCurrency(mov.amount)}
                         </span>
-                        {isDiff && (
-                          <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 block">
-                            (≈ {isIncome ? '+' : '-'}{formatCurrency(equivalentInBase, baseCurrency)})
-                          </span>
-                        )}
                       </div>
 
                       <button
@@ -962,23 +908,10 @@ export const BilleteraView: React.FC = () => {
                   type="text"
                   value={billeteraName}
                   onChange={e => setBilleteraName(e.target.value)}
-                  placeholder="Ej. Nequi, Daviplata, Binance, Interactive Brokers"
+                  placeholder="Ej. Nequi, Daviplata, Bancolombia, Efectivo"
                   className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
                   required
                 />
-              </div>
-
-              {/* Selector de Moneda en Menú Desplegable */}
-              <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">Moneda</label>
-                <select
-                  value={billeteraCurrency}
-                  onChange={e => setBilleteraCurrency(e.target.value as 'COP' | 'USD')}
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
-                >
-                  <option value="COP">Pesos (COP)</option>
-                  <option value="USD">Dólares (USD)</option>
-                </select>
               </div>
 
               {/* Saldo con botón de calculadora integrado dentro del input */}
@@ -1153,19 +1086,6 @@ export const BilleteraView: React.FC = () => {
                     Debo
                   </button>
                 </div>
-              </div>
-
-              {/* Selector de Moneda de la Deuda en Menú Desplegable */}
-              <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">Moneda</label>
-                <select
-                  value={deudaCurrency}
-                  onChange={e => setDeudaCurrency(e.target.value as 'COP' | 'USD')}
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
-                >
-                  <option value="COP">Pesos (COP)</option>
-                  <option value="USD">Dólares (USD)</option>
-                </select>
               </div>
 
               {/* Monto con botón de calculadora integrado dentro del input */}

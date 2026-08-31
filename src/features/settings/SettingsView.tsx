@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 
 export const SettingsView: React.FC = () => {
-  const { data, baseCurrency, updatePeople, updateExpenseSplitMethod, resetToDefault } = useFinance();
+  const { data, updatePeople, updateExpenseSplitMethod, resetToDefault } = useFinance();
 
   // Number of contributors dropdown: 1 to 4 max
   const [personCount, setPersonCount] = useState<number>(Math.min(4, Math.max(1, data.people?.length || 2)));
@@ -200,7 +200,7 @@ export const SettingsView: React.FC = () => {
               Ingreso Total
             </span>
             <span className="font-mono font-black text-lg text-blue-700 dark:text-blue-400">
-              {formatCurrency(totalCombinedIncome, baseCurrency)}
+              {formatCurrency(totalCombinedIncome)}
             </span>
           </div>
 

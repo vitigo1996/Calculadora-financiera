@@ -5,7 +5,7 @@ import { GastosFijosView } from '../gastos_fijos/GastosFijosView';
 import { Receipt, ShieldCheck, Home, CreditCard, Layers, ArrowDownRight } from 'lucide-react';
 
 export const PresupuestoView: React.FC = () => {
-  const { summary, baseCurrency } = useFinance();
+  const { summary } = useFinance();
   const pres = summary.presupuesto;
 
   // Submenu: Presupuesto vs Gastos
@@ -57,7 +57,7 @@ export const PresupuestoView: React.FC = () => {
                   <span className="font-semibold text-slate-800 dark:text-white">Deducciones de ley</span>
                 </div>
                 <span className="font-bold text-blue-700 dark:text-blue-400 font-mono">
-                  {formatCurrency(pres.m3_saludPension, baseCurrency)}
+                  {formatCurrency(pres.m3_saludPension)}
                 </span>
               </div>
 
@@ -70,7 +70,7 @@ export const PresupuestoView: React.FC = () => {
                   <span className="font-semibold text-slate-800 dark:text-white">Vivienda</span>
                 </div>
                 <span className="font-bold text-blue-700 dark:text-blue-400 font-mono">
-                  {formatCurrency(pres.m4_vivienda, baseCurrency)}
+                  {formatCurrency(pres.m4_vivienda)}
                 </span>
               </div>
 
@@ -83,7 +83,7 @@ export const PresupuestoView: React.FC = () => {
                   <span className="font-semibold text-slate-800 dark:text-white">Obligaciones</span>
                 </div>
                 <span className="font-bold text-blue-700 dark:text-blue-400 font-mono">
-                  {formatCurrency(pres.m6_obligaciones, baseCurrency)}
+                  {formatCurrency(pres.m6_obligaciones)}
                 </span>
               </div>
 
@@ -96,7 +96,7 @@ export const PresupuestoView: React.FC = () => {
                   <span className="font-semibold text-slate-800 dark:text-white">Tarjetas</span>
                 </div>
                 <span className="font-bold text-blue-700 dark:text-blue-400 font-mono">
-                  {formatCurrency(pres.m5_tarjetas, baseCurrency)}
+                  {formatCurrency(pres.m5_tarjetas)}
                 </span>
               </div>
 
@@ -109,7 +109,7 @@ export const PresupuestoView: React.FC = () => {
                   <span className="font-bold text-slate-800 dark:text-white">Gastos del mes</span>
                 </div>
                 <span className="font-black text-base text-slate-800 dark:text-slate-100 font-mono">
-                  {formatCurrency(pres.m7_totalGastos, baseCurrency)}
+                  {formatCurrency(pres.m7_totalGastos)}
                 </span>
               </div>
             </div>
@@ -121,7 +121,7 @@ export const PresupuestoView: React.FC = () => {
             <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm transition-colors">
               <span className="text-xs font-semibold text-blue-700 dark:text-blue-400 block">Mitad de Mes</span>
               <div className="text-2xl sm:text-3xl font-black text-blue-700 dark:text-blue-400 mt-1 font-mono">
-                {formatCurrency(pres.m9_mitadDeMes, baseCurrency)}
+                {formatCurrency(pres.m9_mitadDeMes)}
               </div>
             </div>
 
@@ -129,7 +129,7 @@ export const PresupuestoView: React.FC = () => {
             <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm transition-colors">
               <span className="text-xs font-semibold text-blue-700 dark:text-blue-400 block">Fin de Mes</span>
               <div className="text-2xl sm:text-3xl font-black text-blue-700 dark:text-blue-400 mt-1 font-mono">
-                {formatCurrency(pres.m10_finDeMes, baseCurrency)}
+                {formatCurrency(pres.m10_finDeMes)}
               </div>
             </div>
 
@@ -137,7 +137,7 @@ export const PresupuestoView: React.FC = () => {
             <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-300 dark:border-blue-500/30 shadow-sm transition-colors">
               <span className="text-xs font-semibold text-blue-700 dark:text-blue-400 block">Libre</span>
               <div className="text-2xl sm:text-3xl font-black text-slate-800 dark:text-white mt-1 font-mono">
-                {formatCurrency(pres.m11_disponible, baseCurrency)}
+                {formatCurrency(pres.m11_disponible)}
               </div>
             </div>
           </div>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useFinance } from '../../context/FinanceContext';
-import { formatCurrency, calculateSubscriptionMonthlyCost, convertToBase } from '../../services/financeCalculations';
+import { formatCurrency, calculateSubscriptionMonthlyCost } from '../../services/financeCalculations';
 import { HousingExpense, ObligationItem, SubscriptionItem, PaymentPeriod } from '../../models/finance';
 import {
   Home,
@@ -26,7 +26,6 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
   const {
     data,
     summary,
-    baseCurrency,
     addHousingExpense,
     updateHousingExpense,
     deleteHousingExpense,
@@ -43,8 +42,6 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
     moveSubscription
   } = useFinance();
 
-  const dolarRate = data.dolarRate || 3600;
-
   // Active people for dynamic proportional splits
   const activePeople = (data.people || []).filter(p => p.enabled);
   const totalCombinedIncome = activePeople.reduce((sum, p) => sum + (p.monthlyIncome || 0), 0);
@@ -59,7 +56,6 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
   const [editingHousingObj, setEditingHousingObj] = useState<HousingExpense | null>(null);
   const [housingName, setHousingName] = useState('');
   const [housingTotal, setHousingTotal] = useState('');
-  const [housingCurrency, setHousingCurrency] = useState<'COP' | 'USD'>('COP');
   const [housingPeriod, setHousingPeriod] = useState<PaymentPeriod>('1st_fortnight');
   const [showHousingCalc, setShowHousingCalc] = useState(false);
   const [housingCalcDelta, setHousingCalcDelta] = useState('');
@@ -70,7 +66,6 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
   const [obligationName, setObligationName] = useState('');
   const [obligationMonthlyPayment, setObligationMonthlyPayment] = useState('');
   const [obligationTotalDebt, setObligationTotalDebt] = useState('');
-  const [obligationCurrency, setObligationCurrency] = useState<'COP' | 'USD'>('COP');
   const [obligationPeriod, setObligationPeriod] = useState<PaymentPeriod>('1st_fortnight');
   const [showObligationMonthlyCalc, setShowObligationMonthlyCalc] = useState(false);
   const [obligationMonthlyCalcDelta, setObligationMonthlyCalcDelta] = useState('');
@@ -82,7 +77,6 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
   const [editingSubObj, setEditingSubObj] = useState<SubscriptionItem | null>(null);
   const [subName, setSubName] = useState('');
   const [subPrice, setSubPrice] = useState('');
-  const [subCurrency, setSubCurrency] = useState<'COP' | 'USD'>('COP');
   const [subBilling, setSubBilling] = useState<'monthly' | 'yearly'>('monthly');
   const [subMembers, setSubMembers] = useState('1');
   const [subPeriod, setSubPeriod] = useState<PaymentPeriod>('1st_fortnight');
@@ -110,7 +104,6 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
     setEditingHousingObj(null);
     setHousingName('');
     setHousingTotal('');
-    setHousingCurrency(baseCurrency);
     setHousingPeriod('1st_fortnight');
     setHousingCalcDelta('');
     setShowHousingCalc(false);
@@ -122,7 +115,6 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
     setEditingHousingObj(h);
     setHousingName(h.name);
     setHousingTotal(h.totalAmount.toString());
-    setHousingCurrency(h.moneda || 'COP');
     setHousingPeriod(h.period);
     setHousingCalcDelta('');
     setShowHousingCalc(false);
@@ -139,15 +131,15 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
       updateHousingExpense(editingHousingObj.id, {
         name: housingName.trim(),
         totalAmount: total,
-        moneda: housingCurrency,
-        period: housingPeriod
+        period: housingPeriod,
+        moneda: 'COP'
       });
     } else {
       addHousingExpense({
         name: housingName.trim(),
         totalAmount: total,
-        moneda: housingCurrency,
-        period: housingPeriod
+        period: housingPeriod,
+        moneda: 'COP'
       });
     }
     setShowHousingModal(false);
@@ -157,7 +149,7 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
   // Delete Housing
   const handleDeleteHousing = () => {
     if (!editingHousingObj) return;
-    if (confirm(`¿Eliminar gasto de vivienda "${editingHousingObj.name}"?`)) {
+    if (confirm(`¿Eliminar "${editingHousingObj.name}"?`)) {
       deleteHousingExpense(editingHousingObj.id);
       setShowHousingModal(false);
       setEditingHousingObj(null);
@@ -170,11 +162,10 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
     setObligationName('');
     setObligationMonthlyPayment('');
     setObligationTotalDebt('');
-    setObligationCurrency(baseCurrency);
     setObligationPeriod('1st_fortnight');
     setObligationMonthlyCalcDelta('');
-    setShowObligationMonthlyCalc(false);
     setObligationDebtCalcDelta('');
+    setShowObligationMonthlyCalc(false);
     setShowObligationDebtCalc(false);
     setShowObligationModal(true);
   };
@@ -183,48 +174,38 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
   const openEditObligation = (ob: ObligationItem) => {
     setEditingObligationObj(ob);
     setObligationName(ob.name);
-    const monthlyVal = ob.davidAmount !== undefined && ob.davidAmount !== ob.totalAmount && ob.totalDebtBalance
-      ? ob.davidAmount
-      : ob.totalAmount;
-    setObligationMonthlyPayment(monthlyVal.toString());
-
-    const debtVal = ob.totalDebtBalance !== undefined
-      ? ob.totalDebtBalance
-      : (ob.name.toLowerCase().includes('icetex') ? 3471648 : ob.totalAmount);
-    setObligationTotalDebt(debtVal ? debtVal.toString() : '');
-
-    setObligationCurrency(ob.moneda || 'COP');
+    setObligationMonthlyPayment(ob.totalAmount.toString());
+    setObligationTotalDebt(ob.totalDebtBalance !== undefined ? ob.totalDebtBalance.toString() : '');
     setObligationPeriod(ob.period);
     setObligationMonthlyCalcDelta('');
-    setShowObligationMonthlyCalc(false);
     setObligationDebtCalcDelta('');
+    setShowObligationMonthlyCalc(false);
     setShowObligationDebtCalc(false);
     setShowObligationModal(true);
   };
 
-  // Save Obligation (Cuota Mensual + Total Deuda)
+  // Save Obligation
   const handleSaveObligation = (e: React.FormEvent) => {
     e.preventDefault();
     if (!obligationName.trim()) return;
     const monthlyVal = parseFloat(obligationMonthlyPayment) || 0;
-    const totalDebtVal = parseFloat(obligationTotalDebt) || 0;
+    const debtVal = obligationTotalDebt ? parseFloat(obligationTotalDebt) : undefined;
 
     if (editingObligationObj) {
       updateObligation(editingObligationObj.id, {
         name: obligationName.trim(),
         totalAmount: monthlyVal,
-        davidAmount: monthlyVal,
-        totalDebtBalance: totalDebtVal > 0 ? totalDebtVal : undefined,
-        moneda: obligationCurrency,
-        period: obligationPeriod
+        totalDebtBalance: debtVal,
+        period: obligationPeriod,
+        moneda: 'COP'
       });
     } else {
       addObligation({
         name: obligationName.trim(),
         totalAmount: monthlyVal,
-        totalDebtBalance: totalDebtVal > 0 ? totalDebtVal : undefined,
-        moneda: obligationCurrency,
-        period: obligationPeriod
+        totalDebtBalance: debtVal,
+        period: obligationPeriod,
+        moneda: 'COP'
       });
     }
     setShowObligationModal(false);
@@ -234,7 +215,7 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
   // Delete Obligation
   const handleDeleteObligation = () => {
     if (!editingObligationObj) return;
-    if (confirm(`¿Eliminar obligación "${editingObligationObj.name}"?`)) {
+    if (confirm(`¿Eliminar "${editingObligationObj.name}"?`)) {
       deleteObligation(editingObligationObj.id);
       setShowObligationModal(false);
       setEditingObligationObj(null);
@@ -246,7 +227,6 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
     setEditingSubObj(null);
     setSubName('');
     setSubPrice('');
-    setSubCurrency(baseCurrency);
     setSubBilling('monthly');
     setSubMembers('1');
     setSubPeriod('1st_fortnight');
@@ -261,9 +241,8 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
     setEditingSubObj(sub);
     setSubName(sub.name);
     setSubPrice(sub.totalPrice.toString());
-    setSubCurrency(sub.moneda || 'COP');
     setSubBilling(sub.billing);
-    setSubMembers(sub.members.toString());
+    setSubMembers((sub.members || 1).toString());
     setSubPeriod(sub.period || '1st_fortnight');
     setSubMonth(sub.billingMonth || 'Enero');
     setSubCalcDelta('');
@@ -276,27 +255,27 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
     e.preventDefault();
     if (!subName.trim()) return;
     const price = parseFloat(subPrice) || 0;
-    const members = parseInt(subMembers) || 1;
+    const members = parseInt(subMembers, 10) || 1;
 
     if (editingSubObj) {
       updateSubscription(editingSubObj.id, {
         name: subName.trim(),
         totalPrice: price,
-        moneda: subCurrency,
-        billing: subBilling,
         members,
-        period: subBilling === 'yearly' ? undefined : subPeriod,
-        billingMonth: subBilling === 'yearly' ? subMonth : undefined
+        billing: subBilling,
+        period: subBilling === 'monthly' ? subPeriod : undefined,
+        billingMonth: subBilling === 'yearly' ? subMonth : undefined,
+        moneda: 'COP'
       });
     } else {
       addSubscription({
         name: subName.trim(),
         totalPrice: price,
-        moneda: subCurrency,
-        billing: subBilling,
         members,
-        period: subBilling === 'yearly' ? undefined : subPeriod,
-        billingMonth: subBilling === 'yearly' ? subMonth : undefined
+        billing: subBilling,
+        period: subBilling === 'monthly' ? subPeriod : undefined,
+        billingMonth: subBilling === 'yearly' ? subMonth : undefined,
+        moneda: 'COP'
       });
     }
     setShowSubModal(false);
@@ -306,7 +285,7 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
   // Delete Subscription
   const handleDeleteSub = () => {
     if (!editingSubObj) return;
-    if (confirm(`¿Eliminar suscripción "${editingSubObj.name}"?`)) {
+    if (confirm(`¿Eliminar la suscripción "${editingSubObj.name}"?`)) {
       deleteSubscription(editingSubObj.id);
       setShowSubModal(false);
       setEditingSubObj(null);
@@ -314,12 +293,11 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
   };
 
   return (
-    <div className="space-y-6 pb-24 animate-fadeIn">
-      {/* Header */}
+    <div className="space-y-6 animate-fadeIn">
       {!hideHeader && (
         <div>
           <h2 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
-            <Home className="w-5 h-5 text-blue-600 dark:text-blue-400" /> Gastos
+            <Home className="w-5 h-5 text-blue-600 dark:text-blue-400" /> Gastos Fijos
           </h2>
         </div>
       )}
@@ -342,9 +320,6 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
           {data.housingExpenses.map((item, idx) => {
             const isDragging = draggedHousingIdx === idx;
             const isSharedItem = item.isShared !== false;
-            const itemMoneda = item.moneda || 'COP';
-            const isDiff = itemMoneda !== baseCurrency;
-            const equivalentInBase = convertToBase(item.totalAmount, itemMoneda, baseCurrency, dolarRate);
 
             return (
               <div
@@ -380,11 +355,6 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
                   <div>
                     <div className="flex items-center gap-2">
                       <h4 className="font-bold text-slate-800 dark:text-white text-sm">{item.name}</h4>
-                      {isDiff && (
-                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300">
-                          {itemMoneda}
-                        </span>
-                      )}
                     </div>
                     {/* Reparto proporcional */}
                     {activePeople.length > 1 && isSharedItem && (
@@ -393,12 +363,14 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
                           const ratio = getPersonRatio(p.monthlyIncome);
                           const share = item.totalAmount * ratio;
                           return (
-                            <span key={p.id || pIdx}>
-                              {pIdx > 0 && <span className="mr-2 opacity-40">•</span>}
-                              <strong className={pIdx === 0 ? 'text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-300'}>
+                            <span key={p.name} className="flex items-center gap-1">
+                              {pIdx === 0 ? <User className="w-3 h-3 text-blue-600 dark:text-blue-400" /> : <Users className="w-3 h-3 text-slate-400" />}
+                              <strong className={pIdx === 0 ? 'text-blue-700 dark:text-blue-300 font-semibold' : 'text-slate-600 dark:text-slate-400 font-medium'}>
                                 {p.name}:
                               </strong>{' '}
-                              {formatCurrency(share, itemMoneda)}
+                              <span className="font-mono text-slate-700 dark:text-slate-300">
+                                {formatCurrency(share)}
+                              </span>
                             </span>
                           );
                         })}
@@ -410,27 +382,21 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
                 <div className="flex items-center gap-2">
                   <div className="text-right">
                     <span className="font-mono font-bold text-sm text-slate-800 dark:text-white block">
-                      {formatCurrency(item.totalAmount, itemMoneda)}
+                      {formatCurrency(item.totalAmount)}
                     </span>
-                    {isDiff && (
-                      <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 block">
-                        (≈ {formatCurrency(equivalentInBase, baseCurrency)})
-                      </span>
-                    )}
                   </div>
 
-                  {/* Botón de toggle Compartido / Individual */}
                   {activePeople.length > 1 && (
                     <button
                       onClick={() => toggleHousingShared(item.id)}
-                      className={`p-2 rounded-xl border transition-all ${
+                      className={`p-2 rounded-xl transition-all border ${
                         isSharedItem
-                          ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800/40 hover:bg-blue-100'
-                          : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-300/80 dark:border-transparent hover:bg-slate-200'
+                          ? 'bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800/40 shadow-sm'
+                          : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-300/80 dark:border-transparent'
                       }`}
-                      title={isSharedItem ? 'Gasto Compartido activo (clic para hacer individual)' : 'Gasto Individual (clic para compartir)'}
+                      title={isSharedItem ? 'Gasto compartido entre personas' : 'Gasto individual (100% Yo)'}
                     >
-                      {isSharedItem ? <Users className="w-3.5 h-3.5" /> : <User className="w-3.5 h-3.5" />}
+                      <Users className="w-3.5 h-3.5" />
                     </button>
                   )}
 
@@ -470,9 +436,6 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
               : ob.totalAmount;
             const totalDebt = ob.totalDebtBalance || (ob.name.toLowerCase().includes('icetex') ? 3471648 : ob.totalAmount);
             const isSharedOb = ob.isShared !== false;
-            const obMoneda = ob.moneda || 'COP';
-            const isDiff = obMoneda !== baseCurrency;
-            const debtInBase = convertToBase(totalDebt, obMoneda, baseCurrency, dolarRate);
 
             return (
               <div
@@ -509,29 +472,26 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
                     {/* Nombre y al frente el valor de la cuota mensual sin paréntesis */}
                     <div className="flex flex-wrap items-center gap-2">
                       <h4 className="font-bold text-slate-800 dark:text-white text-sm">{ob.name}</h4>
-                      {isDiff && (
-                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300">
-                          {obMoneda}
-                        </span>
-                      )}
                       <span className="text-xs font-bold text-slate-500 dark:text-slate-400 font-mono">
-                        {formatCurrency(monthlyPayment, obMoneda)}/mes
+                        {formatCurrency(monthlyPayment)}/mes
                       </span>
                     </div>
 
-                    {/* Distribución proporcional debajo del nombre */}
+                    {/* Reparto proporcional */}
                     {activePeople.length > 1 && isSharedOb && (
                       <div className="flex flex-wrap items-center gap-2 mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
                         {activePeople.map((p, pIdx) => {
                           const ratio = getPersonRatio(p.monthlyIncome);
                           const share = monthlyPayment * ratio;
                           return (
-                            <span key={p.id || pIdx}>
-                              {pIdx > 0 && <span className="mr-2 opacity-40">•</span>}
-                              <strong className={pIdx === 0 ? 'text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-300'}>
+                            <span key={p.name} className="flex items-center gap-1">
+                              {pIdx === 0 ? <User className="w-3 h-3 text-blue-600 dark:text-blue-400" /> : <Users className="w-3 h-3 text-slate-400" />}
+                              <strong className={pIdx === 0 ? 'text-blue-700 dark:text-blue-300 font-semibold' : 'text-slate-600 dark:text-slate-400 font-medium'}>
                                 {p.name}:
                               </strong>{' '}
-                              {formatCurrency(share, obMoneda)}
+                              <span className="font-mono text-slate-700 dark:text-slate-300">
+                                {formatCurrency(share)}
+                              </span>
                             </span>
                           );
                         })}
@@ -540,31 +500,24 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
                   </div>
                 </div>
 
-                {/* Total de la deuda a la derecha */}
                 <div className="flex items-center gap-2">
                   <div className="text-right">
                     <span className="font-mono font-bold text-sm text-slate-800 dark:text-white block">
-                      {formatCurrency(totalDebt, obMoneda)}
+                      {formatCurrency(totalDebt)}
                     </span>
-                    {isDiff && (
-                      <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 block">
-                        (≈ {formatCurrency(debtInBase, baseCurrency)})
-                      </span>
-                    )}
                   </div>
 
-                  {/* Botón de toggle Compartido / Individual */}
                   {activePeople.length > 1 && (
                     <button
                       onClick={() => toggleObligationShared(ob.id)}
-                      className={`p-2 rounded-xl border transition-all ${
+                      className={`p-2 rounded-xl transition-all border ${
                         isSharedOb
-                          ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800/40 hover:bg-blue-100'
-                          : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-300/80 dark:border-transparent hover:bg-slate-200'
+                          ? 'bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800/40 shadow-sm'
+                          : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-300/80 dark:border-transparent'
                       }`}
-                      title={isSharedOb ? 'Gasto Compartido activo (clic para hacer individual)' : 'Gasto Individual (clic para compartir)'}
+                      title={isSharedOb ? 'Obligación compartida entre personas' : 'Obligación individual (100% Yo)'}
                     >
-                      {isSharedOb ? <Users className="w-3.5 h-3.5" /> : <User className="w-3.5 h-3.5" />}
+                      <Users className="w-3.5 h-3.5" />
                     </button>
                   )}
 
@@ -603,9 +556,6 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
             const monthlyCost = calculateSubscriptionMonthlyCost(sub);
             const isDragging = draggedSubIdx === idx;
             const isYearly = sub.billing === 'yearly';
-            const subMoneda = sub.moneda || 'COP';
-            const isDiff = subMoneda !== baseCurrency;
-            const costInBase = convertToBase(monthlyCost, subMoneda, baseCurrency, dolarRate);
 
             return (
               <div
@@ -648,29 +598,22 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
                   <div>
                     <div className="flex items-center gap-2">
                       <h4 className="font-bold text-slate-800 dark:text-white text-sm">{sub.name}</h4>
-                      {isDiff && (
-                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300">
-                          {subMoneda}
-                        </span>
+                    </div>
+
+                    <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                      <span>{isYearly ? 'Pago Anual' : 'Pago Mensual'}</span>
+                      {sub.members > 1 && (
+                        <span>• Dividido entre {sub.members} personas</span>
                       )}
                     </div>
-                    <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                      {isYearly ? 'Anual' : 'Mensual'}
-                      {sub.members > 1 && ` • ${sub.members} personas`}
-                    </span>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2">
                   <div className="text-right">
                     <span className="font-mono font-bold text-sm text-slate-800 dark:text-white block">
-                      {formatCurrency(monthlyCost, subMoneda)}
+                      {formatCurrency(monthlyCost)}
                     </span>
-                    {isDiff && (
-                      <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 block">
-                        (≈ {formatCurrency(costInBase, baseCurrency)})
-                      </span>
-                    )}
                   </div>
 
                   <button
@@ -710,23 +653,10 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
                   type="text"
                   value={housingName}
                   onChange={e => setHousingName(e.target.value)}
-                  placeholder="Ej. Arriendo, Servicios Públicos, Internet"
+                  placeholder="Ej. Arriendo, Administración, Energía, Internet"
                   className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
                   required
                 />
-              </div>
-
-              {/* Selector de Moneda */}
-              <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">Moneda</label>
-                <select
-                  value={housingCurrency}
-                  onChange={e => setHousingCurrency(e.target.value as 'COP' | 'USD')}
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
-                >
-                  <option value="COP">Pesos (COP)</option>
-                  <option value="USD">Dólares (USD)</option>
-                </select>
               </div>
 
               {/* Valor Total con Calculadora */}
@@ -758,7 +688,7 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
                     <Calculator className="w-4 h-4" />
                   </button>
 
-                  {/* Pop-up Calculadora */}
+                  {/* Pop-up de Calculadora */}
                   {showHousingCalc && (
                     <div className="absolute right-0 top-full mt-2 z-30 p-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-2xl shadow-xl space-y-2.5 w-64 animate-scaleUp">
                       <div className="flex items-center justify-between">
@@ -821,19 +751,36 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
                 </div>
               </div>
 
-              {/* Quincena */}
+              {/* Quincena de Pago */}
               <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                  Quincena de Pago
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
+                  Periodo de Pago
                 </label>
-                <select
-                  value={housingPeriod}
-                  onChange={e => setHousingPeriod(e.target.value as PaymentPeriod)}
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
-                >
-                  <option value="1st_fortnight">1ª Quincena (Mitad de mes)</option>
-                  <option value="2nd_fortnight">2ª Quincena (Fin de mes)</option>
-                </select>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setHousingPeriod('1st_fortnight')}
+                    className={`py-2.5 px-3 rounded-2xl text-xs font-bold border transition-all ${
+                      housingPeriod === '1st_fortnight'
+                        ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                        : 'bg-slate-50 dark:bg-slate-950/40 border-slate-300 dark:border-slate-800 text-slate-600 dark:text-slate-400'
+                    }`}
+                  >
+                    1ª Quincena
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setHousingPeriod('2nd_fortnight')}
+                    className={`py-2.5 px-3 rounded-2xl text-xs font-bold border transition-all ${
+                      housingPeriod === '2nd_fortnight'
+                        ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                        : 'bg-slate-50 dark:bg-slate-950/40 border-slate-300 dark:border-slate-800 text-slate-600 dark:text-slate-400'
+                    }`}
+                  >
+                    2ª Quincena
+                  </button>
+                </div>
               </div>
 
               <div className="flex items-center gap-2 pt-3">
@@ -891,23 +838,10 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
                   type="text"
                   value={obligationName}
                   onChange={e => setObligationName(e.target.value)}
-                  placeholder="Ej. Cuota Carro, Crédito Icetex"
+                  placeholder="Ej. Icetex, Crédito Hipotecario, Préstamo"
                   className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
                   required
                 />
-              </div>
-
-              {/* Selector de Moneda */}
-              <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">Moneda</label>
-                <select
-                  value={obligationCurrency}
-                  onChange={e => setObligationCurrency(e.target.value as 'COP' | 'USD')}
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
-                >
-                  <option value="COP">Pesos (COP)</option>
-                  <option value="USD">Dólares (USD)</option>
-                </select>
               </div>
 
               {/* Cuota Mensual con Calculadora */}
@@ -939,12 +873,12 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
                     <Calculator className="w-4 h-4" />
                   </button>
 
-                  {/* Pop-up Calculadora Cuota Mensual */}
+                  {/* Pop-up de Calculadora para Cuota */}
                   {showObligationMonthlyCalc && (
                     <div className="absolute right-0 top-full mt-2 z-30 p-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-2xl shadow-xl space-y-2.5 w-64 animate-scaleUp">
                       <div className="flex items-center justify-between">
                         <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
-                          Ajustar Cuota
+                          Ajustar Cuota Mensual
                         </span>
                         <button
                           type="button"
@@ -1002,10 +936,10 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
                 </div>
               </div>
 
-              {/* Total de la Deuda con Calculadora */}
+              {/* Total Deuda (Saldo pendiente) con Calculadora */}
               <div>
                 <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                  Total de la Deuda <span className="text-[11px] font-normal text-slate-400">(Opcional)</span>
+                  Total Deuda (Saldo Pendiente)
                 </label>
                 <div className="relative">
                   <input
@@ -1013,7 +947,7 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
                     step="any"
                     value={obligationTotalDebt}
                     onChange={e => setObligationTotalDebt(e.target.value)}
-                    placeholder="0"
+                    placeholder="0 (Saldo total que resta por pagar)"
                     className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl pl-3.5 pr-11 py-2.5 text-sm text-slate-800 dark:text-white font-mono focus:outline-none focus:border-blue-500"
                   />
 
@@ -1030,7 +964,7 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
                     <Calculator className="w-4 h-4" />
                   </button>
 
-                  {/* Pop-up Calculadora Total Deuda */}
+                  {/* Pop-up de Calculadora para Total Deuda */}
                   {showObligationDebtCalc && (
                     <div className="absolute right-0 top-full mt-2 z-30 p-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-2xl shadow-xl space-y-2.5 w-64 animate-scaleUp">
                       <div className="flex items-center justify-between">
@@ -1093,19 +1027,36 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
                 </div>
               </div>
 
-              {/* Quincena */}
+              {/* Quincena de Pago */}
               <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                  Quincena de Pago
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
+                  Periodo de Pago
                 </label>
-                <select
-                  value={obligationPeriod}
-                  onChange={e => setObligationPeriod(e.target.value as PaymentPeriod)}
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
-                >
-                  <option value="1st_fortnight">1ª Quincena (Mitad de mes)</option>
-                  <option value="2nd_fortnight">2ª Quincena (Fin de mes)</option>
-                </select>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setObligationPeriod('1st_fortnight')}
+                    className={`py-2.5 px-3 rounded-2xl text-xs font-bold border transition-all ${
+                      obligationPeriod === '1st_fortnight'
+                        ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                        : 'bg-slate-50 dark:bg-slate-950/40 border-slate-300 dark:border-slate-800 text-slate-600 dark:text-slate-400'
+                    }`}
+                  >
+                    1ª Quincena
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setObligationPeriod('2nd_fortnight')}
+                    className={`py-2.5 px-3 rounded-2xl text-xs font-bold border transition-all ${
+                      obligationPeriod === '2nd_fortnight'
+                        ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                        : 'bg-slate-50 dark:bg-slate-950/40 border-slate-300 dark:border-slate-800 text-slate-600 dark:text-slate-400'
+                    }`}
+                  >
+                    2ª Quincena
+                  </button>
+                </div>
               </div>
 
               <div className="flex items-center gap-2 pt-3">
@@ -1169,19 +1120,6 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
                 />
               </div>
 
-              {/* Selector de Moneda */}
-              <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">Moneda</label>
-                <select
-                  value={subCurrency}
-                  onChange={e => setSubCurrency(e.target.value as 'COP' | 'USD')}
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
-                >
-                  <option value="COP">Pesos (COP)</option>
-                  <option value="USD">Dólares (USD)</option>
-                </select>
-              </div>
-
               {/* Precio con Calculadora */}
               <div>
                 <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
@@ -1211,12 +1149,12 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
                     <Calculator className="w-4 h-4" />
                   </button>
 
-                  {/* Pop-up Calculadora */}
+                  {/* Pop-up de Calculadora */}
                   {showSubCalc && (
                     <div className="absolute right-0 top-full mt-2 z-30 p-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-2xl shadow-xl space-y-2.5 w-64 animate-scaleUp">
                       <div className="flex items-center justify-between">
                         <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
-                          Ajustar Monto
+                          Ajustar Precio
                         </span>
                         <button
                           type="button"
@@ -1274,57 +1212,93 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                {/* Tipo de Cobro */}
-                <div>
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                    Frecuencia
-                  </label>
-                  <select
-                    value={subBilling}
-                    onChange={e => setSubBilling(e.target.value as 'monthly' | 'yearly')}
-                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3 py-2 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
-                  >
-                    <option value="monthly">Mensual</option>
-                    <option value="yearly">Anual</option>
-                  </select>
-                </div>
+              {/* Miembros / Personas */}
+              <div>
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                  Número de Personas (Dividir costo)
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  max="50"
+                  value={subMembers}
+                  onChange={e => setSubMembers(e.target.value)}
+                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white font-mono focus:outline-none focus:border-blue-500"
+                  required
+                />
+              </div>
 
-                {/* Personas / Miembros */}
-                <div>
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                    Miembros
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    value={subMembers}
-                    onChange={e => setSubMembers(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3 py-2 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 font-mono"
-                    required
-                  />
+              {/* Frecuencia: Mensual vs Anual */}
+              <div>
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
+                  Frecuencia de Cobro
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSubBilling('monthly')}
+                    className={`py-2.5 px-3 rounded-2xl text-xs font-bold border transition-all ${
+                      subBilling === 'monthly'
+                        ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                        : 'bg-slate-50 dark:bg-slate-950/40 border-slate-300 dark:border-slate-800 text-slate-600 dark:text-slate-400'
+                    }`}
+                  >
+                    Mensual
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setSubBilling('yearly')}
+                    className={`py-2.5 px-3 rounded-2xl text-xs font-bold border transition-all ${
+                      subBilling === 'yearly'
+                        ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                        : 'bg-slate-50 dark:bg-slate-950/40 border-slate-300 dark:border-slate-800 text-slate-600 dark:text-slate-400'
+                    }`}
+                  >
+                    Anual
+                  </button>
                 </div>
               </div>
 
-              {/* Quincena si es Mensual, o Selección de Mes si es Anual */}
-              {subBilling === 'monthly' ? (
+              {/* Quincena (si es mensual) */}
+              {subBilling === 'monthly' && (
                 <div>
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                    Quincena de Pago
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
+                    Periodo de Pago
                   </label>
-                  <select
-                    value={subPeriod}
-                    onChange={e => setSubPeriod(e.target.value as PaymentPeriod)}
-                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
-                  >
-                    <option value="1st_fortnight">1ª Quincena (Mitad de mes)</option>
-                    <option value="2nd_fortnight">2ª Quincena (Fin de mes)</option>
-                  </select>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setSubPeriod('1st_fortnight')}
+                      className={`py-2 px-3 rounded-2xl text-xs font-bold border transition-all ${
+                        subPeriod === '1st_fortnight'
+                          ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                          : 'bg-slate-50 dark:bg-slate-950/40 border-slate-300 dark:border-slate-800 text-slate-600 dark:text-slate-400'
+                      }`}
+                    >
+                      1ª Quincena
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setSubPeriod('2nd_fortnight')}
+                      className={`py-2 px-3 rounded-2xl text-xs font-bold border transition-all ${
+                        subPeriod === '2nd_fortnight'
+                          ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                          : 'bg-slate-50 dark:bg-slate-950/40 border-slate-300 dark:border-slate-800 text-slate-600 dark:text-slate-400'
+                      }`}
+                    >
+                      2ª Quincena
+                    </button>
+                  </div>
                 </div>
-              ) : (
+              )}
+
+              {/* Mes de Pago (si es anual) */}
+              {subBilling === 'yearly' && (
                 <div>
                   <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                    Mes de Cobro / Renovación
+                    Mes en que se cobra
                   </label>
                   <select
                     value={subMonth}
@@ -1332,7 +1306,9 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
                     className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
                   >
                     {MONTHS.map(m => (
-                      <option key={m} value={m}>{m}</option>
+                      <option key={m} value={m}>
+                        {m}
+                      </option>
                     ))}
                   </select>
                 </div>
