@@ -293,8 +293,10 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       ...prev,
       creditCards: prev.creditCards.map(c => {
         if (c.id === cardId) {
-          // Keep only purchases made after the cutoff
-          const remainingPurchases = (c.purchases || []).filter(p => p.isAfterCutoff === true);
+          // Keep only purchases made after the cutoff, and clear isAfterCutoff flag
+          const remainingPurchases = (c.purchases || [])
+            .filter(p => p.isAfterCutoff === true)
+            .map(p => ({ ...p, isAfterCutoff: false }));
           return {
             ...c,
             billingCutoffAmount: undefined,
