@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useFinance } from '../../context/FinanceContext';
 import { formatCurrency } from '../../services/financeCalculations';
-import { Wallet, DollarSign, Edit2, TrendingUp, Building2, Coins, ShieldAlert, FileText, Check } from 'lucide-react';
+import { Wallet, Edit2, TrendingUp, Building2, Coins, ShieldAlert, FileText, Check } from 'lucide-react';
 
 export const BilleteraView: React.FC = () => {
   const { data, summary, updateBilletera, updateAutofinanciera } = useFinance();
@@ -30,7 +30,6 @@ export const BilleteraView: React.FC = () => {
     {
       key: 'etoroUSD',
       nombre: 'Etoro',
-      subtitulo: 'Inversiones globales en dólares',
       saldo: data.billetera.etoroUSD,
       moneda: 'USD',
       equivalenteCOP: summary.portafolio.etoroCOP,
@@ -40,7 +39,6 @@ export const BilleteraView: React.FC = () => {
     {
       key: 'plentiUSD',
       nombre: 'Plenti',
-      subtitulo: 'Dólar digital (USDt)',
       saldo: data.billetera.plentiUSD,
       moneda: 'USD',
       equivalenteCOP: summary.portafolio.plentiCOP,
@@ -50,7 +48,6 @@ export const BilleteraView: React.FC = () => {
     {
       key: 'efectivoCOP',
       nombre: 'Efectivo',
-      subtitulo: 'Dinero disponible en mano',
       saldo: data.billetera.efectivoCOP,
       moneda: 'COP',
       icon: Wallet,
@@ -59,7 +56,6 @@ export const BilleteraView: React.FC = () => {
     {
       key: 'bancolombiaCOP',
       nombre: 'Bancolombia',
-      subtitulo: 'Cuenta de ahorros principal',
       saldo: data.billetera.bancolombiaCOP,
       moneda: 'COP',
       icon: Building2,
@@ -72,19 +68,16 @@ export const BilleteraView: React.FC = () => {
       {/* Header */}
       <div>
         <h2 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
-          <Wallet className="w-5 h-5 text-emerald-600 dark:text-emerald-400" /> Billetera & Cuentas
+          <Wallet className="w-5 h-5 text-emerald-600 dark:text-emerald-400" /> Billetera
         </h2>
-        <p className="text-xs text-slate-500 dark:text-slate-400">
-          Disponibilidad en cuentas, saldos en dólares y obligaciones registradas
-        </p>
       </div>
 
       {/* Cuentas y Saldos */}
       <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
         <div className="p-5 border-b border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
-          <h3 className="font-bold text-slate-800 dark:text-white text-sm">Disponibilidad en Cuentas</h3>
+          <h3 className="font-bold text-slate-800 dark:text-white text-sm">Billetera</h3>
           <span className="text-xs text-slate-500 dark:text-slate-400 font-mono">
-            Tasa: 1 USD = {formatCurrency(data.billetera.dolar, 'COP')}
+            1 USD = {formatCurrency(data.billetera.dolar, 'COP')}
           </span>
         </div>
 
@@ -101,7 +94,6 @@ export const BilleteraView: React.FC = () => {
                   </div>
                   <div>
                     <h4 className="font-bold text-slate-800 dark:text-white text-sm">{c.nombre}</h4>
-                    <span className="text-xs text-slate-500 dark:text-slate-400">{c.subtitulo}</span>
                     {c.equivalenteCOP && (
                       <span className="block text-[11px] text-emerald-600 dark:text-emerald-400 font-mono mt-0.5">
                         Equivalente: {formatCurrency(c.equivalenteCOP, 'COP')}
@@ -150,11 +142,10 @@ export const BilleteraView: React.FC = () => {
         </div>
       </div>
 
-      {/* Deudas & Compromisos Registrados */}
+      {/* Deudas */}
       <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
         <div className="p-5 border-b border-slate-100 dark:border-slate-800/80">
-          <h3 className="font-bold text-slate-800 dark:text-white text-sm">Deudas & Gastos Registrados</h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400">Compromisos de largo plazo e imprevistos anuales</p>
+          <h3 className="font-bold text-slate-800 dark:text-white text-sm">Deudas</h3>
         </div>
 
         <div className="divide-y divide-slate-100 dark:divide-slate-800/80">
@@ -164,10 +155,7 @@ export const BilleteraView: React.FC = () => {
               <div className="w-10 h-10 rounded-2xl bg-rose-100 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/40 flex items-center justify-center">
                 <ShieldAlert className="w-5 h-5" />
               </div>
-              <div>
-                <h4 className="font-bold text-slate-800 dark:text-white text-sm">Autofinanciera</h4>
-                <span className="text-xs text-slate-500 dark:text-slate-400">Saldo total adeudado</span>
-              </div>
+              <h4 className="font-bold text-slate-800 dark:text-white text-sm">Autofinanciera</h4>
             </div>
 
             <div className="flex items-center gap-2">
@@ -209,10 +197,7 @@ export const BilleteraView: React.FC = () => {
               <div className="w-10 h-10 rounded-2xl bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/40 flex items-center justify-center">
                 <FileText className="w-5 h-5" />
               </div>
-              <div>
-                <h4 className="font-bold text-slate-800 dark:text-white text-sm">Multas</h4>
-                <span className="text-xs text-slate-500 dark:text-slate-400">Imprevistos vehiculares</span>
-              </div>
+              <h4 className="font-bold text-slate-800 dark:text-white text-sm">Multas</h4>
             </div>
             <span className="text-xs text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-xl border border-slate-200 dark:border-slate-700">
               Registrado
@@ -225,10 +210,7 @@ export const BilleteraView: React.FC = () => {
               <div className="w-10 h-10 rounded-2xl bg-sky-100 dark:bg-sky-950/50 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800/40 flex items-center justify-center">
                 <FileText className="w-5 h-5" />
               </div>
-              <div>
-                <h4 className="font-bold text-slate-800 dark:text-white text-sm">SOAT y Tecnomecánica</h4>
-                <span className="text-xs text-slate-500 dark:text-slate-400">Gasto anual vehicular obligatorio</span>
-              </div>
+              <h4 className="font-bold text-slate-800 dark:text-white text-sm">SOAT y Tecnomecánica</h4>
             </div>
             <span className="text-xs text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-xl border border-slate-200 dark:border-slate-700">
               Registrado
@@ -241,10 +223,7 @@ export const BilleteraView: React.FC = () => {
               <div className="w-10 h-10 rounded-2xl bg-purple-100 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800/40 flex items-center justify-center">
                 <FileText className="w-5 h-5" />
               </div>
-              <div>
-                <h4 className="font-bold text-slate-800 dark:text-white text-sm">Declaración de Renta</h4>
-                <span className="text-xs text-slate-500 dark:text-slate-400">Impuestos y honorarios anuales</span>
-              </div>
+              <h4 className="font-bold text-slate-800 dark:text-white text-sm">Declaración de Renta</h4>
             </div>
             <span className="text-xs text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-xl border border-slate-200 dark:border-slate-700">
               Registrado

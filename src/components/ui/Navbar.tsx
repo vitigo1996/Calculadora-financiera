@@ -19,8 +19,6 @@ export const Navbar: React.FC = () => {
     }
   };
 
-  const isShared = summary.mode === 'shared' && summary.p2.enabled;
-
   return (
     <header className="sticky top-0 z-40 bg-white/80 dark:bg-slate-900/85 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800/80 px-4 py-3 transition-colors">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
@@ -33,19 +31,6 @@ export const Navbar: React.FC = () => {
             <h1 className="font-bold text-sm sm:text-base text-slate-800 dark:text-slate-100 leading-tight">
               Finanzas Personales
             </h1>
-            <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400">
-              {isShared ? (
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                  {summary.p1.name} ({(summary.p1.ratio * 100).toFixed(0)}%) & {summary.p2.name} ({(summary.p2.ratio * 100).toFixed(0)}%)
-                </span>
-              ) : (
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                  {summary.p1.name} (Individual)
-                </span>
-              )}
-            </div>
           </div>
         </div>
 
