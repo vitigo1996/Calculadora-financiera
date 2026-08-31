@@ -54,24 +54,32 @@ export const initialFinanceData: AppFinanceData = {
       id: 'deuda-auto',
       nombre: 'Autofinanciera',
       monto: 24166570.0,
+      moneda: 'COP',
+      tipo: 'por_pagar',
       icon: 'car'
     },
     {
       id: 'deuda-multas',
       nombre: 'Multas',
       monto: 0,
+      moneda: 'COP',
+      tipo: 'por_pagar',
       icon: 'shield_alert'
     },
     {
       id: 'deuda-soat',
       nombre: 'Soat y Tecno',
       monto: 0,
+      moneda: 'COP',
+      tipo: 'por_pagar',
       icon: 'file_text'
     },
     {
       id: 'deuda-declaracion',
       nombre: 'Declaracion',
       monto: 0,
+      moneda: 'COP',
+      tipo: 'por_pagar',
       icon: 'scale'
     }
   ],

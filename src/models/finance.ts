@@ -20,6 +20,8 @@ export interface DeudaItem {
   id: string;
   nombre: string;
   monto?: number;
+  moneda: 'COP' | 'USD';
+  tipo: 'por_cobrar' | 'por_pagar'; // por_cobrar = positiva (me deben), por_pagar = negativa (yo debo)
   icon?: string;
 }
 
@@ -63,6 +65,7 @@ export interface AppFinanceData {
   mode: 'single' | 'shared';
   people: [PersonProfile, PersonProfile];
   dolarRate: number; // Tasa USD/COP
+  dolarRateLiveUpdated?: string;
   billeteraItems: BilleteraAccountItem[];
   deudaItems: DeudaItem[];
   housingExpenses: HousingExpense[];

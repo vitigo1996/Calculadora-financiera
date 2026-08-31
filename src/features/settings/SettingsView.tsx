@@ -63,13 +63,13 @@ export const SettingsView: React.FC = () => {
       </div>
 
       {savedSuccess && (
-        <div className="bg-emerald-100 dark:bg-emerald-950/50 border border-emerald-300 dark:border-emerald-500/30 text-emerald-800 dark:text-emerald-400 p-3.5 rounded-2xl flex items-center gap-2 text-xs font-semibold animate-scaleUp">
+        <div className="bg-blue-100 dark:bg-blue-950/50 border border-blue-300 dark:border-blue-500/30 text-blue-800 dark:text-blue-400 p-3.5 rounded-2xl flex items-center gap-2 text-xs font-semibold animate-scaleUp">
           <CheckCircle2 className="w-4 h-4" /> ¡Configuración guardada exitosamente!
         </div>
       )}
 
       {/* Selector de Tema Visual: Claro u Oscuro */}
-      <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-sm transition-colors">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-300 dark:border-slate-800 shadow-sm transition-colors">
         <label className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 block mb-3">
           Tema de la Aplicación
         </label>
@@ -79,18 +79,18 @@ export const SettingsView: React.FC = () => {
             onClick={() => setTheme('light')}
             className={`p-3.5 rounded-2xl border text-left flex items-center gap-3 transition-all ${
               theme === 'light'
-                ? 'bg-amber-50 border-amber-300 text-slate-800 shadow-sm'
-                : 'bg-slate-50 dark:bg-slate-950/40 border-slate-200 dark:border-slate-800 text-slate-500 hover:border-slate-300'
+                ? 'bg-blue-50 border-blue-400 text-slate-800 shadow-sm'
+                : 'bg-slate-50 dark:bg-slate-950/40 border-slate-300 dark:border-slate-800 text-slate-500 hover:border-slate-400'
             }`}
           >
             <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
-              theme === 'light' ? 'bg-amber-100 text-amber-700' : 'bg-slate-200 dark:bg-slate-800 text-slate-500'
+              theme === 'light' ? 'bg-blue-100 text-blue-700' : 'bg-slate-200 dark:bg-slate-800 text-slate-500'
             }`}>
               <Sun className="w-5 h-5" />
             </div>
             <div>
               <span className="font-bold text-xs block">Modo Claro</span>
-              <span className="text-[11px] text-slate-500">Visual pastel limpio</span>
+              <span className="text-[11px] text-slate-500">Visual limpio y contrastado</span>
             </div>
           </button>
 
@@ -99,12 +99,12 @@ export const SettingsView: React.FC = () => {
             onClick={() => setTheme('dark')}
             className={`p-3.5 rounded-2xl border text-left flex items-center gap-3 transition-all ${
               theme === 'dark'
-                ? 'bg-slate-800 border-indigo-500/50 text-white shadow-sm'
-                : 'bg-slate-50 dark:bg-slate-950/40 border-slate-200 dark:border-slate-800 text-slate-500 hover:border-slate-300'
+                ? 'bg-slate-800 border-blue-500 text-white shadow-sm'
+                : 'bg-slate-50 dark:bg-slate-950/40 border-slate-300 dark:border-slate-800 text-slate-500 hover:border-slate-400'
             }`}
           >
             <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
-              theme === 'dark' ? 'bg-indigo-950 text-indigo-300' : 'bg-slate-200 dark:bg-slate-800 text-slate-500'
+              theme === 'dark' ? 'bg-blue-950 text-blue-300' : 'bg-slate-200 dark:bg-slate-800 text-slate-500'
             }`}>
               <Moon className="w-5 h-5" />
             </div>
@@ -117,7 +117,7 @@ export const SettingsView: React.FC = () => {
       </div>
 
       {/* Formulario de Ingresos & Hogar */}
-      <form onSubmit={handleSave} className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-6 transition-colors">
+      <form onSubmit={handleSave} className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-300 dark:border-slate-800 shadow-sm space-y-6 transition-colors">
         {/* Selector de Modo */}
         <div>
           <label className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 block mb-2">
@@ -129,12 +129,12 @@ export const SettingsView: React.FC = () => {
               onClick={() => setLocalMode('single')}
               className={`p-4 rounded-2xl border text-left flex items-center gap-3 transition-all ${
                 mode === 'single'
-                  ? 'bg-emerald-50 dark:bg-emerald-500/15 border-emerald-300 dark:border-emerald-500 text-slate-800 dark:text-white shadow-sm'
-                  : 'bg-slate-50 dark:bg-slate-950/40 border-slate-200 dark:border-slate-800 text-slate-500 hover:border-slate-300'
+                  ? 'bg-blue-50 dark:bg-blue-500/15 border-blue-400 dark:border-blue-500 text-slate-800 dark:text-white shadow-sm'
+                  : 'bg-slate-50 dark:bg-slate-950/40 border-slate-300 dark:border-slate-800 text-slate-500 hover:border-slate-400'
               }`}
             >
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                mode === 'single' ? 'bg-emerald-100 dark:bg-emerald-500 text-emerald-800 dark:text-slate-950' : 'bg-slate-200 dark:bg-slate-800 text-slate-500'
+                mode === 'single' ? 'bg-blue-100 dark:bg-blue-500 text-blue-800 dark:text-slate-950' : 'bg-slate-200 dark:bg-slate-800 text-slate-500'
               }`}>
                 <User className="w-5 h-5" />
               </div>
@@ -149,12 +149,12 @@ export const SettingsView: React.FC = () => {
               onClick={() => setLocalMode('shared')}
               className={`p-4 rounded-2xl border text-left flex items-center gap-3 transition-all ${
                 mode === 'shared'
-                  ? 'bg-emerald-50 dark:bg-emerald-500/15 border-emerald-300 dark:border-emerald-500 text-slate-800 dark:text-white shadow-sm'
-                  : 'bg-slate-50 dark:bg-slate-950/40 border-slate-200 dark:border-slate-800 text-slate-500 hover:border-slate-300'
+                  ? 'bg-blue-50 dark:bg-blue-500/15 border-blue-400 dark:border-blue-500 text-slate-800 dark:text-white shadow-sm'
+                  : 'bg-slate-50 dark:bg-slate-950/40 border-slate-300 dark:border-slate-800 text-slate-500 hover:border-slate-400'
               }`}
             >
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                mode === 'shared' ? 'bg-emerald-100 dark:bg-emerald-500 text-emerald-800 dark:text-slate-950' : 'bg-slate-200 dark:bg-slate-800 text-slate-500'
+                mode === 'shared' ? 'bg-blue-100 dark:bg-blue-500 text-blue-800 dark:text-slate-950' : 'bg-slate-200 dark:bg-slate-800 text-slate-500'
               }`}>
                 <Users className="w-5 h-5" />
               </div>
@@ -167,8 +167,8 @@ export const SettingsView: React.FC = () => {
         </div>
 
         {/* Persona 1 */}
-        <div className="bg-slate-50 dark:bg-slate-950/70 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
-          <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400 block">Titular Principal</span>
+        <div className="bg-slate-50 dark:bg-slate-950/70 p-4 rounded-2xl border border-slate-300 dark:border-slate-800 space-y-3">
+          <span className="text-xs font-bold text-blue-700 dark:text-blue-400 block">Titular Principal</span>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 block mb-1">Nombre</label>
@@ -176,7 +176,7 @@ export const SettingsView: React.FC = () => {
                 type="text"
                 value={p1Name}
                 onChange={e => setP1Name(e.target.value)}
-                className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-emerald-500"
+                className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
                 required
               />
             </div>
@@ -187,7 +187,7 @@ export const SettingsView: React.FC = () => {
                 type="number"
                 value={p1Income}
                 onChange={e => setP1Income(e.target.value)}
-                className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-emerald-500 font-mono"
+                className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 font-mono"
                 required
               />
             </div>
@@ -199,7 +199,7 @@ export const SettingsView: React.FC = () => {
                 step="0.5"
                 value={p1Rate}
                 onChange={e => setP1Rate(e.target.value)}
-                className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-emerald-500 font-mono"
+                className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 font-mono"
                 required
               />
             </div>
@@ -208,8 +208,8 @@ export const SettingsView: React.FC = () => {
 
         {/* Persona 2 */}
         {mode === 'shared' && (
-          <div className="bg-slate-50 dark:bg-slate-950/70 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
-            <span className="text-xs font-bold text-indigo-700 dark:text-indigo-400 block">Pareja / Co-aportante</span>
+          <div className="bg-slate-50 dark:bg-slate-950/70 p-4 rounded-2xl border border-slate-300 dark:border-slate-800 space-y-3">
+            <span className="text-xs font-bold text-slate-700 dark:text-slate-300 block">Pareja / Co-aportante</span>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 block mb-1">Nombre</label>
@@ -217,7 +217,7 @@ export const SettingsView: React.FC = () => {
                   type="text"
                   value={p2Name}
                   onChange={e => setP2Name(e.target.value)}
-                  className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500"
+                  className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
                   required
                 />
               </div>
@@ -228,7 +228,7 @@ export const SettingsView: React.FC = () => {
                   type="number"
                   value={p2Income}
                   onChange={e => setP2Income(e.target.value)}
-                  className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500 font-mono"
+                  className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 font-mono"
                   required
                 />
               </div>
@@ -237,40 +237,40 @@ export const SettingsView: React.FC = () => {
         )}
 
         {/* Tasa Dólar */}
-        <div className="bg-slate-50 dark:bg-slate-950/70 p-4 rounded-2xl border border-slate-200 dark:border-slate-800">
+        <div className="bg-slate-50 dark:bg-slate-950/70 p-4 rounded-2xl border border-slate-300 dark:border-slate-800">
           <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1 flex items-center gap-1.5">
-            <DollarSign className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> Tasa de Cambio Dólar (USD / COP)
+            <DollarSign className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" /> Tasa de Cambio Dólar (USD / COP)
           </label>
           <input
             type="number"
             value={usdRate}
             onChange={e => setUsdRate(e.target.value)}
             placeholder="3600"
-            className="w-full sm:w-64 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-emerald-500 font-mono"
+            className="w-full sm:w-64 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 font-mono"
             required
           />
         </div>
 
         <button
           type="submit"
-          className="w-full bg-emerald-600 hover:bg-emerald-500 dark:bg-emerald-500 dark:hover:bg-emerald-400 text-white dark:text-slate-950 font-bold text-xs py-3 rounded-2xl shadow-sm transition-all flex items-center justify-center gap-2"
+          className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs py-3 rounded-2xl shadow-sm transition-all flex items-center justify-center gap-2"
         >
           <Save className="w-4 h-4" /> Guardar Ajustes
         </button>
       </form>
 
       {/* Exportar / Restablecer */}
-      <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-4 transition-colors">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-300 dark:border-slate-800 shadow-sm space-y-4 transition-colors">
         <h3 className="font-bold text-slate-800 dark:text-white text-sm flex items-center gap-2">
-          <Download className="w-4 h-4 text-sky-600 dark:text-sky-400" /> Exportar Datos & Copias de Seguridad
+          <Download className="w-4 h-4 text-blue-600 dark:text-blue-400" /> Exportar Datos & Copias de Seguridad
         </h3>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
           <button
             onClick={() => StorageService.exportExcel(data)}
-            className="bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 border border-emerald-200 dark:border-emerald-500/30 text-emerald-800 dark:text-emerald-300 p-4 rounded-2xl flex items-center gap-3 transition-colors text-left"
+            className="bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/50 border border-blue-200 dark:border-blue-500/30 text-blue-800 dark:text-blue-300 p-4 rounded-2xl flex items-center gap-3 transition-colors text-left"
           >
-            <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 flex items-center justify-center">
               <FileSpreadsheet className="w-5 h-5" />
             </div>
             <div>
@@ -285,7 +285,7 @@ export const SettingsView: React.FC = () => {
                 resetToDefault();
               }
             }}
-            className="bg-slate-50 dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-850 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 p-4 rounded-2xl flex items-center gap-3 transition-colors text-left"
+            className="bg-slate-50 dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-850 border border-slate-300 dark:border-slate-800 text-slate-700 dark:text-slate-300 p-4 rounded-2xl flex items-center gap-3 transition-colors text-left"
           >
             <div className="w-10 h-10 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 flex items-center justify-center">
               <RefreshCw className="w-5 h-5" />

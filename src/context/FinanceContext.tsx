@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import {
   AppFinanceData,
   PersonProfile,
@@ -10,18 +10,21 @@ import {
   DeudaItem
 } from '../models/finance';
 import { StorageService } from '../services/storageService';
+import { CurrencyService } from '../services/currencyService';
 import { calculateAllFinances, CalculatedSummary } from '../services/financeCalculations';
 
 interface FinanceContextType {
   data: AppFinanceData;
   summary: CalculatedSummary;
+  isFetchingRate: boolean;
+  refreshLiveDolarRate: () => Promise<boolean>;
   setMode: (mode: 'single' | 'shared') => void;
   updatePeople: (people: [PersonProfile, PersonProfile]) => void;
   updateDolarRate: (rate: number) => void;
-  addBilleteraItem: (item: { nombre: string; moneda: 'COP' | 'USD'; saldo: number }) => void;
+  addBilleteraItem: (item: { nombre: string; moneda: 'COP' | 'USD'; saldo: number; icon?: string }) => void;
   updateBilleteraItem: (id: string, updated: Partial<BilleteraAccountItem>) => void;
   deleteBilleteraItem: (id: string) => void;
-  addDeudaItem: (item: { nombre: string; monto?: number }) => void;
+  addDeudaItem: (item: { nombre: string; monto?: number; moneda: 'COP' | 'USD'; tipo: 'por_cobrar' | 'por_pagar'; icon?: string }) => void;
   updateDeudaItem: (id: string, updated: Partial<DeudaItem>) => void;
   deleteDeudaItem: (id: string) => void;
   updateHousingExpense: (id: string, updated: Partial<HousingExpense>) => void;
@@ -39,6 +42,32 @@ const FinanceContext = createContext<FinanceContextType | undefined>(undefined);
 
 export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [data, setData] = useState<AppFinanceData>(() => StorageService.loadData());
+  const [isFetchingRate, setIsFetchingRate] = useState(false);
+
+  // Auto-fetch live dollar on load if internet is available
+  const refreshLiveDolarRate = useCallback(async () => {
+    setIsFetchingRate(true);
+    try {
+      const liveRate = await CurrencyService.fetchLiveUsdRate();
+      if (liveRate && liveRate > 0) {
+        setData(prev => ({
+          ...prev,
+          dolarRate: liveRate,
+          dolarRateLiveUpdated: new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
+        }));
+        setIsFetchingRate(false);
+        return true;
+      }
+    } catch (e) {
+      console.warn('Error fetching live USD TRM', e);
+    }
+    setIsFetchingRate(false);
+    return false;
+  }, []);
+
+  useEffect(() => {
+    refreshLiveDolarRate();
+  }, [refreshLiveDolarRate]);
 
   useEffect(() => {
     StorageService.saveData(data);
@@ -65,7 +94,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setData(prev => ({ ...prev, dolarRate: rate }));
   };
 
-  const addBilleteraItem = (item: { nombre: string; moneda: 'COP' | 'USD'; saldo: number }) => {
+  const addBilleteraItem = (item: { nombre: string; moneda: 'COP' | 'USD'; saldo: number; icon?: string }) => {
     const newItem: BilleteraAccountItem = {
       id: `acc-${Date.now()}`,
       ...item
@@ -90,7 +119,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }));
   };
 
-  const addDeudaItem = (item: { nombre: string; monto?: number }) => {
+  const addDeudaItem = (item: { nombre: string; monto?: number; moneda: 'COP' | 'USD'; tipo: 'por_cobrar' | 'por_pagar'; icon?: string }) => {
     const newItem: DeudaItem = {
       id: `deuda-${Date.now()}`,
       ...item
@@ -181,6 +210,8 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       value={{
         data,
         summary,
+        isFetchingRate,
+        refreshLiveDolarRate,
         setMode,
         updatePeople,
         updateDolarRate,

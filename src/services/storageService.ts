@@ -2,7 +2,7 @@ import { AppFinanceData, BilleteraAccountItem, DeudaItem } from '../models/finan
 import { initialFinanceData } from './defaultData';
 import * as XLSX from 'xlsx';
 
-const STORAGE_KEY = 'app_finanzas_data_v4';
+const STORAGE_KEY = 'app_finanzas_data_v5';
 
 export const StorageService = {
   loadData(): AppFinanceData {
@@ -10,17 +10,17 @@ export const StorageService = {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
-        // Ensure billeteraItems and deudaItems exist
-        if (parsed && !parsed.billeteraItems) {
-          return {
-            ...initialFinanceData,
-            ...parsed,
-            dolarRate: parsed.dolarRate || parsed.billetera?.dolar || 3600,
-            billeteraItems: initialFinanceData.billeteraItems,
-            deudaItems: initialFinanceData.deudaItems
-          };
+        if (parsed && Array.isArray(parsed.deudaItems)) {
+          parsed.deudaItems = parsed.deudaItems.map((d: any) => ({
+            ...d,
+            moneda: d.moneda || 'COP',
+            tipo: d.tipo || 'por_pagar'
+          }));
         }
-        return parsed;
+        return {
+          ...initialFinanceData,
+          ...parsed
+        };
       }
     } catch (e) {
       console.error('Error loading data from localStorage', e);
@@ -58,7 +58,7 @@ export const StorageService = {
 
     // Sheet: Billetera
     const billeteraRows = [
-      { Concepto: 'Tasa Dolar (USD/COP)', Valor: data.dolarRate, Moneda: 'COP' },
+      { Concepto: 'Tasa Dolar TRM (USD/COP)', Valor: data.dolarRate, Moneda: 'COP' },
       ...data.billeteraItems.map(b => ({
         Concepto: b.nombre,
         Valor: b.saldo,
@@ -71,7 +71,9 @@ export const StorageService = {
     // Sheet: Deudas
     const deudasRows = data.deudaItems.map(d => ({
       Concepto: d.nombre,
-      Monto: d.monto || 0
+      Tipo: d.tipo === 'por_cobrar' ? 'Por Cobrar (Me deben)' : 'Por Pagar (Debo pagar)',
+      Monto: d.monto || 0,
+      Moneda: d.moneda || 'COP'
     }));
     const wsDeudas = XLSX.utils.json_to_sheet(deudasRows);
     XLSX.utils.book_append_sheet(wb, wsDeudas, 'Deudas');
