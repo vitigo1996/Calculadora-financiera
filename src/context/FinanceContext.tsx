@@ -31,7 +31,7 @@ interface FinanceContextType {
   updateBilleteraItem: (id: string, updated: Partial<BilleteraAccountItem>) => void;
   deleteBilleteraItem: (id: string) => void;
   moveBilleteraItem: (index: number, direction: 'up' | 'down') => void;
-  addExpenseMovement: (movement: { name: string; amount: number; moneda: 'COP' | 'USD'; sourceAccountId: string; destinationType: 'none' | 'card' | 'obligation'; destinationId?: string; destinationName?: string }) => void;
+  addExpenseMovement: (movement: { type?: 'expense' | 'income'; name: string; amount: number; moneda: 'COP' | 'USD'; sourceAccountId: string; destinationType?: 'none' | 'card' | 'obligation'; destinationId?: string; destinationName?: string }) => void;
   deleteExpenseMovement: (id: string) => void;
   clearExpenseMovements: () => void;
   addDeudaItem: (item: { nombre: string; monto?: number; moneda: 'COP' | 'USD'; tipo: 'por_cobrar' | 'por_pagar'; icon?: string }) => void;
@@ -180,45 +180,48 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const addExpenseMovement = (movement: {
+    type?: 'expense' | 'income';
     name: string;
     amount: number;
     moneda: 'COP' | 'USD';
     sourceAccountId: string;
-    destinationType: 'none' | 'card' | 'obligation';
+    destinationType?: 'none' | 'card' | 'obligation';
     destinationId?: string;
     destinationName?: string;
   }) => {
     setData(prev => {
+      const isIncome = movement.type === 'income';
       const sourceAcc = (prev.billeteraItems || []).find(b => b.id === movement.sourceAccountId);
       const sourceAccountName = sourceAcc ? sourceAcc.nombre : 'Billetera';
 
       const newMovement = {
         id: `mov-${Date.now()}`,
+        type: movement.type || 'expense',
         name: movement.name.trim(),
         amount: movement.amount,
         moneda: movement.moneda,
         sourceAccountId: movement.sourceAccountId,
         sourceAccountName,
-        destinationType: movement.destinationType,
-        destinationId: movement.destinationId,
-        destinationName: movement.destinationName,
+        destinationType: isIncome ? undefined : (movement.destinationType || 'none'),
+        destinationId: isIncome ? undefined : movement.destinationId,
+        destinationName: isIncome ? undefined : movement.destinationName,
         date: new Date().toISOString()
       };
 
-      // 1. Descontar saldo de la cuenta de origen en Billetera
+      // 1. Actualizar saldo en la cuenta de Billetera (sumar si es ingreso, restar si es gasto)
       const updatedBilletera = (prev.billeteraItems || []).map(acc => {
         if (acc.id === movement.sourceAccountId) {
           return {
             ...acc,
-            saldo: Math.max(0, acc.saldo - movement.amount)
+            saldo: isIncome ? acc.saldo + movement.amount : Math.max(0, acc.saldo - movement.amount)
           };
         }
         return acc;
       });
 
-      // 2. Si el destino es Tarjeta de Crédito, aplicar el pago
+      // 2. Si es Gasto y el destino es Tarjeta de Crédito, aplicar el pago
       let updatedCreditCards = prev.creditCards;
-      if (movement.destinationType === 'card' && movement.destinationId) {
+      if (!isIncome && movement.destinationType === 'card' && movement.destinationId) {
         updatedCreditCards = (prev.creditCards || []).map(c => {
           if (c.id === movement.destinationId) {
             if (c.billingCutoffAmount !== undefined) {

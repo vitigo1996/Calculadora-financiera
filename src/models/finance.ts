@@ -97,12 +97,13 @@ export interface SubscriptionItem {
 
 export interface ExpenseMovement {
   id: string;
+  type?: 'expense' | 'income';
   name: string;
   amount: number;
   moneda: 'COP' | 'USD';
   sourceAccountId: string;
   sourceAccountName: string;
-  destinationType: 'none' | 'card' | 'obligation';
+  destinationType?: 'none' | 'card' | 'obligation';
   destinationId?: string;
   destinationName?: string;
   date: string;
