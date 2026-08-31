@@ -66,19 +66,15 @@ export interface CalculatedSummary {
 
   // Portafolio
   portafolio: {
-    etoroCOP: number;
-    plentiCOP: number;
-    nuEmergenciaCOP: number;
-    comfamaCasaCOP: number;
-    bancolombiaAhorroCOP: number;
     totalPortafolio: number;
     items: {
-      key: string;
+      id: string;
       label: string;
-      category: string;
+      moneda: 'COP' | 'USD';
+      saldoOriginal: number;
       valorCOP: number;
-      valorOriginal?: string;
       percentage: number;
+      icon?: string;
       color: string;
     }[];
   };
@@ -112,16 +108,13 @@ export function calculateAllFinances(data: AppFinanceData): CalculatedSummary {
 
   if (isShared && activePeople.length >= 2) {
     if (splitMethod === 'equal') {
-      // 50/50 o 1/N
       h4 = 1.0 / activePeople.length;
       i4 = 1.0 / activePeople.length;
     } else if (splitMethod === 'equal_remaining') {
-      // Remanente igual
       const avgIncome = totalIncome / activePeople.length;
       h4 = totalIncome > 0 ? Math.max(0, Math.min(1, 0.5 + (p1.monthlyIncome - avgIncome) / (totalIncome || 1))) : 0.5;
       i4 = Math.max(0, 1.0 - h4);
     } else {
-      // 'proportional': Proporcional a ingresos
       h4 = totalIncome > 0 ? p1.monthlyIncome / totalIncome : 1.0;
       i4 = totalIncome > 0 ? p2.monthlyIncome / totalIncome : 0.0;
     }
@@ -215,66 +208,31 @@ export function calculateAllFinances(data: AppFinanceData): CalculatedSummary {
   // M11: Disponible
   const m11_disponible = p1.monthlyIncome - m7_totalGastos;
 
-  // Portafolio
+  // Portafolio Dinámico
   const dolarRate = data.dolarRate || 3600;
-  const etoroAccount = data.billeteraItems?.find(b => b.nombre.toLowerCase().includes('etoro'));
-  const plentiAccount = data.billeteraItems?.find(b => b.nombre.toLowerCase().includes('plenti'));
+  const palette = ['#2563eb', '#3b82f6', '#60a5fa', '#93c5fd', '#64748b', '#0284c7', '#0369a1'];
 
-  const etoroUSD = etoroAccount ? etoroAccount.saldo : 5037.0;
-  const plentiUSD = plentiAccount ? plentiAccount.saldo : 1500.0;
+  const rawPortItems = data.portfolioItems || [];
+  const calculatedPortItems = rawPortItems.map((item, idx) => {
+    const isUSD = item.moneda === 'USD';
+    const valorCOP = isUSD ? item.saldo * dolarRate : item.saldo;
+    return {
+      id: item.id,
+      label: item.nombre,
+      moneda: item.moneda,
+      saldoOriginal: item.saldo,
+      valorCOP,
+      icon: item.icon,
+      color: item.color || palette[idx % palette.length]
+    };
+  });
 
-  const etoroCOP = etoroUSD * dolarRate;
-  const plentiCOP = plentiUSD * dolarRate;
-  const nuEmergenciaCOP = data.portfolioExtras?.nuEmergenciaCOP || 24001919.0;
-  const comfamaCasaCOP = data.portfolioExtras?.comfamaCasaCOP || 2812407.0;
-  const bancolombiaAhorroCOP = data.portfolioExtras?.bancolombiaAhorroCOP || 0.0;
+  const totalPortafolio = calculatedPortItems.reduce((sum, item) => sum + item.valorCOP, 0);
 
-  const totalPortafolio = etoroCOP + plentiCOP + nuEmergenciaCOP + comfamaCasaCOP + bancolombiaAhorroCOP;
-
-  const portfolioItems = [
-    {
-      key: 'etoro',
-      label: 'Etoro ETF',
-      category: 'Inversión USD',
-      valorCOP: etoroCOP,
-      valorOriginal: `$${etoroUSD.toLocaleString('es-CO')} USD`,
-      percentage: totalPortafolio > 0 ? (etoroCOP / totalPortafolio) * 100 : 0,
-      color: '#2563eb'
-    },
-    {
-      key: 'nu',
-      label: 'Nu Emergencia',
-      category: 'Fondo de Emergencia',
-      valorCOP: nuEmergenciaCOP,
-      percentage: totalPortafolio > 0 ? (nuEmergenciaCOP / totalPortafolio) * 100 : 0,
-      color: '#3b82f6'
-    },
-    {
-      key: 'plenti',
-      label: 'Plenti USDt',
-      category: 'Dólares Digitales',
-      valorCOP: plentiCOP,
-      valorOriginal: `$${plentiUSD.toLocaleString('es-CO')} USD`,
-      percentage: totalPortafolio > 0 ? (plentiCOP / totalPortafolio) * 100 : 0,
-      color: '#60a5fa'
-    },
-    {
-      key: 'comfama',
-      label: 'Comfama Casa',
-      category: 'Ahorro Vivienda',
-      valorCOP: comfamaCasaCOP,
-      percentage: totalPortafolio > 0 ? (comfamaCasaCOP / totalPortafolio) * 100 : 0,
-      color: '#93c5fd'
-    },
-    {
-      key: 'bancolombia',
-      label: 'Bancolombia',
-      category: 'Ahorro a la mano',
-      valorCOP: bancolombiaAhorroCOP,
-      percentage: totalPortafolio > 0 ? (bancolombiaAhorroCOP / totalPortafolio) * 100 : 0,
-      color: '#64748b'
-    }
-  ];
+  const portfolioItemsWithPercentages = calculatedPortItems.map(item => ({
+    ...item,
+    percentage: totalPortafolio > 0 ? (item.valorCOP / totalPortafolio) * 100 : 0
+  }));
 
   return {
     mode: data.mode,
@@ -355,13 +313,8 @@ export function calculateAllFinances(data: AppFinanceData): CalculatedSummary {
       m11_disponible
     },
     portafolio: {
-      etoroCOP,
-      plentiCOP,
-      nuEmergenciaCOP,
-      comfamaCasaCOP,
-      bancolombiaAhorroCOP,
       totalPortafolio,
-      items: portfolioItems
+      items: portfolioItemsWithPercentages
     }
   };
 }

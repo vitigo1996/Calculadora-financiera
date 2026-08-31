@@ -1,8 +1,8 @@
-import { AppFinanceData, BilleteraAccountItem, DeudaItem } from '../models/finance';
+import { AppFinanceData, BilleteraAccountItem, DeudaItem, PortfolioAccountItem } from '../models/finance';
 import { initialFinanceData } from './defaultData';
 import * as XLSX from 'xlsx';
 
-const STORAGE_KEY = 'app_finanzas_data_v5';
+const STORAGE_KEY = 'app_finanzas_data_v6';
 
 export const StorageService = {
   loadData(): AppFinanceData {
@@ -10,17 +10,22 @@ export const StorageService = {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
-        if (parsed && Array.isArray(parsed.deudaItems)) {
-          parsed.deudaItems = parsed.deudaItems.map((d: any) => ({
-            ...d,
-            moneda: d.moneda || 'COP',
-            tipo: d.tipo || 'por_pagar'
-          }));
+        if (parsed) {
+          if (Array.isArray(parsed.deudaItems)) {
+            parsed.deudaItems = parsed.deudaItems.map((d: any) => ({
+              ...d,
+              moneda: d.moneda || 'COP',
+              tipo: d.tipo || 'por_pagar'
+            }));
+          }
+          if (!Array.isArray(parsed.portfolioItems) || parsed.portfolioItems.length === 0) {
+            parsed.portfolioItems = initialFinanceData.portfolioItems;
+          }
+          return {
+            ...initialFinanceData,
+            ...parsed
+          };
         }
-        return {
-          ...initialFinanceData,
-          ...parsed
-        };
       }
     } catch (e) {
       console.error('Error loading data from localStorage', e);
@@ -71,20 +76,21 @@ export const StorageService = {
     // Sheet: Deudas
     const deudasRows = data.deudaItems.map(d => ({
       Concepto: d.nombre,
-      Tipo: d.tipo === 'por_cobrar' ? 'Por Cobrar (Me deben)' : 'Por Pagar (Debo pagar)',
+      Tipo: d.tipo === 'por_cobrar' ? 'Me Deben' : 'Debo',
       Monto: d.monto || 0,
       Moneda: d.moneda || 'COP'
     }));
     const wsDeudas = XLSX.utils.json_to_sheet(deudasRows);
     XLSX.utils.book_append_sheet(wb, wsDeudas, 'Deudas');
 
-    // Sheet: Vivienda
-    const wsHousing = XLSX.utils.json_to_sheet(data.housingExpenses);
-    XLSX.utils.book_append_sheet(wb, wsHousing, 'Vivienda');
-
-    // Sheet: Suscripciones
-    const wsSub = XLSX.utils.json_to_sheet(data.subscriptions);
-    XLSX.utils.book_append_sheet(wb, wsSub, 'Suscripciones');
+    // Sheet: Portafolio
+    const portRows = (data.portfolioItems || []).map(p => ({
+      Activo: p.nombre,
+      Saldo: p.saldo,
+      Moneda: p.moneda
+    }));
+    const wsPort = XLSX.utils.json_to_sheet(portRows);
+    XLSX.utils.book_append_sheet(wb, wsPort, 'Portafolio');
 
     XLSX.writeFile(wb, `Finanzas_Export_${new Date().toISOString().slice(0, 10)}.xlsx`);
   }

@@ -27,6 +27,15 @@ export interface DeudaItem {
   icon?: string;
 }
 
+export interface PortfolioAccountItem {
+  id: string;
+  nombre: string;
+  moneda: 'COP' | 'USD';
+  saldo: number;
+  icon?: string;
+  color?: string;
+}
+
 export interface HousingExpense {
   id: string;
   name: string;
@@ -71,11 +80,12 @@ export interface AppFinanceData {
   dolarRateLiveUpdated?: string;
   billeteraItems: BilleteraAccountItem[];
   deudaItems: DeudaItem[];
+  portfolioItems: PortfolioAccountItem[];
   housingExpenses: HousingExpense[];
   obligations: ObligationItem[];
   creditCards: CreditCardItem[];
   subscriptions: SubscriptionItem[];
-  portfolioExtras: {
+  portfolioExtras?: {
     nuEmergenciaCOP: number;
     comfamaCasaCOP: number;
     bancolombiaAhorroCOP: number;

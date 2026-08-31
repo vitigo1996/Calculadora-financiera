@@ -2,17 +2,18 @@ import { AppFinanceData } from '../models/finance';
 
 export const initialFinanceData: AppFinanceData = {
   mode: 'shared',
+  expenseSplitMethod: 'proportional',
   people: [
     {
       id: 'p-1',
-      name: 'David',
+      name: 'Yo',
       monthlyIncome: 4400000,
       healthPensionRate: 0.08,
       enabled: true
     },
     {
       id: 'p-2',
-      name: 'Daniela',
+      name: 'Persona 2',
       monthlyIncome: 8500000,
       healthPensionRate: 0.0,
       enabled: true
@@ -81,6 +82,48 @@ export const initialFinanceData: AppFinanceData = {
       moneda: 'COP',
       tipo: 'por_pagar',
       icon: 'scale'
+    }
+  ],
+  portfolioItems: [
+    {
+      id: 'port-etoro',
+      nombre: 'Etoro ETF',
+      moneda: 'USD',
+      saldo: 5037.0,
+      icon: 'trending_up',
+      color: '#2563eb'
+    },
+    {
+      id: 'port-nu',
+      nombre: 'Nu Emergencia',
+      moneda: 'COP',
+      saldo: 24001919.0,
+      icon: 'shield_check',
+      color: '#3b82f6'
+    },
+    {
+      id: 'port-plenti',
+      nombre: 'Plenti USDt',
+      moneda: 'USD',
+      saldo: 1500.0,
+      icon: 'coins',
+      color: '#60a5fa'
+    },
+    {
+      id: 'port-comfama',
+      nombre: 'Comfama Casa',
+      moneda: 'COP',
+      saldo: 2812407.0,
+      icon: 'home',
+      color: '#93c5fd'
+    },
+    {
+      id: 'port-bancolombia',
+      nombre: 'Bancolombia Ahorro',
+      moneda: 'COP',
+      saldo: 0.0,
+      icon: 'building',
+      color: '#64748b'
     }
   ],
   housingExpenses: [
@@ -219,10 +262,5 @@ export const initialFinanceData: AppFinanceData = {
       active: true
     }
   ],
-  portfolioExtras: {
-    nuEmergenciaCOP: 24001919.0,
-    comfamaCasaCOP: 2812407.0,
-    bancolombiaAhorroCOP: 0.0
-  },
   lastUpdated: new Date().toISOString()
 };

@@ -8,6 +8,7 @@ import {
   ObligationItem,
   BilleteraAccountItem,
   DeudaItem,
+  PortfolioAccountItem,
   ExpenseSplitMethod
 } from '../models/finance';
 import { StorageService } from '../services/storageService';
@@ -29,13 +30,15 @@ interface FinanceContextType {
   addDeudaItem: (item: { nombre: string; monto?: number; moneda: 'COP' | 'USD'; tipo: 'por_cobrar' | 'por_pagar'; icon?: string }) => void;
   updateDeudaItem: (id: string, updated: Partial<DeudaItem>) => void;
   deleteDeudaItem: (id: string) => void;
+  addPortfolioItem: (item: { nombre: string; moneda: 'COP' | 'USD'; saldo: number; icon?: string }) => void;
+  updatePortfolioItem: (id: string, updated: Partial<PortfolioAccountItem>) => void;
+  deletePortfolioItem: (id: string) => void;
   updateHousingExpense: (id: string, updated: Partial<HousingExpense>) => void;
   updateObligation: (id: string, updated: Partial<ObligationItem>) => void;
   addCardPurchase: (cardId: string, purchase: { concept: string; amount: number }) => void;
   deleteCardPurchase: (cardId: string, purchaseId: string) => void;
   updateCreditCard: (id: string, updated: Partial<CreditCardItem>) => void;
   toggleSubscription: (id: string) => void;
-  updatePortfolioExtras: (extras: Partial<AppFinanceData['portfolioExtras']>) => void;
   resetToDefault: () => void;
   importData: (imported: AppFinanceData) => void;
 }
@@ -153,6 +156,31 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }));
   };
 
+  const addPortfolioItem = (item: { nombre: string; moneda: 'COP' | 'USD'; saldo: number; icon?: string }) => {
+    const newItem: PortfolioAccountItem = {
+      id: `port-${Date.now()}`,
+      ...item
+    };
+    setData(prev => ({
+      ...prev,
+      portfolioItems: [...(prev.portfolioItems || []), newItem]
+    }));
+  };
+
+  const updatePortfolioItem = (id: string, updated: Partial<PortfolioAccountItem>) => {
+    setData(prev => ({
+      ...prev,
+      portfolioItems: (prev.portfolioItems || []).map(p => (p.id === id ? { ...p, ...updated } : p))
+    }));
+  };
+
+  const deletePortfolioItem = (id: string) => {
+    setData(prev => ({
+      ...prev,
+      portfolioItems: (prev.portfolioItems || []).filter(p => p.id !== id)
+    }));
+  };
+
   const updateHousingExpense = (id: string, updated: Partial<HousingExpense>) => {
     setData(prev => ({
       ...prev,
@@ -198,13 +226,6 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }));
   };
 
-  const updatePortfolioExtras = (extras: Partial<AppFinanceData['portfolioExtras']>) => {
-    setData(prev => ({
-      ...prev,
-      portfolioExtras: { ...prev.portfolioExtras, ...extras }
-    }));
-  };
-
   const resetToDefault = () => {
     const def = StorageService.resetData();
     setData(def);
@@ -231,13 +252,15 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         addDeudaItem,
         updateDeudaItem,
         deleteDeudaItem,
+        addPortfolioItem,
+        updatePortfolioItem,
+        deletePortfolioItem,
         updateHousingExpense,
         updateObligation,
         addCardPurchase,
         deleteCardPurchase,
         updateCreditCard,
         toggleSubscription,
-        updatePortfolioExtras,
         resetToDefault,
         importData
       }}
