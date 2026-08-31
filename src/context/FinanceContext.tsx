@@ -27,12 +27,15 @@ interface FinanceContextType {
   addBilleteraItem: (item: { nombre: string; moneda: 'COP' | 'USD'; saldo: number; icon?: string }) => void;
   updateBilleteraItem: (id: string, updated: Partial<BilleteraAccountItem>) => void;
   deleteBilleteraItem: (id: string) => void;
+  moveBilleteraItem: (index: number, direction: 'up' | 'down') => void;
   addDeudaItem: (item: { nombre: string; monto?: number; moneda: 'COP' | 'USD'; tipo: 'por_cobrar' | 'por_pagar'; icon?: string }) => void;
   updateDeudaItem: (id: string, updated: Partial<DeudaItem>) => void;
   deleteDeudaItem: (id: string) => void;
+  moveDeudaItem: (index: number, direction: 'up' | 'down') => void;
   addPortfolioItem: (item: { nombre: string; moneda: 'COP' | 'USD'; saldo: number; icon?: string }) => void;
   updatePortfolioItem: (id: string, updated: Partial<PortfolioAccountItem>) => void;
   deletePortfolioItem: (id: string) => void;
+  movePortfolioItem: (index: number, direction: 'up' | 'down') => void;
   updateHousingExpense: (id: string, updated: Partial<HousingExpense>) => void;
   updateObligation: (id: string, updated: Partial<ObligationItem>) => void;
   addCardPurchase: (cardId: string, purchase: { concept: string; amount: number }) => void;
@@ -131,6 +134,18 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }));
   };
 
+  const moveBilleteraItem = (index: number, direction: 'up' | 'down') => {
+    setData(prev => {
+      const list = [...prev.billeteraItems];
+      const targetIndex = direction === 'up' ? index - 1 : index + 1;
+      if (targetIndex < 0 || targetIndex >= list.length) return prev;
+      const temp = list[index];
+      list[index] = list[targetIndex];
+      list[targetIndex] = temp;
+      return { ...prev, billeteraItems: list };
+    });
+  };
+
   const addDeudaItem = (item: { nombre: string; monto?: number; moneda: 'COP' | 'USD'; tipo: 'por_cobrar' | 'por_pagar'; icon?: string }) => {
     const newItem: DeudaItem = {
       id: `deuda-${Date.now()}`,
@@ -156,6 +171,18 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }));
   };
 
+  const moveDeudaItem = (index: number, direction: 'up' | 'down') => {
+    setData(prev => {
+      const list = [...prev.deudaItems];
+      const targetIndex = direction === 'up' ? index - 1 : index + 1;
+      if (targetIndex < 0 || targetIndex >= list.length) return prev;
+      const temp = list[index];
+      list[index] = list[targetIndex];
+      list[targetIndex] = temp;
+      return { ...prev, deudaItems: list };
+    });
+  };
+
   const addPortfolioItem = (item: { nombre: string; moneda: 'COP' | 'USD'; saldo: number; icon?: string }) => {
     const newItem: PortfolioAccountItem = {
       id: `port-${Date.now()}`,
@@ -179,6 +206,18 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       ...prev,
       portfolioItems: (prev.portfolioItems || []).filter(p => p.id !== id)
     }));
+  };
+
+  const movePortfolioItem = (index: number, direction: 'up' | 'down') => {
+    setData(prev => {
+      const list = [...(prev.portfolioItems || [])];
+      const targetIndex = direction === 'up' ? index - 1 : index + 1;
+      if (targetIndex < 0 || targetIndex >= list.length) return prev;
+      const temp = list[index];
+      list[index] = list[targetIndex];
+      list[targetIndex] = temp;
+      return { ...prev, portfolioItems: list };
+    });
   };
 
   const updateHousingExpense = (id: string, updated: Partial<HousingExpense>) => {
@@ -249,12 +288,15 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         addBilleteraItem,
         updateBilleteraItem,
         deleteBilleteraItem,
+        moveBilleteraItem,
         addDeudaItem,
         updateDeudaItem,
         deleteDeudaItem,
+        moveDeudaItem,
         addPortfolioItem,
         updatePortfolioItem,
         deletePortfolioItem,
+        movePortfolioItem,
         updateHousingExpense,
         updateObligation,
         addCardPurchase,

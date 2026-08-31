@@ -208,9 +208,19 @@ export function calculateAllFinances(data: AppFinanceData): CalculatedSummary {
   // M11: Disponible
   const m11_disponible = p1.monthlyIncome - m7_totalGastos;
 
-  // Portafolio Dinámico
+  // Portafolio Dinámico con Gama de Colores Amplia y Distinguible
   const dolarRate = data.dolarRate || 3600;
-  const palette = ['#2563eb', '#3b82f6', '#60a5fa', '#93c5fd', '#64748b', '#0284c7', '#0369a1'];
+  const distinctPalette = [
+    '#3b82f6', // Blue
+    '#10b981', // Emerald
+    '#f59e0b', // Amber
+    '#8b5cf6', // Violet
+    '#ec4899', // Pink
+    '#06b6d4', // Cyan
+    '#f97316', // Orange
+    '#14b8a6', // Teal
+    '#6366f1'  // Indigo
+  ];
 
   const rawPortItems = data.portfolioItems || [];
   const calculatedPortItems = rawPortItems.map((item, idx) => {
@@ -223,7 +233,7 @@ export function calculateAllFinances(data: AppFinanceData): CalculatedSummary {
       saldoOriginal: item.saldo,
       valorCOP,
       icon: item.icon,
-      color: item.color || palette[idx % palette.length]
+      color: item.color || distinctPalette[idx % distinctPalette.length]
     };
   });
 

@@ -11,7 +11,9 @@ import {
   Minus,
   Trash2,
   X,
-  Calculator
+  Calculator,
+  ChevronUp,
+  ChevronDown
 } from 'lucide-react';
 
 export const PortafolioView: React.FC = () => {
@@ -20,7 +22,8 @@ export const PortafolioView: React.FC = () => {
     summary,
     addPortfolioItem,
     updatePortfolioItem,
-    deletePortfolioItem
+    deletePortfolioItem,
+    movePortfolioItem
   } = useFinance();
 
   const dolarRate = data.dolarRate || 3600;
@@ -131,7 +134,7 @@ export const PortafolioView: React.FC = () => {
         </div>
       </div>
 
-      {/* Recuadro Portafolio (Mismo formato que Billetera) */}
+      {/* Recuadro Portafolio */}
       <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
         <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
           <h3 className="font-bold text-slate-800 dark:text-white text-sm">Portafolio</h3>
@@ -146,10 +149,12 @@ export const PortafolioView: React.FC = () => {
         </div>
 
         <div className="divide-y divide-slate-200 dark:divide-slate-800">
-          {(data.portfolioItems || []).map(item => {
+          {(data.portfolioItems || []).map((item, idx) => {
             const Icon = getIconComponent(item.icon || 'trending_up');
             const isUSD = item.moneda === 'USD';
             const equivalentCOP = isUSD ? item.saldo * dolarRate : null;
+            const isFirst = idx === 0;
+            const isLast = idx === (data.portfolioItems || []).length - 1;
 
             return (
               <div
@@ -157,6 +162,34 @@ export const PortafolioView: React.FC = () => {
                 className="p-4 bg-white dark:bg-slate-900 transition-colors flex items-center justify-between"
               >
                 <div className="flex items-center gap-3">
+                  {/* Controles para reordenar arriba/abajo */}
+                  <div className="flex flex-col gap-0.5">
+                    <button
+                      onClick={() => movePortfolioItem(idx, 'up')}
+                      disabled={isFirst}
+                      title="Mover arriba"
+                      className={`p-1 rounded-lg transition-colors ${
+                        isFirst
+                          ? 'text-slate-300 dark:text-slate-700 cursor-not-allowed'
+                          : 'text-slate-500 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-slate-800'
+                      }`}
+                    >
+                      <ChevronUp className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => movePortfolioItem(idx, 'down')}
+                      disabled={isLast}
+                      title="Mover abajo"
+                      className={`p-1 rounded-lg transition-colors ${
+                        isLast
+                          ? 'text-slate-300 dark:text-slate-700 cursor-not-allowed'
+                          : 'text-slate-500 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-slate-800'
+                      }`}
+                    >
+                      <ChevronDown className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+
                   <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${getItemIconStyle()}`}>
                     <Icon className="w-5 h-5" />
                   </div>
@@ -174,7 +207,6 @@ export const PortafolioView: React.FC = () => {
 
                 <div className="flex items-center gap-2">
                   <div className="text-right flex items-center gap-1.5">
-                    {/* Moneda como texto plano */}
                     <span className="text-xs font-semibold font-mono text-slate-500 dark:text-slate-400">
                       {item.moneda}
                     </span>
@@ -197,45 +229,82 @@ export const PortafolioView: React.FC = () => {
         </div>
       </div>
 
-      {/* Gráfico Donut y Distribución */}
+      {/* Gráfico Donut: Etiquetas en columna a la izquierda y Gráfica a la derecha */}
       {port.items.length > 0 && (
-        <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-300 dark:border-slate-800 shadow-sm transition-colors">
-          <div className="h-44 flex items-center justify-center">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={port.items}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={42}
-                  outerRadius={65}
-                  paddingAngle={3}
-                  dataKey="valorCOP"
-                >
-                  {port.items.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  formatter={(value: any) => `COP ${formatCurrency(Number(value), 'COP')}`}
-                  contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '12px', fontSize: '12px', color: '#fff' }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
+        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-300 dark:border-slate-800 shadow-sm transition-colors">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+            {/* Columna Izquierda: Etiquetas con colores distinguibles */}
+            <div className="space-y-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-2">
+                Distribución de Activos
+              </span>
+              <div className="space-y-2">
+                {port.items.map((item, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center justify-between p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 transition-colors"
+                  >
+                    <div className="flex items-center gap-2.5 truncate">
+                      <span
+                        className="w-3.5 h-3.5 rounded-full flex-shrink-0 shadow-sm ring-1 ring-white/20"
+                        style={{ backgroundColor: item.color }}
+                      ></span>
+                      <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
+                        {item.label}
+                      </span>
+                    </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-3 pt-3 border-t border-slate-200 dark:border-slate-800">
-            {port.items.map((item, i) => (
-              <div key={i} className="flex items-center justify-between text-xs p-1.5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800">
-                <div className="flex items-center gap-1.5 truncate">
-                  <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }}></span>
-                  <span className="text-slate-700 dark:text-slate-300 font-medium truncate">{item.label}</span>
-                </div>
-                <span className="font-bold text-blue-700 dark:text-blue-300 font-mono ml-1">
-                  {item.percentage.toFixed(1)}%
-                </span>
+                    <div className="text-right flex items-center gap-2 flex-shrink-0">
+                      <span className="text-xs font-mono text-slate-500 dark:text-slate-400 hidden sm:inline">
+                        COP {formatCurrency(item.valorCOP, 'COP')}
+                      </span>
+                      <span
+                        className="font-bold text-xs font-mono px-2 py-0.5 rounded-lg text-white"
+                        style={{ backgroundColor: item.color }}
+                      >
+                        {item.percentage.toFixed(1)}%
+                      </span>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
+
+            {/* Columna Derecha: Gráfica Donut con Tooltip de Alto Contraste */}
+            <div className="h-56 flex items-center justify-center">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={port.items}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={50}
+                    outerRadius={80}
+                    paddingAngle={3}
+                    dataKey="valorCOP"
+                    nameKey="label"
+                  >
+                    {port.items.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} stroke="#ffffff" strokeWidth={1.5} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    formatter={(value: any, name: any) => [`COP ${formatCurrency(Number(value), 'COP')}`, `${name}`]}
+                    contentStyle={{
+                      backgroundColor: '#0f172a',
+                      borderColor: '#334155',
+                      borderRadius: '16px',
+                      padding: '10px 14px',
+                      color: '#ffffff',
+                      fontWeight: 'bold',
+                      boxShadow: '0 12px 30px -4px rgba(0, 0, 0, 0.4)'
+                    }}
+                    itemStyle={{ color: '#60a5fa', fontSize: '13px', fontWeight: 'bold' }}
+                    labelStyle={{ color: '#f8fafc', fontSize: '13px', fontWeight: 'bold' }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </div>
       )}

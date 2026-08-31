@@ -12,7 +12,9 @@ import {
   X,
   Calculator,
   ArrowDownLeft,
-  ArrowUpRight
+  ArrowUpRight,
+  ChevronUp,
+  ChevronDown
 } from 'lucide-react';
 
 export const BilleteraView: React.FC = () => {
@@ -21,9 +23,11 @@ export const BilleteraView: React.FC = () => {
     addBilleteraItem,
     updateBilleteraItem,
     deleteBilleteraItem,
+    moveBilleteraItem,
     addDeudaItem,
     updateDeudaItem,
-    deleteDeudaItem
+    deleteDeudaItem,
+    moveDeudaItem
   } = useFinance();
 
   const dolarRate = data.dolarRate || 3600;
@@ -230,10 +234,12 @@ export const BilleteraView: React.FC = () => {
         </div>
 
         <div className="divide-y divide-slate-200 dark:divide-slate-800">
-          {data.billeteraItems.map(item => {
+          {data.billeteraItems.map((item, idx) => {
             const Icon = getIconComponent(item.icon);
             const isUSD = item.moneda === 'USD';
             const equivalentCOP = isUSD ? item.saldo * dolarRate : null;
+            const isFirst = idx === 0;
+            const isLast = idx === data.billeteraItems.length - 1;
 
             return (
               <div
@@ -241,6 +247,34 @@ export const BilleteraView: React.FC = () => {
                 className="p-4 bg-white dark:bg-slate-900 transition-colors flex items-center justify-between"
               >
                 <div className="flex items-center gap-3">
+                  {/* Reorder Buttons */}
+                  <div className="flex flex-col gap-0.5">
+                    <button
+                      onClick={() => moveBilleteraItem(idx, 'up')}
+                      disabled={isFirst}
+                      title="Mover arriba"
+                      className={`p-1 rounded-lg transition-colors ${
+                        isFirst
+                          ? 'text-slate-300 dark:text-slate-700 cursor-not-allowed'
+                          : 'text-slate-500 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-slate-800'
+                      }`}
+                    >
+                      <ChevronUp className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => moveBilleteraItem(idx, 'down')}
+                      disabled={isLast}
+                      title="Mover abajo"
+                      className={`p-1 rounded-lg transition-colors ${
+                        isLast
+                          ? 'text-slate-300 dark:text-slate-700 cursor-not-allowed'
+                          : 'text-slate-500 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-slate-800'
+                      }`}
+                    >
+                      <ChevronDown className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+
                   <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${getItemIconStyle()}`}>
                     <Icon className="w-5 h-5" />
                   </div>
@@ -258,7 +292,6 @@ export const BilleteraView: React.FC = () => {
 
                 <div className="flex items-center gap-2">
                   <div className="text-right flex items-center gap-1.5">
-                    {/* Moneda como texto plano limpio sin recuadro */}
                     <span className="text-xs font-semibold font-mono text-slate-500 dark:text-slate-400">
                       {item.moneda}
                     </span>
@@ -296,11 +329,13 @@ export const BilleteraView: React.FC = () => {
         </div>
 
         <div className="divide-y divide-slate-200 dark:divide-slate-800">
-          {data.deudaItems.map(item => {
+          {data.deudaItems.map((item, idx) => {
             const Icon = getIconComponent(item.icon || 'shield_alert');
             const hasAmount = item.monto !== undefined && item.monto > 0;
             const isPorCobrar = item.tipo === 'por_cobrar';
             const moneda = item.moneda || 'COP';
+            const isFirst = idx === 0;
+            const isLast = idx === data.deudaItems.length - 1;
 
             return (
               <div
@@ -308,6 +343,34 @@ export const BilleteraView: React.FC = () => {
                 className="p-4 bg-white dark:bg-slate-900 transition-colors flex items-center justify-between"
               >
                 <div className="flex items-center gap-3">
+                  {/* Reorder Buttons */}
+                  <div className="flex flex-col gap-0.5">
+                    <button
+                      onClick={() => moveDeudaItem(idx, 'up')}
+                      disabled={isFirst}
+                      title="Mover arriba"
+                      className={`p-1 rounded-lg transition-colors ${
+                        isFirst
+                          ? 'text-slate-300 dark:text-slate-700 cursor-not-allowed'
+                          : 'text-slate-500 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-slate-800'
+                      }`}
+                    >
+                      <ChevronUp className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => moveDeudaItem(idx, 'down')}
+                      disabled={isLast}
+                      title="Mover abajo"
+                      className={`p-1 rounded-lg transition-colors ${
+                        isLast
+                          ? 'text-slate-300 dark:text-slate-700 cursor-not-allowed'
+                          : 'text-slate-500 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-slate-800'
+                      }`}
+                    >
+                      <ChevronDown className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+
                   <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${getItemIconStyle()}`}>
                     <Icon className="w-5 h-5" />
                   </div>
@@ -334,7 +397,6 @@ export const BilleteraView: React.FC = () => {
                 <div className="flex items-center gap-2">
                   {hasAmount ? (
                     <div className="text-right flex items-center gap-1.5">
-                      {/* Moneda como texto plano limpio sin recuadro */}
                       <span className="text-xs font-semibold font-mono text-slate-500 dark:text-slate-400">
                         {moneda}
                       </span>
