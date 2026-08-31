@@ -76,7 +76,7 @@ export const GastosFijosView: React.FC = () => {
             const isEditing = editingHousingId === item.id;
 
             return (
-              <div key={item.id} className="p-4 hover:bg-slate-50 dark:hover:bg-slate-850/50 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div key={item.id} className="p-4 bg-white dark:bg-slate-900 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-start gap-3">
                   <span className="mt-0.5 px-2.5 py-1 rounded-xl text-xs font-bold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800/40">
                     {item.period === '1st_fortnight' ? '1ª Quincena' : '2ª Quincena'}
@@ -115,7 +115,7 @@ export const GastosFijosView: React.FC = () => {
                   ) : (
                     <>
                       <div className="flex items-center gap-1">
-                        <span className="text-[11px] font-bold font-mono px-1.5 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                        <span className="text-xs font-semibold font-mono text-slate-500 dark:text-slate-400">
                           COP
                         </span>
                         <span className="font-mono font-bold text-sm text-blue-600 dark:text-blue-400">
@@ -158,7 +158,7 @@ export const GastosFijosView: React.FC = () => {
             const isEditing = editingObligationId === item.id;
 
             return (
-              <div key={item.id} className="p-4 hover:bg-slate-50 dark:hover:bg-slate-850/50 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div key={item.id} className="p-4 bg-white dark:bg-slate-900 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-start gap-3">
                   <span className="mt-0.5 px-2.5 py-1 rounded-xl text-xs font-bold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800/40">
                     1ª Quincena
@@ -208,7 +208,7 @@ export const GastosFijosView: React.FC = () => {
                   ) : (
                     <>
                       <div className="flex items-center gap-1">
-                        <span className="text-[11px] font-bold font-mono px-1.5 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                        <span className="text-xs font-semibold font-mono text-slate-500 dark:text-slate-400">
                           COP
                         </span>
                         <span className="font-mono font-bold text-sm text-blue-600 dark:text-blue-400">
