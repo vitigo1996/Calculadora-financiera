@@ -587,19 +587,13 @@ export const GastosFijosView: React.FC = () => {
             <Sparkles className="w-4 h-4 text-blue-600 dark:text-blue-400" /> Suscripciones
           </h3>
 
-          {/* Botón Agregar a la izquierda y Total a su derecha */}
-          <div className="flex items-center gap-3">
-            <button
-              onClick={openCreateSub}
-              className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800/40 hover:bg-blue-200 transition-all flex items-center gap-1 shadow-sm"
-            >
-              <Plus className="w-3.5 h-3.5" /> Agregar
-            </button>
-
-            <span className="text-xs text-slate-500 dark:text-slate-400">
-              Total: <strong className="text-blue-600 dark:text-blue-400 font-mono font-bold">{formatCurrency(summary.suscripciones.totalMonthly, baseCurrency)}</strong>
-            </span>
-          </div>
+          {/* Botón directo de Agregar */}
+          <button
+            onClick={openCreateSub}
+            className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800/40 hover:bg-blue-200 transition-all flex items-center gap-1 shadow-sm"
+          >
+            <Plus className="w-3.5 h-3.5" /> Agregar
+          </button>
         </div>
 
         <div className="divide-y divide-slate-200 dark:divide-slate-800">
