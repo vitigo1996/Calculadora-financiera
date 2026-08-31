@@ -46,14 +46,16 @@ interface FinanceContextType {
   cancelCardCutoff: (cardId: string) => void;
   addCardPurchase: (cardId: string, purchase: { concept: string; amount: number }) => void;
   deleteCardPurchase: (cardId: string, purchaseId: string) => void;
-  addHousingExpense: (item: { name: string; period: PaymentPeriod; totalAmount: number; icon?: string }) => void;
+  addHousingExpense: (item: { name: string; period: PaymentPeriod; totalAmount: number; isShared?: boolean; icon?: string }) => void;
   updateHousingExpense: (id: string, updated: Partial<HousingExpense>) => void;
   deleteHousingExpense: (id: string) => void;
   moveHousingExpense: (index: number, direction: 'up' | 'down') => void;
-  addObligation: (item: { name: string; period: PaymentPeriod; totalAmount: number; totalDebtBalance?: number; icon?: string }) => void;
+  toggleHousingShared: (id: string) => void;
+  addObligation: (item: { name: string; period: PaymentPeriod; totalAmount: number; totalDebtBalance?: number; isShared?: boolean; icon?: string }) => void;
   updateObligation: (id: string, updated: Partial<ObligationItem>) => void;
   deleteObligation: (id: string) => void;
   moveObligation: (index: number, direction: 'up' | 'down') => void;
+  toggleObligationShared: (id: string) => void;
   addSubscription: (item: { name: string; totalPrice: number; members: number; billing: 'monthly' | 'yearly'; period?: PaymentPeriod; icon?: string }) => void;
   updateSubscription: (id: string, updated: Partial<SubscriptionItem>) => void;
   deleteSubscription: (id: string) => void;
@@ -366,9 +368,10 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   // Housing CRUD
-  const addHousingExpense = (item: { name: string; period: PaymentPeriod; totalAmount: number; icon?: string }) => {
+  const addHousingExpense = (item: { name: string; period: PaymentPeriod; totalAmount: number; isShared?: boolean; icon?: string }) => {
     const newH: HousingExpense = {
       id: `house-${Date.now()}`,
+      isShared: item.isShared !== undefined ? item.isShared : true,
       ...item
     };
     setData(prev => ({
@@ -403,10 +406,20 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     });
   };
 
+  const toggleHousingShared = (id: string) => {
+    setData(prev => ({
+      ...prev,
+      housingExpenses: prev.housingExpenses.map(h =>
+        h.id === id ? { ...h, isShared: h.isShared === false ? true : false } : h
+      )
+    }));
+  };
+
   // Obligations CRUD
-  const addObligation = (item: { name: string; period: PaymentPeriod; totalAmount: number; totalDebtBalance?: number; icon?: string }) => {
+  const addObligation = (item: { name: string; period: PaymentPeriod; totalAmount: number; totalDebtBalance?: number; isShared?: boolean; icon?: string }) => {
     const newOb: ObligationItem = {
       id: `ob-${Date.now()}`,
+      isShared: item.isShared !== undefined ? item.isShared : true,
       ...item
     };
     setData(prev => ({
@@ -439,6 +452,15 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       list[targetIndex] = temp;
       return { ...prev, obligations: list };
     });
+  };
+
+  const toggleObligationShared = (id: string) => {
+    setData(prev => ({
+      ...prev,
+      obligations: prev.obligations.map(o =>
+        o.id === id ? { ...o, isShared: o.isShared === false ? true : false } : o
+      )
+    }));
   };
 
   // Subscriptions CRUD
@@ -533,10 +555,12 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         updateHousingExpense,
         deleteHousingExpense,
         moveHousingExpense,
+        toggleHousingShared,
         addObligation,
         updateObligation,
         deleteObligation,
         moveObligation,
+        toggleObligationShared,
         addSubscription,
         updateSubscription,
         deleteSubscription,

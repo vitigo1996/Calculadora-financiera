@@ -42,6 +42,7 @@ export interface HousingExpense {
   referenceCode?: string;
   period: PaymentPeriod;
   totalAmount: number;
+  isShared?: boolean;
   icon?: string;
 }
 
@@ -53,6 +54,7 @@ export interface ObligationItem {
   davidAmount?: number;
   danielaAmount?: number;
   totalDebtBalance?: number;
+  isShared?: boolean;
   icon?: string;
 }
 
