@@ -3,15 +3,15 @@ import { useFinance } from '../../context/FinanceContext';
 import { formatCurrency } from '../../services/financeCalculations';
 import { BilleteraAccountItem, DeudaItem } from '../../models/finance';
 import { getIconComponent, IconPicker } from '../../components/ui/IconPicker';
+import { AmountCalculatorInput } from '../../components/ui/AmountCalculatorInput';
 import {
   Wallet,
   Edit2,
   Plus,
   Trash2,
-  Check,
   X,
   SlidersHorizontal,
-  Settings2
+  Calculator
 } from 'lucide-react';
 
 export const BilleteraView: React.FC = () => {
@@ -38,6 +38,9 @@ export const BilleteraView: React.FC = () => {
   const [billeteraBalance, setBilleteraBalance] = useState('');
   const [billeteraIcon, setBilleteraIcon] = useState('wallet');
 
+  // Calculator Modal for quick balance update
+  const [calcTargetBilletera, setCalcTargetBilletera] = useState<BilleteraAccountItem | null>(null);
+
   // Deudas Edit Mode & State
   const [isManagingDeudas, setIsManagingDeudas] = useState(false);
   const [showAddDeudaModal, setShowAddDeudaModal] = useState(false);
@@ -47,6 +50,9 @@ export const BilleteraView: React.FC = () => {
   const [deudaName, setDeudaName] = useState('');
   const [deudaAmount, setDeudaAmount] = useState('');
   const [deudaIcon, setDeudaIcon] = useState('shield_alert');
+
+  // Calculator Modal for quick debt update
+  const [calcTargetDeuda, setCalcTargetDeuda] = useState<DeudaItem | null>(null);
 
   // Helper color based on currency and name
   const getBilleteraColor = (name: string, moneda: 'COP' | 'USD') => {
@@ -202,11 +208,11 @@ export const BilleteraView: React.FC = () => {
                     <Icon className="w-5 h-5" />
                   </div>
                   <div>
-                    <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-1.5">
                       <h4 className="font-bold text-slate-800 dark:text-white text-sm">{item.nombre}</h4>
                       {isUSD && equivalentCOP !== null && (
-                        <span className="text-[11px] font-mono font-semibold px-2 py-0.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/40">
-                          ≈ {formatCurrency(equivalentCOP, 'COP')}
+                        <span className="text-xs font-mono font-medium text-emerald-600 dark:text-emerald-400">
+                          ({formatCurrency(equivalentCOP, 'COP')})
                         </span>
                       )}
                     </div>
@@ -219,6 +225,15 @@ export const BilleteraView: React.FC = () => {
                       {formatCurrency(item.saldo, item.moneda)}
                     </span>
                   </div>
+
+                  {/* Calculator Button to modify balance */}
+                  <button
+                    onClick={() => setCalcTargetBilletera(item)}
+                    className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/40 transition-colors"
+                    title="Calculadora de saldo (+ / -)"
+                  >
+                    <Calculator className="w-3.5 h-3.5" />
+                  </button>
 
                   <button
                     onClick={() => openEditBilletera(item)}
@@ -301,6 +316,15 @@ export const BilleteraView: React.FC = () => {
                     </span>
                   ) : null}
 
+                  {/* Calculator Button to modify debt */}
+                  <button
+                    onClick={() => setCalcTargetDeuda(item)}
+                    className="p-2 rounded-xl bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/40 transition-colors"
+                    title="Calculadora de deuda (+ / -)"
+                  >
+                    <Calculator className="w-3.5 h-3.5" />
+                  </button>
+
                   <button
                     onClick={() => openEditDeuda(item)}
                     className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors"
@@ -328,6 +352,38 @@ export const BilleteraView: React.FC = () => {
           })}
         </div>
       </div>
+
+      {/* Interactive Calculator Modal for Billetera */}
+      {calcTargetBilletera && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <AmountCalculatorInput
+            title={`Saldo: ${calcTargetBilletera.nombre}`}
+            currency={calcTargetBilletera.moneda}
+            initialValue={calcTargetBilletera.saldo}
+            onApply={newSaldo => {
+              updateBilleteraItem(calcTargetBilletera.id, { saldo: newSaldo });
+              setCalcTargetBilletera(null);
+            }}
+            onCancel={() => setCalcTargetBilletera(null)}
+          />
+        </div>
+      )}
+
+      {/* Interactive Calculator Modal for Deuda */}
+      {calcTargetDeuda && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <AmountCalculatorInput
+            title={`Deuda: ${calcTargetDeuda.nombre}`}
+            currency="COP"
+            initialValue={calcTargetDeuda.monto || 0}
+            onApply={newMonto => {
+              updateDeudaItem(calcTargetDeuda.id, { monto: newMonto });
+              setCalcTargetDeuda(null);
+            }}
+            onCancel={() => setCalcTargetDeuda(null)}
+          />
+        </div>
+      )}
 
       {/* Modal: Crear / Editar Billetera con IconPicker */}
       {showAddBilleteraModal && (
