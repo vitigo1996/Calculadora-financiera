@@ -792,7 +792,7 @@ export const BilleteraView: React.FC = () => {
                 >
                   {data.billeteraItems.map(acc => (
                     <option key={acc.id} value={acc.id}>
-                      {acc.nombre} ({formatCurrency(acc.saldo, acc.moneda)})
+                      {acc.nombre}
                     </option>
                   ))}
                 </select>
@@ -876,28 +876,25 @@ export const BilleteraView: React.FC = () => {
                       <optgroup label="Vivienda">
                         {data.housingExpenses.map(h => (
                           <option key={h.id} value={`h-${h.id}`}>
-                            {h.name} ({formatCurrency(h.totalAmount, h.moneda || 'COP')})
+                            {h.name}
                           </option>
                         ))}
                       </optgroup>
                     )}
                     {data.obligations.length > 0 && (
                       <optgroup label="Obligaciones">
-                        {data.obligations.map(ob => {
-                          const val = ob.davidAmount !== undefined && ob.davidAmount !== ob.totalAmount && ob.totalDebtBalance ? ob.davidAmount : ob.totalAmount;
-                          return (
-                            <option key={ob.id} value={`o-${ob.id}`}>
-                              {ob.name} ({formatCurrency(val, ob.moneda || 'COP')}/mes)
-                            </option>
-                          );
-                        })}
+                        {data.obligations.map(ob => (
+                          <option key={ob.id} value={`o-${ob.id}`}>
+                            {ob.name}
+                          </option>
+                        ))}
                       </optgroup>
                     )}
                     {data.deudaItems.length > 0 && (
                       <optgroup label="Deudas">
                         {data.deudaItems.map(d => (
                           <option key={d.id} value={`d-${d.id}`}>
-                            {d.nombre} ({formatCurrency(d.monto || 0, d.moneda || 'COP')})
+                            {d.nombre}
                           </option>
                         ))}
                       </optgroup>
@@ -918,15 +915,11 @@ export const BilleteraView: React.FC = () => {
                     className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
                     required
                   >
-                    {data.creditCards.map(card => {
-                      const cutoffDue = card.billingCutoffAmount;
-                      const hasCutoff = cutoffDue !== undefined;
-                      return (
-                        <option key={card.id} value={card.id}>
-                          {card.name} {hasCutoff ? `(Corte pendiente: ${formatCurrency(cutoffDue, card.moneda || 'COP')})` : ''}
-                        </option>
-                      );
-                    })}
+                    {data.creditCards.map(card => (
+                      <option key={card.id} value={card.id}>
+                        {card.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
               )}
