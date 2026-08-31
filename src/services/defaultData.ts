@@ -6,51 +6,87 @@ export const initialFinanceData: AppFinanceData = {
     {
       id: 'p-1',
       name: 'David',
-      monthlyIncome: 4400000, // H3
+      monthlyIncome: 4400000,
       healthPensionRate: 0.08,
       enabled: true
     },
     {
       id: 'p-2',
       name: 'Daniela',
-      monthlyIncome: 8500000, // I3
+      monthlyIncome: 8500000,
       healthPensionRate: 0.0,
       enabled: true
     }
   ],
-  billetera: {
-    dolar: 3600, // C2 (Dólar TRM)
-    etoroUSD: 5037.0, // C3 (Etoro)
-    plentiUSD: 1500.0, // C4 (Plenti)
-    efectivoCOP: 130000.0, // C5 (Efectivo)
-    bancolombiaCOP: 350000.0 // C6 (Bancolombia)
-  },
-  deudas: {
-    autofinancieraMonto: 24166570.0, // B18, C18
-    multas: 'Multas y Contingencias', // B22
-    soatTecno: 'SOAT y Tecnomecánica', // B23
-    declaracion: 'Declaración de Renta' // B24
-  },
+  dolarRate: 3600,
+  billeteraItems: [
+    {
+      id: 'acc-etoro',
+      nombre: 'Etoro',
+      moneda: 'USD',
+      saldo: 5037.0
+    },
+    {
+      id: 'acc-plenti',
+      nombre: 'Plenti',
+      moneda: 'USD',
+      saldo: 1500.0
+    },
+    {
+      id: 'acc-efectivo',
+      nombre: 'Efectivo',
+      moneda: 'COP',
+      saldo: 130000.0
+    },
+    {
+      id: 'acc-bancolombia',
+      nombre: 'Bancolombia',
+      moneda: 'COP',
+      saldo: 350000.0
+    }
+  ],
+  deudaItems: [
+    {
+      id: 'deuda-auto',
+      nombre: 'Autofinanciera',
+      monto: 24166570.0
+    },
+    {
+      id: 'deuda-multas',
+      nombre: 'Multas',
+      monto: 0
+    },
+    {
+      id: 'deuda-soat',
+      nombre: 'Soat y Tecno',
+      monto: 0
+    },
+    {
+      id: 'deuda-declaracion',
+      nombre: 'Declaracion',
+      monto: 0
+    }
+  ],
   housingExpenses: [
     {
       id: 'house-1',
       name: 'Servicios (3628)',
       referenceCode: '3628',
       period: '1st_fortnight',
-      totalAmount: 251239.0 // G7
+      totalAmount: 251239.0
     },
     {
       id: 'house-2',
       name: 'Internet (07409278)',
       referenceCode: '07409278',
       period: '1st_fortnight',
-      totalAmount: 91521.0 // G8
+      totalAmount: 91521.0
     },
     {
       id: 'house-3',
       name: 'Arriendo',
       period: '2nd_fortnight',
-      totalAmount: 1367600.0 // G9
+      totalAmount: 1367600.0
     }
   ],
   obligations: [
@@ -58,17 +94,17 @@ export const initialFinanceData: AppFinanceData = {
       id: 'ob-1',
       name: 'Carro',
       period: '1st_fortnight',
-      totalAmount: 1521807.0, // G12
-      davidAmount: 519000.0, // H12 = G12 * H4
-      danielaAmount: 1521807.0 // I12
+      totalAmount: 1521807.0,
+      davidAmount: 519000.0,
+      danielaAmount: 1521807.0
     },
     {
       id: 'ob-2',
       name: 'Icetex',
       period: '1st_fortnight',
-      totalAmount: 3471648.0, // G13 (saldo deuda)
-      davidAmount: 49719.0, // H13 (pago David)
-      danielaAmount: 0.0, // I13
+      totalAmount: 3471648.0,
+      davidAmount: 49719.0,
+      danielaAmount: 0.0,
       totalDebtBalance: 3471648.0
     }
   ],
@@ -103,9 +139,9 @@ export const initialFinanceData: AppFinanceData = {
       name: 'Addi',
       period: '1st_fortnight',
       creditLimit: 8000000,
-      minPaymentOverride: 41650, // H18
+      minPaymentOverride: 41650,
       purchases: [
-        { id: 'p-addi', concept: 'Deuda Addi', amount: 124950 } // G18
+        { id: 'p-addi', concept: 'Deuda Addi', amount: 124950 }
       ]
     }
   ],
@@ -168,9 +204,9 @@ export const initialFinanceData: AppFinanceData = {
     }
   ],
   portfolioExtras: {
-    nuEmergenciaCOP: 24001919.0, // L16 / M16
-    comfamaCasaCOP: 2812407.0, // L17 / M17
-    bancolombiaAhorroCOP: 0.0 // L18 / M18
+    nuEmergenciaCOP: 24001919.0,
+    comfamaCasaCOP: 2812407.0,
+    bancolombiaAhorroCOP: 0.0
   },
   lastUpdated: new Date().toISOString()
 };

@@ -2,14 +2,12 @@ import React, { useState } from 'react';
 import { useFinance } from '../../context/FinanceContext';
 import { useTheme } from '../../context/ThemeContext';
 import { StorageService } from '../../services/storageService';
-import { formatCurrency } from '../../services/financeCalculations';
 import {
   Settings,
   User,
   Users,
   DollarSign,
   Download,
-  Upload,
   RefreshCw,
   Save,
   CheckCircle2,
@@ -19,7 +17,7 @@ import {
 } from 'lucide-react';
 
 export const SettingsView: React.FC = () => {
-  const { data, setMode, updatePeople, updateBilletera, resetToDefault, importData } = useFinance();
+  const { data, setMode, updatePeople, updateDolarRate, resetToDefault } = useFinance();
   const { theme, setTheme } = useTheme();
   const [p1, p2] = data.people;
 
@@ -31,7 +29,7 @@ export const SettingsView: React.FC = () => {
   const [p2Name, setP2Name] = useState(p2.name);
   const [p2Income, setP2Income] = useState(p2.monthlyIncome.toString());
 
-  const [usdRate, setUsdRate] = useState(data.billetera.dolar.toString());
+  const [usdRate, setUsdRate] = useState((data.dolarRate || 3600).toString());
   const [savedSuccess, setSavedSuccess] = useState(false);
 
   const handleSave = (e: React.FormEvent) => {
@@ -46,7 +44,7 @@ export const SettingsView: React.FC = () => {
       { ...p1, name: p1Name, monthlyIncome: inc1, healthPensionRate: rate1, enabled: true },
       { ...p2, name: p2Name, monthlyIncome: inc2, enabled: mode === 'shared' }
     ]);
-    updateBilletera({ dolar: usd });
+    updateDolarRate(usd);
 
     setSavedSuccess(true);
     setTimeout(() => setSavedSuccess(false), 3000);

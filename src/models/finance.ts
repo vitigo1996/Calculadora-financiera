@@ -8,19 +8,17 @@ export interface PersonProfile {
   enabled: boolean;
 }
 
-export interface BilleteraSaldos {
-  dolar: number; // C2
-  etoroUSD: number; // C3
-  plentiUSD: number; // C4
-  efectivoCOP: number; // C5
-  bancolombiaCOP: number; // C6
+export interface BilleteraAccountItem {
+  id: string;
+  nombre: string;
+  moneda: 'COP' | 'USD';
+  saldo: number;
 }
 
-export interface DeudasBilletera {
-  autofinancieraMonto: number; // C18: 24166570
-  multas: string; // B22
-  soatTecno: string; // B23
-  declaracion: string; // B24
+export interface DeudaItem {
+  id: string;
+  nombre: string;
+  monto?: number;
 }
 
 export interface HousingExpense {
@@ -28,25 +26,25 @@ export interface HousingExpense {
   name: string;
   referenceCode?: string;
   period: PaymentPeriod;
-  totalAmount: number; // G7, G8, G9
+  totalAmount: number;
 }
 
 export interface ObligationItem {
   id: string;
   name: string;
   period: PaymentPeriod;
-  totalAmount: number; // G12, G13
-  davidAmount?: number; // H12, H13
-  danielaAmount?: number; // I12, I13
+  totalAmount: number;
+  davidAmount?: number;
+  danielaAmount?: number;
   totalDebtBalance?: number;
 }
 
 export interface CreditCardItem {
   id: string;
-  name: string; // Nu, Falabella, Addi
+  name: string;
   period: PaymentPeriod;
-  creditLimit: number; // Cupo total
-  minPaymentOverride?: number; // Pago mínimo
+  creditLimit: number;
+  minPaymentOverride?: number;
   purchases: { id: string; concept: string; amount: number }[];
 }
 
@@ -59,27 +57,20 @@ export interface SubscriptionItem {
   active: boolean;
 }
 
-export interface PortfolioItem {
-  id: string;
-  name: string; // ETF, USDt, Nu, Comfama, Bancolombia
-  category: string; // Emergencia, Casa, Ahorro, Inversión
-  currency: 'COP' | 'USD';
-  balance: number;
-}
-
 export interface AppFinanceData {
   mode: 'single' | 'shared';
   people: [PersonProfile, PersonProfile];
-  billetera: BilleteraSaldos;
-  deudas: DeudasBilletera;
+  dolarRate: number; // Tasa USD/COP
+  billeteraItems: BilleteraAccountItem[];
+  deudaItems: DeudaItem[];
   housingExpenses: HousingExpense[];
   obligations: ObligationItem[];
   creditCards: CreditCardItem[];
   subscriptions: SubscriptionItem[];
   portfolioExtras: {
-    nuEmergenciaCOP: number; // L16: 24001919
-    comfamaCasaCOP: number; // L17: 2812407
-    bancolombiaAhorroCOP: number; // L18: 0
+    nuEmergenciaCOP: number;
+    comfamaCasaCOP: number;
+    bancolombiaAhorroCOP: number;
   };
   lastUpdated: string;
 }

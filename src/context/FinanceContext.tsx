@@ -1,5 +1,14 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { AppFinanceData, PersonProfile, HousingExpense, SubscriptionItem, CreditCardItem, ObligationItem, BilleteraSaldos } from '../models/finance';
+import {
+  AppFinanceData,
+  PersonProfile,
+  HousingExpense,
+  SubscriptionItem,
+  CreditCardItem,
+  ObligationItem,
+  BilleteraAccountItem,
+  DeudaItem
+} from '../models/finance';
 import { StorageService } from '../services/storageService';
 import { calculateAllFinances, CalculatedSummary } from '../services/financeCalculations';
 
@@ -8,8 +17,13 @@ interface FinanceContextType {
   summary: CalculatedSummary;
   setMode: (mode: 'single' | 'shared') => void;
   updatePeople: (people: [PersonProfile, PersonProfile]) => void;
-  updateBilletera: (billetera: Partial<BilleteraSaldos>) => void;
-  updateAutofinanciera: (amount: number) => void;
+  updateDolarRate: (rate: number) => void;
+  addBilleteraItem: (item: { nombre: string; moneda: 'COP' | 'USD'; saldo: number }) => void;
+  updateBilleteraItem: (id: string, updated: Partial<BilleteraAccountItem>) => void;
+  deleteBilleteraItem: (id: string) => void;
+  addDeudaItem: (item: { nombre: string; monto?: number }) => void;
+  updateDeudaItem: (id: string, updated: Partial<DeudaItem>) => void;
+  deleteDeudaItem: (id: string) => void;
   updateHousingExpense: (id: string, updated: Partial<HousingExpense>) => void;
   updateObligation: (id: string, updated: Partial<ObligationItem>) => void;
   addCardPurchase: (cardId: string, purchase: { concept: string; amount: number }) => void;
@@ -47,31 +61,71 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setData(prev => ({ ...prev, people }));
   };
 
-  const updateBilletera = (billetera: Partial<BilleteraSaldos>) => {
+  const updateDolarRate = (rate: number) => {
+    setData(prev => ({ ...prev, dolarRate: rate }));
+  };
+
+  const addBilleteraItem = (item: { nombre: string; moneda: 'COP' | 'USD'; saldo: number }) => {
+    const newItem: BilleteraAccountItem = {
+      id: `acc-${Date.now()}`,
+      ...item
+    };
     setData(prev => ({
       ...prev,
-      billetera: { ...prev.billetera, ...billetera }
+      billeteraItems: [...prev.billeteraItems, newItem]
     }));
   };
 
-  const updateAutofinanciera = (amount: number) => {
+  const updateBilleteraItem = (id: string, updated: Partial<BilleteraAccountItem>) => {
     setData(prev => ({
       ...prev,
-      deudas: { ...prev.deudas, autofinancieraMonto: amount }
+      billeteraItems: prev.billeteraItems.map(b => (b.id === id ? { ...b, ...updated } : b))
+    }));
+  };
+
+  const deleteBilleteraItem = (id: string) => {
+    setData(prev => ({
+      ...prev,
+      billeteraItems: prev.billeteraItems.filter(b => b.id !== id)
+    }));
+  };
+
+  const addDeudaItem = (item: { nombre: string; monto?: number }) => {
+    const newItem: DeudaItem = {
+      id: `deuda-${Date.now()}`,
+      ...item
+    };
+    setData(prev => ({
+      ...prev,
+      deudaItems: [...prev.deudaItems, newItem]
+    }));
+  };
+
+  const updateDeudaItem = (id: string, updated: Partial<DeudaItem>) => {
+    setData(prev => ({
+      ...prev,
+      deudaItems: prev.deudaItems.map(d => (d.id === id ? { ...d, ...updated } : d))
+    }));
+  };
+
+  const deleteDeudaItem = (id: string) => {
+    setData(prev => ({
+      ...prev,
+      deudaItems: prev.deudaItems.filter(d => d.id !== id)
     }));
   };
 
   const updateHousingExpense = (id: string, updated: Partial<HousingExpense>) => {
     setData(prev => ({
       ...prev,
-      housingExpenses: prev.housingExpenses.map(h => h.id === id ? { ...h, ...updated } : h)
+      housingExpenses: prev.housingExpenses.map(h => (h.id === id ? { ...h, ...updated } : h))
     }));
   };
 
   const updateObligation = (id: string, updated: Partial<ObligationItem>) => {
     setData(prev => ({
       ...prev,
-      obligations: prev.obligations.map(o => o.id === id ? { ...o, ...updated } : o)
+      obligations: prev.obligations.map(o => (o.id === id ? { ...o, ...updated } : o))
     }));
   };
 
@@ -79,28 +133,30 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const newP = { id: `p-${Date.now()}`, ...purchase };
     setData(prev => ({
       ...prev,
-      creditCards: prev.creditCards.map(c => c.id === cardId ? { ...c, purchases: [...c.purchases, newP] } : c)
+      creditCards: prev.creditCards.map(c => (c.id === cardId ? { ...c, purchases: [...c.purchases, newP] } : c))
     }));
   };
 
   const deleteCardPurchase = (cardId: string, purchaseId: string) => {
     setData(prev => ({
       ...prev,
-      creditCards: prev.creditCards.map(c => c.id === cardId ? { ...c, purchases: c.purchases.filter(p => p.id !== purchaseId) } : c)
+      creditCards: prev.creditCards.map(c =>
+        c.id === cardId ? { ...c, purchases: c.purchases.filter(p => p.id !== purchaseId) } : c
+      )
     }));
   };
 
   const updateCreditCard = (id: string, updated: Partial<CreditCardItem>) => {
     setData(prev => ({
       ...prev,
-      creditCards: prev.creditCards.map(c => c.id === id ? { ...c, ...updated } : c)
+      creditCards: prev.creditCards.map(c => (c.id === id ? { ...c, ...updated } : c))
     }));
   };
 
   const toggleSubscription = (id: string) => {
     setData(prev => ({
       ...prev,
-      subscriptions: prev.subscriptions.map(s => s.id === id ? { ...s, active: !s.active } : s)
+      subscriptions: prev.subscriptions.map(s => (s.id === id ? { ...s, active: !s.active } : s))
     }));
   };
 
@@ -121,23 +177,30 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   return (
-    <FinanceContext.Provider value={{
-      data,
-      summary,
-      setMode,
-      updatePeople,
-      updateBilletera,
-      updateAutofinanciera,
-      updateHousingExpense,
-      updateObligation,
-      addCardPurchase,
-      deleteCardPurchase,
-      updateCreditCard,
-      toggleSubscription,
-      updatePortfolioExtras,
-      resetToDefault,
-      importData
-    }}>
+    <FinanceContext.Provider
+      value={{
+        data,
+        summary,
+        setMode,
+        updatePeople,
+        updateDolarRate,
+        addBilleteraItem,
+        updateBilleteraItem,
+        deleteBilleteraItem,
+        addDeudaItem,
+        updateDeudaItem,
+        deleteDeudaItem,
+        updateHousingExpense,
+        updateObligation,
+        addCardPurchase,
+        deleteCardPurchase,
+        updateCreditCard,
+        toggleSubscription,
+        updatePortfolioExtras,
+        resetToDefault,
+        importData
+      }}
+    >
       {children}
     </FinanceContext.Provider>
   );

@@ -5,16 +5,16 @@ import { formatCurrency } from '../../services/financeCalculations';
 import { DollarSign, TrendingUp, Sun, Moon } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
-  const { data, summary, updateBilletera } = useFinance();
+  const { data, updateDolarRate } = useFinance();
   const { theme, toggleTheme } = useTheme();
   const [editingRate, setEditingRate] = useState(false);
-  const [rateInput, setRateInput] = useState(data.billetera.dolar.toString());
+  const [rateInput, setRateInput] = useState((data.dolarRate || 3600).toString());
 
   const handleSaveRate = (e: React.FormEvent) => {
     e.preventDefault();
     const val = parseFloat(rateInput);
     if (!isNaN(val) && val > 0) {
-      updateBilletera({ dolar: val });
+      updateDolarRate(val);
       setEditingRate(false);
     }
   };
@@ -67,7 +67,7 @@ export const Navbar: React.FC = () => {
           ) : (
             <button
               onClick={() => {
-                setRateInput(data.billetera.dolar.toString());
+                setRateInput((data.dolarRate || 3600).toString());
                 setEditingRate(true);
               }}
               title="Haz clic para modificar la tasa de cambio USD/COP"
@@ -75,7 +75,7 @@ export const Navbar: React.FC = () => {
             >
               <DollarSign className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
               <span className="font-mono text-emerald-700 dark:text-emerald-400 font-bold">
-                {formatCurrency(data.billetera.dolar, 'COP')}
+                {formatCurrency(data.dolarRate || 3600, 'COP')}
               </span>
               <span className="text-[10px] text-slate-400">USD</span>
             </button>

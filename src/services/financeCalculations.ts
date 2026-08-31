@@ -1,80 +1,77 @@
-import { AppFinanceData, SubscriptionItem, CreditCardItem } from '../models/finance';
+import { AppFinanceData, SubscriptionItem, CreditCardItem, BilleteraAccountItem } from '../models/finance';
 
 export interface CalculatedSummary {
   mode: 'single' | 'shared';
-  dolar: number; // C2
-  etoroUSD: number; // C3
-  plentiUSD: number; // C4
-  efectivoCOP: number; // C5
-  bancolombiaCOP: number; // C6
+  dolar: number;
+  billeteraItems: BilleteraAccountItem[];
 
-  // Ingresos (Filas 2-4)
+  // Ingresos
   p1: {
     name: string;
-    income: number; // H3
-    ratio: number; // H4
-    healthPension: number; // M3: H3 * 0.08
+    income: number;
+    ratio: number;
+    healthPension: number;
   };
   p2: {
     name: string;
-    income: number; // I3
-    ratio: number; // I4
+    income: number;
+    ratio: number;
     enabled: boolean;
   };
-  totalIncome: number; // H3 + I3
+  totalIncome: number;
 
-  // Vivienda (Filas 7-9)
+  // Vivienda
   vivienda: {
     servicios: { total: number; david: number; daniela: number; ref: string; period: string };
     internet: { total: number; david: number; daniela: number; ref: string; period: string };
     arriendo: { total: number; david: number; daniela: number; period: string };
-    totalDavid: number; // M4 = SUM(H7:H9)
+    totalDavid: number;
     totalDaniela: number;
     totalHogar: number;
   };
 
-  // Obligaciones (Filas 12-13)
+  // Obligaciones
   obligaciones: {
     carro: { total: number; david: number; daniela: number; period: string };
     icetex: { totalDebt: number; david: number; daniela: number; period: string };
-    totalDavid: number; // M6 = SUM(H12:H13)
+    totalDavid: number;
     totalDaniela: number;
   };
 
-  // Tarjetas de Crédito (Filas 16-18)
+  // Tarjetas de Crédito
   tarjetas: {
     nu: { deuda: number; pagoMinimo: number; cupoTotal: number; cupoDisponible: number; period: string };
     falabella: { deuda: number; pagoMinimo: number; cupoTotal: number; cupoDisponible: number; period: string };
     addi: { deuda: number; pagoMinimo: number; cupoTotal: number; cupoDisponible: number; period: string };
-    totalPagoDavid: number; // M5 = SUM(H16:H18)
+    totalPagoDavid: number;
   };
 
-  // Suscripciones (Filas 8-15 B, C)
+  // Suscripciones
   suscripciones: {
     items: { id: string; name: string; totalPrice: number; members: number; billing: string; monthlyCost: number; active: boolean }[];
     totalMonthly: number;
   };
 
-  // Presupuesto (Columnas K y M, Filas 3-11)
+  // Presupuesto
   presupuesto: {
-    m3_saludPension: number; // =H3*0.08
-    m4_vivienda: number; // =SUM(H7:H9)
-    m5_tarjetas: number; // =SUM(H16:H18)
-    m6_obligaciones: number; // =SUM(H12:H13)
-    m7_totalGastos: number; // =SUM(M3:M6)
-    m9_mitadDeMes: number; // =H7+H8+H17+H18+H12+H13+(M3/2)
-    m10_finDeMes: number; // =H9+H16+(M3/2)
-    m11_disponible: number; // =H3-SUM(M3:M6)
+    m3_saludPension: number;
+    m4_vivienda: number;
+    m5_tarjetas: number;
+    m6_obligaciones: number;
+    m7_totalGastos: number;
+    m9_mitadDeMes: number;
+    m10_finDeMes: number;
+    m11_disponible: number;
   };
 
-  // Portafolio (Filas 13-18 K, L, M, N)
+  // Portafolio
   portafolio: {
-    etoroCOP: number; // M14 = C2 * C3
-    plentiCOP: number; // M15 = C2 * C4
-    nuEmergenciaCOP: number; // M16 = L16
-    comfamaCasaCOP: number; // M17 = L17
-    bancolombiaAhorroCOP: number; // M18 = L18
-    totalPortafolio: number; // SUM(M14:M18)
+    etoroCOP: number;
+    plentiCOP: number;
+    nuEmergenciaCOP: number;
+    comfamaCasaCOP: number;
+    bancolombiaAhorroCOP: number;
+    totalPortafolio: number;
     items: {
       key: string;
       label: string;
@@ -84,14 +81,6 @@ export interface CalculatedSummary {
       percentage: number;
       color: string;
     }[];
-  };
-
-  // Deudas adicionales y contingencias (Filas 18, 22-24)
-  deudas: {
-    autofinancieraMonto: number; // C18
-    multas: string; // B22
-    soatTecno: string; // B23
-    declaracion: string; // B24
   };
 }
 
@@ -124,7 +113,7 @@ export function calculateAllFinances(data: AppFinanceData): CalculatedSummary {
   // M3: Salud / Pension = H3 * 0.08
   const m3_saludPension = h3 * (p1.healthPensionRate || 0.08);
 
-  // Vivienda (Filas 7-9)
+  // Vivienda
   const servObj = data.housingExpenses.find(h => h.referenceCode === '3628') || data.housingExpenses[0];
   const netObj = data.housingExpenses.find(h => h.referenceCode === '07409278') || data.housingExpenses[1];
   const arrObj = data.housingExpenses.find(h => h.name.toLowerCase().includes('arriendo')) || data.housingExpenses[2];
@@ -141,66 +130,53 @@ export function calculateAllFinances(data: AppFinanceData): CalculatedSummary {
   const h9 = g9 * h4;
   const i9 = g9 * i4;
 
-  // M4: =SUM(H7:H9)
   const m4_vivienda = h7 + h8 + h9;
   const viviendaDaniela = i7 + i8 + i9;
   const viviendaHogar = g7 + g8 + g9;
 
-  // Obligaciones (Filas 12-13)
+  // Obligaciones
   const carroObj = data.obligations.find(o => o.name.toLowerCase().includes('carro'));
   const icetexObj = data.obligations.find(o => o.name.toLowerCase().includes('icetex'));
 
   const g12 = carroObj?.totalAmount || 1521807;
   const h12 = isShared ? g12 * h4 : g12;
-  const i12 = g12; // Daniela en Excel: =1521807
+  const i12 = g12;
 
   const g13 = icetexObj?.totalAmount || 3471648;
   const h13 = icetexObj?.davidAmount !== undefined ? icetexObj.davidAmount : 49719;
   const i13 = icetexObj?.danielaAmount !== undefined ? icetexObj.danielaAmount : 0;
 
-  // M6: =SUM(H12:H13)
   const m6_obligaciones = h12 + h13;
   const obligacionesDaniela = i12 + i13;
 
-  // Tarjetas de Crédito (Filas 16-18)
+  // Tarjetas de Crédito
   const nuObj = data.creditCards.find(c => c.name.toLowerCase().includes('nu'));
   const falaObj = data.creditCards.find(c => c.name.toLowerCase().includes('falabella'));
   const addiObj = data.creditCards.find(c => c.name.toLowerCase().includes('addi'));
 
-  // Nu: G16 = H16 = suma de compras
   const nuPurchasesSum = nuObj ? calculateCardPurchasesTotal(nuObj) : 0;
   const g16 = nuPurchasesSum;
   const h16 = nuPurchasesSum;
   const nuCupo = nuObj?.creditLimit || 5000000;
-  const i16 = nuCupo - g16; // Cupo disponible
+  const i16 = nuCupo - g16;
 
-  // Falabella: G17 = 0, H17 = G17, I17 = 4400000 - G17
   const falaPurchasesSum = falaObj ? calculateCardPurchasesTotal(falaObj) : 0;
   const g17 = falaPurchasesSum;
   const h17 = falaPurchasesSum;
   const falaCupo = falaObj?.creditLimit || 4400000;
   const i17 = falaCupo - g17;
 
-  // Addi: G18 = 124950 (deuda), H18 = 41650 (pago mínimo), I18 = 8000000 - G18
   const addiPurchasesSum = addiObj ? calculateCardPurchasesTotal(addiObj) : 124950;
   const g18 = addiPurchasesSum;
   const h18 = addiObj?.minPaymentOverride !== undefined ? addiObj.minPaymentOverride : 41650;
   const addiCupo = addiObj?.creditLimit || 8000000;
   const i18 = addiCupo - g18;
 
-  // M5: =SUM(H16:H18)
   const m5_tarjetas = h16 + h17 + h18;
-
-  // M7: Total Gastos = SUM(M3:M6)
   const m7_totalGastos = m3_saludPension + m4_vivienda + m5_tarjetas + m6_obligaciones;
 
-  // M9: Mitad de mes = H7+H8+H17+H18+H12+H13+(M3/2)
   const m9_mitadDeMes = h7 + h8 + h17 + h18 + h12 + h13 + (m3_saludPension / 2);
-
-  // M10: Fin de mes = H9+H16+(M3/2)
   const m10_finDeMes = h9 + h16 + (m3_saludPension / 2);
-
-  // M11: Disponible = H3-SUM(M3:M6)
   const m11_disponible = h3 - m7_totalGastos;
 
   // Suscripciones
@@ -215,13 +191,16 @@ export function calculateAllFinances(data: AppFinanceData): CalculatedSummary {
   }));
   const totalSubMonthly = subItems.reduce((acc, s) => acc + (s.active ? s.monthlyCost : 0), 0);
 
-  // Portafolio (Filas 14-18)
-  const c2 = data.billetera.dolar;
-  const c3 = data.billetera.etoroUSD;
-  const c4 = data.billetera.plentiUSD;
+  // Portafolio
+  const c2 = data.dolarRate || 3600;
+  const etoroAccount = data.billeteraItems.find(b => b.nombre.toLowerCase().includes('etoro'));
+  const plentiAccount = data.billeteraItems.find(b => b.nombre.toLowerCase().includes('plenti'));
 
-  const m14 = c2 * c3; // ETF
-  const m15 = c2 * c4; // USDt
+  const etoroUSD = etoroAccount ? etoroAccount.saldo : 5037;
+  const plentiUSD = plentiAccount ? plentiAccount.saldo : 1500;
+
+  const m14 = c2 * etoroUSD; // ETF
+  const m15 = c2 * plentiUSD; // USDt
   const m16 = data.portfolioExtras.nuEmergenciaCOP; // Nu Emergencia
   const m17 = data.portfolioExtras.comfamaCasaCOP; // Comfama Casa
   const m18 = data.portfolioExtras.bancolombiaAhorroCOP; // Bancolombia
@@ -234,7 +213,7 @@ export function calculateAllFinances(data: AppFinanceData): CalculatedSummary {
       label: 'ETF',
       category: 'Inversión Global (eToro)',
       valorCOP: m14,
-      valorOriginal: `${c3.toLocaleString('en-US')} USD`,
+      valorOriginal: `${etoroUSD.toLocaleString('en-US')} USD`,
       percentage: totalPortafolio > 0 ? (m14 / totalPortafolio) * 100 : 0,
       color: '#10b981'
     },
@@ -243,7 +222,7 @@ export function calculateAllFinances(data: AppFinanceData): CalculatedSummary {
       label: 'USDt',
       category: 'Dólar Digital (Plenti)',
       valorCOP: m15,
-      valorOriginal: `${c4.toLocaleString('en-US')} USD`,
+      valorOriginal: `${plentiUSD.toLocaleString('en-US')} USD`,
       percentage: totalPortafolio > 0 ? (m15 / totalPortafolio) * 100 : 0,
       color: '#3b82f6'
     },
@@ -276,10 +255,7 @@ export function calculateAllFinances(data: AppFinanceData): CalculatedSummary {
   return {
     mode: data.mode,
     dolar: c2,
-    etoroUSD: c3,
-    plentiUSD: c4,
-    efectivoCOP: data.billetera.efectivoCOP,
-    bancolombiaCOP: data.billetera.bancolombiaCOP,
+    billeteraItems: data.billeteraItems,
     p1: {
       name: p1.name,
       income: h3,
@@ -335,12 +311,6 @@ export function calculateAllFinances(data: AppFinanceData): CalculatedSummary {
       bancolombiaAhorroCOP: m18,
       totalPortafolio,
       items: portItems
-    },
-    deudas: {
-      autofinancieraMonto: data.deudas.autofinancieraMonto,
-      multas: data.deudas.multas,
-      soatTecno: data.deudas.soatTecno,
-      declaracion: data.deudas.declaracion
     }
   };
 }

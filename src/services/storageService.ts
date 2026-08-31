@@ -1,16 +1,26 @@
-import { AppFinanceData } from '../models/finance';
+import { AppFinanceData, BilleteraAccountItem, DeudaItem } from '../models/finance';
 import { initialFinanceData } from './defaultData';
-import { calculateSubscriptionMonthlyCost } from './financeCalculations';
 import * as XLSX from 'xlsx';
 
-const STORAGE_KEY = 'app_finanzas_data_v3';
+const STORAGE_KEY = 'app_finanzas_data_v4';
 
 export const StorageService = {
   loadData(): AppFinanceData {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
-        return JSON.parse(stored);
+        const parsed = JSON.parse(stored);
+        // Ensure billeteraItems and deudaItems exist
+        if (parsed && !parsed.billeteraItems) {
+          return {
+            ...initialFinanceData,
+            ...parsed,
+            dolarRate: parsed.dolarRate || parsed.billetera?.dolar || 3600,
+            billeteraItems: initialFinanceData.billeteraItems,
+            deudaItems: initialFinanceData.deudaItems
+          };
+        }
+        return parsed;
       }
     } catch (e) {
       console.error('Error loading data from localStorage', e);
@@ -38,7 +48,7 @@ export const StorageService = {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `Finanzas_Billetera_Backup_${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `Finanzas_Backup_${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
   },
@@ -48,15 +58,23 @@ export const StorageService = {
 
     // Sheet: Billetera
     const billeteraRows = [
-      { Concepto: 'Dolar (TRM)', Valor: data.billetera.dolar, Moneda: 'COP' },
-      { Concepto: 'Etoro', Valor: data.billetera.etoroUSD, Moneda: 'USD' },
-      { Concepto: 'Plenti', Valor: data.billetera.plentiUSD, Moneda: 'USD' },
-      { Concepto: 'Efectivo', Valor: data.billetera.efectivoCOP, Moneda: 'COP' },
-      { Concepto: 'Bancolombia', Valor: data.billetera.bancolombiaCOP, Moneda: 'COP' },
-      { Concepto: 'Deuda Autofinanciera', Valor: data.deudas.autofinancieraMonto, Moneda: 'COP' }
+      { Concepto: 'Tasa Dolar (USD/COP)', Valor: data.dolarRate, Moneda: 'COP' },
+      ...data.billeteraItems.map(b => ({
+        Concepto: b.nombre,
+        Valor: b.saldo,
+        Moneda: b.moneda
+      }))
     ];
     const wsBilletera = XLSX.utils.json_to_sheet(billeteraRows);
     XLSX.utils.book_append_sheet(wb, wsBilletera, 'Billetera');
+
+    // Sheet: Deudas
+    const deudasRows = data.deudaItems.map(d => ({
+      Concepto: d.nombre,
+      Monto: d.monto || 0
+    }));
+    const wsDeudas = XLSX.utils.json_to_sheet(deudasRows);
+    XLSX.utils.book_append_sheet(wb, wsDeudas, 'Deudas');
 
     // Sheet: Vivienda
     const wsHousing = XLSX.utils.json_to_sheet(data.housingExpenses);
