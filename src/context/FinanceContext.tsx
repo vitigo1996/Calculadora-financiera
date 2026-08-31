@@ -9,7 +9,8 @@ import {
   BilleteraAccountItem,
   DeudaItem,
   PortfolioAccountItem,
-  ExpenseSplitMethod
+  ExpenseSplitMethod,
+  PaymentPeriod
 } from '../models/finance';
 import { StorageService } from '../services/storageService';
 import { CurrencyService } from '../services/currencyService';
@@ -36,11 +37,14 @@ interface FinanceContextType {
   updatePortfolioItem: (id: string, updated: Partial<PortfolioAccountItem>) => void;
   deletePortfolioItem: (id: string) => void;
   movePortfolioItem: (index: number, direction: 'up' | 'down') => void;
-  updateHousingExpense: (id: string, updated: Partial<HousingExpense>) => void;
-  updateObligation: (id: string, updated: Partial<ObligationItem>) => void;
+  addCreditCard: (card: { name: string; period: PaymentPeriod; creditLimit: number; minPaymentOverride?: number }) => void;
+  updateCreditCard: (id: string, updated: Partial<CreditCardItem>) => void;
+  deleteCreditCard: (id: string) => void;
+  moveCreditCard: (index: number, direction: 'up' | 'down') => void;
   addCardPurchase: (cardId: string, purchase: { concept: string; amount: number }) => void;
   deleteCardPurchase: (cardId: string, purchaseId: string) => void;
-  updateCreditCard: (id: string, updated: Partial<CreditCardItem>) => void;
+  updateHousingExpense: (id: string, updated: Partial<HousingExpense>) => void;
+  updateObligation: (id: string, updated: Partial<ObligationItem>) => void;
   toggleSubscription: (id: string) => void;
   resetToDefault: () => void;
   importData: (imported: AppFinanceData) => void;
@@ -220,18 +224,45 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     });
   };
 
-  const updateHousingExpense = (id: string, updated: Partial<HousingExpense>) => {
+  const addCreditCard = (card: { name: string; period: PaymentPeriod; creditLimit: number; minPaymentOverride?: number }) => {
+    const newCard: CreditCardItem = {
+      id: `cc-${Date.now()}`,
+      name: card.name,
+      period: card.period,
+      creditLimit: card.creditLimit,
+      minPaymentOverride: card.minPaymentOverride,
+      purchases: []
+    };
     setData(prev => ({
       ...prev,
-      housingExpenses: prev.housingExpenses.map(h => (h.id === id ? { ...h, ...updated } : h))
+      creditCards: [...prev.creditCards, newCard]
     }));
   };
 
-  const updateObligation = (id: string, updated: Partial<ObligationItem>) => {
+  const updateCreditCard = (id: string, updated: Partial<CreditCardItem>) => {
     setData(prev => ({
       ...prev,
-      obligations: prev.obligations.map(o => (o.id === id ? { ...o, ...updated } : o))
+      creditCards: prev.creditCards.map(c => (c.id === id ? { ...c, ...updated } : c))
     }));
+  };
+
+  const deleteCreditCard = (id: string) => {
+    setData(prev => ({
+      ...prev,
+      creditCards: prev.creditCards.filter(c => c.id !== id)
+    }));
+  };
+
+  const moveCreditCard = (index: number, direction: 'up' | 'down') => {
+    setData(prev => {
+      const list = [...prev.creditCards];
+      const targetIndex = direction === 'up' ? index - 1 : index + 1;
+      if (targetIndex < 0 || targetIndex >= list.length) return prev;
+      const temp = list[index];
+      list[index] = list[targetIndex];
+      list[targetIndex] = temp;
+      return { ...prev, creditCards: list };
+    });
   };
 
   const addCardPurchase = (cardId: string, purchase: { concept: string; amount: number }) => {
@@ -251,10 +282,17 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }));
   };
 
-  const updateCreditCard = (id: string, updated: Partial<CreditCardItem>) => {
+  const updateHousingExpense = (id: string, updated: Partial<HousingExpense>) => {
     setData(prev => ({
       ...prev,
-      creditCards: prev.creditCards.map(c => (c.id === id ? { ...c, ...updated } : c))
+      housingExpenses: prev.housingExpenses.map(h => (h.id === id ? { ...h, ...updated } : h))
+    }));
+  };
+
+  const updateObligation = (id: string, updated: Partial<ObligationItem>) => {
+    setData(prev => ({
+      ...prev,
+      obligations: prev.obligations.map(o => (o.id === id ? { ...o, ...updated } : o))
     }));
   };
 
@@ -297,11 +335,14 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         updatePortfolioItem,
         deletePortfolioItem,
         movePortfolioItem,
-        updateHousingExpense,
-        updateObligation,
+        addCreditCard,
+        updateCreditCard,
+        deleteCreditCard,
+        moveCreditCard,
         addCardPurchase,
         deleteCardPurchase,
-        updateCreditCard,
+        updateHousingExpense,
+        updateObligation,
         toggleSubscription,
         resetToDefault,
         importData

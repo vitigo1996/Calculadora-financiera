@@ -12,7 +12,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab })
   const tabs = [
     { id: 'billetera', label: 'Billetera', icon: Wallet },
     { id: 'gastos_fijos', label: 'Gastos Fijos', icon: Home },
-    { id: 'creditos_suscripciones', label: 'Créditos', icon: CreditCard },
+    { id: 'creditos_suscripciones', label: 'Tarjetas', icon: CreditCard },
     { id: 'presupuesto', label: 'Presupuesto', icon: Receipt },
     { id: 'portafolio', label: 'Portafolio', icon: PieChart },
     { id: 'ajustes', label: 'Ajustes', icon: Settings },
