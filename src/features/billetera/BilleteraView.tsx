@@ -124,6 +124,16 @@ export const BilleteraView: React.FC = () => {
     setEditingBilleteraObj(null);
   };
 
+  // Delete Billetera from Modal
+  const handleDeleteBilleteraFromModal = () => {
+    if (!editingBilleteraObj) return;
+    if (confirm(`¿Eliminar la billetera "${editingBilleteraObj.nombre}"?`)) {
+      deleteBilleteraItem(editingBilleteraObj.id);
+      setShowAddBilleteraModal(false);
+      setEditingBilleteraObj(null);
+    }
+  };
+
   // Open Create Deuda Modal
   const openCreateDeuda = () => {
     setDeudaName('');
@@ -188,6 +198,16 @@ export const BilleteraView: React.FC = () => {
 
     setShowAddDeudaModal(false);
     setEditingDeudaObj(null);
+  };
+
+  // Delete Deuda from Modal
+  const handleDeleteDeudaFromModal = () => {
+    if (!editingDeudaObj) return;
+    if (confirm(`¿Eliminar la deuda "${editingDeudaObj.nombre}"?`)) {
+      deleteDeudaItem(editingDeudaObj.id);
+      setShowAddDeudaModal(false);
+      setEditingDeudaObj(null);
+    }
   };
 
   return (
@@ -439,34 +459,17 @@ export const BilleteraView: React.FC = () => {
                 />
               </div>
 
-              {/* Selector de Moneda: 'Pesos (COP)' y 'Dólares (USD)' */}
+              {/* Selector de Moneda en Menú Desplegable */}
               <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">Moneda</label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setBilleteraCurrency('COP')}
-                    className={`py-2.5 rounded-2xl text-xs font-bold border transition-all ${
-                      billeteraCurrency === 'COP'
-                        ? 'bg-blue-100 dark:bg-blue-950/60 border-blue-500 text-blue-800 dark:text-blue-300 shadow-sm'
-                        : 'bg-slate-50 dark:bg-slate-950/40 border-slate-300 dark:border-slate-800 text-slate-600 dark:text-slate-400'
-                    }`}
-                  >
-                    Pesos (COP)
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setBilleteraCurrency('USD')}
-                    className={`py-2.5 rounded-2xl text-xs font-bold border transition-all ${
-                      billeteraCurrency === 'USD'
-                        ? 'bg-blue-100 dark:bg-blue-950/60 border-blue-500 text-blue-800 dark:text-blue-300 shadow-sm'
-                        : 'bg-slate-50 dark:bg-slate-950/40 border-slate-300 dark:border-slate-800 text-slate-600 dark:text-slate-400'
-                    }`}
-                  >
-                    Dólares (USD)
-                  </button>
-                </div>
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">Moneda</label>
+                <select
+                  value={billeteraCurrency}
+                  onChange={e => setBilleteraCurrency(e.target.value as 'COP' | 'USD')}
+                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
+                >
+                  <option value="COP">Pesos (COP)</option>
+                  <option value="USD">Dólares (USD)</option>
+                </select>
               </div>
 
               {/* Saldo con botón de calculadora integrado dentro del input */}
@@ -548,19 +551,31 @@ export const BilleteraView: React.FC = () => {
               {/* Icon Picker con Mosaico Compacto y Pequeño */}
               <IconPicker selectedIconId={billeteraIcon} onSelectIcon={setBilleteraIcon} />
 
-              <div className="flex items-center gap-3 pt-3">
+              <div className="flex items-center gap-2 pt-3">
+                {editingBilleteraObj && (
+                  <button
+                    type="button"
+                    onClick={handleDeleteBilleteraFromModal}
+                    className="p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/50 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/50 transition-colors flex items-center justify-center"
+                    title="Eliminar esta billetera"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
+
                 <button
                   type="button"
                   onClick={() => setShowAddBilleteraModal(false)}
-                  className="flex-1 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-xs py-3 rounded-2xl transition-colors border border-slate-300/80 dark:border-transparent"
+                  className="flex-1 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-xs py-3 rounded-2xl transition-colors border border-slate-300/80 dark:border-transparent text-center"
                 >
                   Cancelar
                 </button>
+
                 <button
                   type="submit"
-                  className="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs py-3 rounded-2xl shadow-sm transition-all"
+                  className="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs py-3 rounded-2xl shadow-sm transition-all text-center"
                 >
-                  {editingBilleteraObj ? 'Actualizar Billetera' : 'Guardar Billetera'}
+                  {editingBilleteraObj ? 'Actualizar' : 'Guardar'}
                 </button>
               </div>
             </form>
@@ -631,34 +646,17 @@ export const BilleteraView: React.FC = () => {
                 </div>
               </div>
 
-              {/* Selector de Moneda de la Deuda */}
+              {/* Selector de Moneda de la Deuda en Menú Desplegable */}
               <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">Moneda</label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setDeudaCurrency('COP')}
-                    className={`py-2 rounded-2xl text-xs font-bold border transition-all ${
-                      deudaCurrency === 'COP'
-                        ? 'bg-blue-100 dark:bg-blue-950/60 border-blue-500 text-blue-800 dark:text-blue-300 shadow-sm'
-                        : 'bg-slate-50 dark:bg-slate-950/40 border-slate-300 dark:border-slate-800 text-slate-600 dark:text-slate-400'
-                    }`}
-                  >
-                    Pesos (COP)
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setDeudaCurrency('USD')}
-                    className={`py-2 rounded-2xl text-xs font-bold border transition-all ${
-                      deudaCurrency === 'USD'
-                        ? 'bg-blue-100 dark:bg-blue-950/60 border-blue-500 text-blue-800 dark:text-blue-300 shadow-sm'
-                        : 'bg-slate-50 dark:bg-slate-950/40 border-slate-300 dark:border-slate-800 text-slate-600 dark:text-slate-400'
-                    }`}
-                  >
-                    Dólares (USD)
-                  </button>
-                </div>
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">Moneda</label>
+                <select
+                  value={deudaCurrency}
+                  onChange={e => setDeudaCurrency(e.target.value as 'COP' | 'USD')}
+                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
+                >
+                  <option value="COP">Pesos (COP)</option>
+                  <option value="USD">Dólares (USD)</option>
+                </select>
               </div>
 
               {/* Monto con botón de calculadora integrado dentro del input */}
@@ -740,19 +738,31 @@ export const BilleteraView: React.FC = () => {
               {/* Icon Picker con Mosaico Compacto y Pequeño */}
               <IconPicker selectedIconId={deudaIcon} onSelectIcon={setDeudaIcon} />
 
-              <div className="flex items-center gap-3 pt-3">
+              <div className="flex items-center gap-2 pt-3">
+                {editingDeudaObj && (
+                  <button
+                    type="button"
+                    onClick={handleDeleteDeudaFromModal}
+                    className="p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/50 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/50 transition-colors flex items-center justify-center"
+                    title="Eliminar esta deuda"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
+
                 <button
                   type="button"
                   onClick={() => setShowAddDeudaModal(false)}
-                  className="flex-1 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-xs py-3 rounded-2xl transition-colors border border-slate-300/80 dark:border-transparent"
+                  className="flex-1 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-xs py-3 rounded-2xl transition-colors border border-slate-300/80 dark:border-transparent text-center"
                 >
                   Cancelar
                 </button>
+
                 <button
                   type="submit"
-                  className="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs py-3 rounded-2xl shadow-sm transition-all"
+                  className="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs py-3 rounded-2xl shadow-sm transition-all text-center"
                 >
-                  {editingDeudaObj ? 'Actualizar Deuda' : 'Guardar Deuda'}
+                  {editingDeudaObj ? 'Actualizar' : 'Guardar'}
                 </button>
               </div>
             </form>

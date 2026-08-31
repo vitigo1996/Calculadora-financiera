@@ -129,12 +129,9 @@ interface IconPickerProps {
 export const IconPicker: React.FC<IconPickerProps> = ({ selectedIconId = 'wallet', onSelectIcon }) => {
   return (
     <div className="space-y-1.5">
-      <div className="flex items-center justify-between">
-        <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block">
-          Ícono
-        </label>
-        <span className="text-[10px] text-slate-400">Desplaza para elegir</span>
-      </div>
+      <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block">
+        Ícono
+      </label>
 
       <div className="max-h-36 overflow-y-auto p-2 bg-slate-50 dark:bg-slate-950/80 border border-slate-300 dark:border-slate-800 rounded-2xl space-y-2.5">
         {ICON_CATEGORIES.map((cat, idx) => (
