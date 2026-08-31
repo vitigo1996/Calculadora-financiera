@@ -37,7 +37,7 @@ export const BilleteraView: React.FC = () => {
   const [billeteraCurrency, setBilleteraCurrency] = useState<'COP' | 'USD'>('COP');
   const [billeteraBalance, setBilleteraBalance] = useState('');
   const [billeteraIcon, setBilleteraIcon] = useState('wallet');
-  const [showBilleteraCalculator, setShowBilleteraCalculator] = useState(false);
+  const [showBilleteraCalcPopup, setShowBilleteraCalcPopup] = useState(false);
   const [billeteraCalcDelta, setBilleteraCalcDelta] = useState('');
 
   // Deudas Edit Mode & State
@@ -49,19 +49,12 @@ export const BilleteraView: React.FC = () => {
   const [deudaName, setDeudaName] = useState('');
   const [deudaAmount, setDeudaAmount] = useState('');
   const [deudaIcon, setDeudaIcon] = useState('shield_alert');
-  const [showDeudaCalculator, setShowDeudaCalculator] = useState(false);
+  const [showDeudaCalcPopup, setShowDeudaCalcPopup] = useState(false);
   const [deudaCalcDelta, setDeudaCalcDelta] = useState('');
 
-  // Helper color based on currency and name
-  const getBilleteraColor = (name: string, moneda: 'COP' | 'USD') => {
-    const n = name.toLowerCase();
-    if (moneda === 'USD') {
-      return 'bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/40';
-    }
-    if (n.includes('efectivo')) {
-      return 'bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800/40';
-    }
-    return 'bg-indigo-100 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800/40';
+  // Uniform neutral blue card theme for all items
+  const getItemIconStyle = () => {
+    return 'bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800/40';
   };
 
   // Open Create Billetera Modal
@@ -71,7 +64,7 @@ export const BilleteraView: React.FC = () => {
     setBilleteraBalance('');
     setBilleteraIcon('wallet');
     setBilleteraCalcDelta('');
-    setShowBilleteraCalculator(false);
+    setShowBilleteraCalcPopup(false);
     setEditingBilleteraObj(null);
     setShowAddBilleteraModal(true);
   };
@@ -84,18 +77,20 @@ export const BilleteraView: React.FC = () => {
     setBilleteraBalance(b.saldo.toString());
     setBilleteraIcon(b.icon || (b.moneda === 'USD' ? 'coins' : 'wallet'));
     setBilleteraCalcDelta('');
-    setShowBilleteraCalculator(false);
+    setShowBilleteraCalcPopup(false);
     setShowAddBilleteraModal(true);
   };
 
-  // Apply Billetera Add/Subtract operation
+  // Apply Billetera Add/Subtract operation and immediately close popup
   const applyBilleteraCalc = (op: '+' | '-') => {
     const delta = parseFloat(billeteraCalcDelta);
-    if (isNaN(delta) || delta <= 0) return;
-    const current = parseFloat(billeteraBalance) || 0;
-    const result = op === '+' ? current + delta : Math.max(0, current - delta);
-    setBilleteraBalance(result.toString());
+    if (!isNaN(delta) && delta > 0) {
+      const current = parseFloat(billeteraBalance) || 0;
+      const result = op === '+' ? current + delta : Math.max(0, current - delta);
+      setBilleteraBalance(result.toString());
+    }
     setBilleteraCalcDelta('');
+    setShowBilleteraCalcPopup(false);
   };
 
   // Save Billetera (Create or Edit)
@@ -130,7 +125,7 @@ export const BilleteraView: React.FC = () => {
     setDeudaAmount('');
     setDeudaIcon('shield_alert');
     setDeudaCalcDelta('');
-    setShowDeudaCalculator(false);
+    setShowDeudaCalcPopup(false);
     setEditingDeudaObj(null);
     setShowAddDeudaModal(true);
   };
@@ -142,18 +137,20 @@ export const BilleteraView: React.FC = () => {
     setDeudaAmount((d.monto || 0).toString());
     setDeudaIcon(d.icon || 'shield_alert');
     setDeudaCalcDelta('');
-    setShowDeudaCalculator(false);
+    setShowDeudaCalcPopup(false);
     setShowAddDeudaModal(true);
   };
 
-  // Apply Deuda Add/Subtract operation
+  // Apply Deuda Add/Subtract operation and immediately close popup
   const applyDeudaCalc = (op: '+' | '-') => {
     const delta = parseFloat(deudaCalcDelta);
-    if (isNaN(delta) || delta <= 0) return;
-    const current = parseFloat(deudaAmount) || 0;
-    const result = op === '+' ? current + delta : Math.max(0, current - delta);
-    setDeudaAmount(result.toString());
+    if (!isNaN(delta) && delta > 0) {
+      const current = parseFloat(deudaAmount) || 0;
+      const result = op === '+' ? current + delta : Math.max(0, current - delta);
+      setDeudaAmount(result.toString());
+    }
     setDeudaCalcDelta('');
+    setShowDeudaCalcPopup(false);
   };
 
   // Save Deuda (Create or Edit)
@@ -185,7 +182,7 @@ export const BilleteraView: React.FC = () => {
       {/* Header */}
       <div>
         <h2 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
-          <Wallet className="w-5 h-5 text-emerald-600 dark:text-emerald-400" /> Billetera
+          <Wallet className="w-5 h-5 text-blue-600 dark:text-blue-400" /> Billetera
         </h2>
       </div>
 
@@ -199,7 +196,7 @@ export const BilleteraView: React.FC = () => {
               onClick={() => setIsManagingBilleteras(!isManagingBilleteras)}
               className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all ${
                 isManagingBilleteras
-                  ? 'bg-emerald-600 dark:bg-emerald-500 text-white dark:text-slate-950 shadow-sm'
+                  ? 'bg-blue-600 text-white shadow-sm'
                   : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
               }`}
             >
@@ -210,7 +207,7 @@ export const BilleteraView: React.FC = () => {
             {isManagingBilleteras && (
               <button
                 onClick={openCreateBilletera}
-                className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/40 hover:bg-emerald-200 transition-all flex items-center gap-1"
+                className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/40 hover:bg-blue-200 transition-all flex items-center gap-1"
               >
                 <Plus className="w-3.5 h-3.5" /> Agregar
               </button>
@@ -230,14 +227,14 @@ export const BilleteraView: React.FC = () => {
                 className="p-4 hover:bg-slate-50/70 dark:hover:bg-slate-850/50 transition-colors flex items-center justify-between"
               >
                 <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-2xl border flex items-center justify-center ${getBilleteraColor(item.nombre, item.moneda)}`}>
+                  <div className={`w-10 h-10 rounded-2xl border flex items-center justify-center ${getItemIconStyle()}`}>
                     <Icon className="w-5 h-5" />
                   </div>
                   <div>
                     <div className="flex flex-wrap items-center gap-1.5">
                       <h4 className="font-bold text-slate-800 dark:text-white text-sm">{item.nombre}</h4>
                       {isUSD && equivalentCOP !== null && (
-                        <span className="text-xs font-mono font-medium text-emerald-600 dark:text-emerald-400">
+                        <span className="text-xs font-mono font-medium text-blue-600 dark:text-blue-400">
                           ({formatCurrency(equivalentCOP, 'COP')})
                         </span>
                       )}
@@ -267,7 +264,7 @@ export const BilleteraView: React.FC = () => {
                           deleteBilleteraItem(item.id);
                         }
                       }}
-                      className="p-2 rounded-xl bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/40 transition-colors"
+                      className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-rose-100 dark:hover:bg-rose-950/50 text-slate-500 hover:text-rose-600 transition-colors"
                       title="Eliminar billetera"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -290,7 +287,7 @@ export const BilleteraView: React.FC = () => {
               onClick={() => setIsManagingDeudas(!isManagingDeudas)}
               className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all ${
                 isManagingDeudas
-                  ? 'bg-rose-600 dark:bg-rose-500 text-white font-bold shadow-sm'
+                  ? 'bg-blue-600 text-white shadow-sm'
                   : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
               }`}
             >
@@ -301,7 +298,7 @@ export const BilleteraView: React.FC = () => {
             {isManagingDeudas && (
               <button
                 onClick={openCreateDeuda}
-                className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/40 hover:bg-rose-200 transition-all flex items-center gap-1"
+                className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/40 hover:bg-blue-200 transition-all flex items-center gap-1"
               >
                 <Plus className="w-3.5 h-3.5" /> Agregar
               </button>
@@ -320,7 +317,7 @@ export const BilleteraView: React.FC = () => {
                 className="p-4 hover:bg-slate-50/70 dark:hover:bg-slate-850/50 transition-colors flex items-center justify-between"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-rose-100 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/40 flex items-center justify-center">
+                  <div className={`w-10 h-10 rounded-2xl border flex items-center justify-center ${getItemIconStyle()}`}>
                     <Icon className="w-5 h-5" />
                   </div>
                   <h4 className="font-bold text-slate-800 dark:text-white text-sm">{item.nombre}</h4>
@@ -328,7 +325,7 @@ export const BilleteraView: React.FC = () => {
 
                 <div className="flex items-center gap-2">
                   {hasAmount ? (
-                    <span className="font-mono font-bold text-sm text-rose-600 dark:text-rose-400">
+                    <span className="font-mono font-bold text-sm text-slate-800 dark:text-white">
                       {formatCurrency(item.monto || 0, 'COP')}
                     </span>
                   ) : null}
@@ -348,7 +345,7 @@ export const BilleteraView: React.FC = () => {
                           deleteDeudaItem(item.id);
                         }
                       }}
-                      className="p-2 rounded-xl bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/40 transition-colors"
+                      className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-rose-100 dark:hover:bg-rose-950/50 text-slate-500 hover:text-rose-600 transition-colors"
                       title="Eliminar deuda"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -361,7 +358,7 @@ export const BilleteraView: React.FC = () => {
         </div>
       </div>
 
-      {/* Modal: Crear / Editar Billetera con Botón Calculadora */}
+      {/* Modal: Crear / Editar Billetera */}
       {showAddBilleteraModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl animate-scaleUp max-h-[90vh] overflow-y-auto">
@@ -385,11 +382,12 @@ export const BilleteraView: React.FC = () => {
                   value={billeteraName}
                   onChange={e => setBilleteraName(e.target.value)}
                   placeholder="Ej. Nequi, Daviplata, Binance, Interactive Brokers"
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-emerald-500"
+                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
                   required
                 />
               </div>
 
+              {/* Selector de Moneda: 'Pesos (COP)' y 'Dólares (USD)' */}
               <div>
                 <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">Moneda</label>
                 <div className="grid grid-cols-2 gap-2">
@@ -398,11 +396,11 @@ export const BilleteraView: React.FC = () => {
                     onClick={() => setBilleteraCurrency('COP')}
                     className={`py-2.5 rounded-2xl text-xs font-bold border transition-all ${
                       billeteraCurrency === 'COP'
-                        ? 'bg-emerald-100 dark:bg-emerald-950/60 border-emerald-500 text-emerald-800 dark:text-emerald-300 shadow-sm'
+                        ? 'bg-blue-100 dark:bg-blue-950/60 border-blue-500 text-blue-800 dark:text-blue-300 shadow-sm'
                         : 'bg-slate-50 dark:bg-slate-950/40 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
                     }`}
                   >
-                    🇨🇴 Pesos (COP)
+                    Pesos (COP)
                   </button>
 
                   <button
@@ -410,77 +408,92 @@ export const BilleteraView: React.FC = () => {
                     onClick={() => setBilleteraCurrency('USD')}
                     className={`py-2.5 rounded-2xl text-xs font-bold border transition-all ${
                       billeteraCurrency === 'USD'
-                        ? 'bg-emerald-100 dark:bg-emerald-950/60 border-emerald-500 text-emerald-800 dark:text-emerald-300 shadow-sm'
+                        ? 'bg-blue-100 dark:bg-blue-950/60 border-blue-500 text-blue-800 dark:text-blue-300 shadow-sm'
                         : 'bg-slate-50 dark:bg-slate-950/40 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
                     }`}
                   >
-                    🇺🇸 Dólares (USD)
+                    Dólares (USD)
                   </button>
                 </div>
               </div>
 
-              {/* Saldo y Botón de Calculadora */}
+              {/* Saldo con botón de calculadora integrado dentro del input */}
               <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                    Saldo {billeteraCurrency === 'USD' ? '(USD)' : '(COP)'}
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => setShowBilleteraCalculator(!showBilleteraCalculator)}
-                    className={`text-xs font-semibold flex items-center gap-1 px-2.5 py-1 rounded-xl transition-all ${
-                      showBilleteraCalculator
-                        ? 'bg-emerald-600 text-white shadow-sm'
-                        : 'bg-slate-100 dark:bg-slate-800 text-emerald-700 dark:text-emerald-400 hover:bg-slate-200 dark:hover:bg-slate-700'
-                    }`}
-                  >
-                    <Calculator className="w-3.5 h-3.5" /> Calculadora
-                  </button>
-                </div>
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                  Saldo {billeteraCurrency === 'USD' ? '(USD)' : '(COP)'}
+                </label>
 
-                <div className="space-y-2">
+                <div className="relative">
                   <input
                     type="number"
                     step="any"
                     value={billeteraBalance}
                     onChange={e => setBilleteraBalance(e.target.value)}
                     placeholder="0"
-                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white font-mono focus:outline-none focus:border-emerald-500"
+                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl pl-3.5 pr-11 py-2.5 text-sm text-slate-800 dark:text-white font-mono focus:outline-none focus:border-blue-500"
                   />
 
-                  {/* Espacio desplegable de sumar o restar */}
-                  {showBilleteraCalculator && (
-                    <div className="flex items-center gap-1.5 p-2 bg-slate-50 dark:bg-slate-950/80 rounded-2xl border border-slate-200 dark:border-slate-800 animate-scaleUp">
+                  <button
+                    type="button"
+                    onClick={() => setShowBilleteraCalcPopup(!showBilleteraCalcPopup)}
+                    title="Calculadora (+ / -)"
+                    className={`absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-xl transition-all ${
+                      showBilleteraCalcPopup
+                        ? 'bg-blue-600 text-white shadow-sm'
+                        : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700'
+                    }`}
+                  >
+                    <Calculator className="w-4 h-4" />
+                  </button>
+
+                  {/* Pop-up de Calculadora */}
+                  {showBilleteraCalcPopup && (
+                    <div className="absolute right-0 top-full mt-2 z-30 p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl space-y-2.5 w-64 animate-scaleUp">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                          Ajustar Saldo
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setShowBilleteraCalcPopup(false)}
+                          className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+
                       <input
                         type="number"
                         step="any"
                         value={billeteraCalcDelta}
                         onChange={e => setBilleteraCalcDelta(e.target.value)}
                         placeholder="Valor a sumar o restar..."
-                        className="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs px-3 py-1.5 rounded-xl text-slate-800 dark:text-white font-mono focus:outline-none"
+                        className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-xs px-2.5 py-1.5 rounded-xl text-slate-800 dark:text-white font-mono focus:outline-none focus:border-blue-500"
+                        autoFocus
                       />
-                      <button
-                        type="button"
-                        onClick={() => applyBilleteraCalc('+')}
-                        className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1 transition-all"
-                        title="Sumar al saldo actual"
-                      >
-                        <Plus className="w-3.5 h-3.5" /> Sumar
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => applyBilleteraCalc('-')}
-                        className="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs flex items-center gap-1 transition-all"
-                        title="Restar al saldo actual"
-                      >
-                        <Minus className="w-3.5 h-3.5" /> Restar
-                      </button>
+
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => applyBilleteraCalc('+')}
+                          className="flex-1 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center justify-center gap-1 shadow-sm transition-all"
+                        >
+                          <Plus className="w-3.5 h-3.5" /> Sumar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => applyBilleteraCalc('-')}
+                          className="flex-1 py-1.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-white font-bold text-xs flex items-center justify-center gap-1 shadow-sm transition-all"
+                        >
+                          <Minus className="w-3.5 h-3.5" /> Restar
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
               </div>
 
-              {/* Icon Picker con Mosaico Compacto y Categorías */}
+              {/* Icon Picker con Mosaico Compacto */}
               <IconPicker selectedIconId={billeteraIcon} onSelectIcon={setBilleteraIcon} />
 
               <div className="flex items-center gap-3 pt-3">
@@ -493,7 +506,7 @@ export const BilleteraView: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs py-3 rounded-2xl shadow-sm transition-all"
+                  className="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs py-3 rounded-2xl shadow-sm transition-all"
                 >
                   {editingBilleteraObj ? 'Actualizar Billetera' : 'Guardar Billetera'}
                 </button>
@@ -503,7 +516,7 @@ export const BilleteraView: React.FC = () => {
         </div>
       )}
 
-      {/* Modal: Crear / Editar Deuda con Botón Calculadora */}
+      {/* Modal: Crear / Editar Deuda */}
       {showAddDeudaModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl animate-scaleUp max-h-[90vh] overflow-y-auto">
@@ -527,73 +540,88 @@ export const BilleteraView: React.FC = () => {
                   value={deudaName}
                   onChange={e => setDeudaName(e.target.value)}
                   placeholder="Ej. Crédito Libre Inversión, Impuesto Predial"
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-rose-500"
+                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
                   required
                 />
               </div>
 
-              {/* Monto y Botón de Calculadora */}
+              {/* Monto con botón de calculadora integrado dentro del input */}
               <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                    Monto (COP)
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => setShowDeudaCalculator(!showDeudaCalculator)}
-                    className={`text-xs font-semibold flex items-center gap-1 px-2.5 py-1 rounded-xl transition-all ${
-                      showDeudaCalculator
-                        ? 'bg-rose-600 text-white shadow-sm'
-                        : 'bg-slate-100 dark:bg-slate-800 text-rose-700 dark:text-rose-400 hover:bg-slate-200 dark:hover:bg-slate-700'
-                    }`}
-                  >
-                    <Calculator className="w-3.5 h-3.5" /> Calculadora
-                  </button>
-                </div>
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                  Monto (COP)
+                </label>
 
-                <div className="space-y-2">
+                <div className="relative">
                   <input
                     type="number"
                     step="any"
                     value={deudaAmount}
                     onChange={e => setDeudaAmount(e.target.value)}
                     placeholder="0 (o valor adeudado)"
-                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white font-mono focus:outline-none focus:border-rose-500"
+                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl pl-3.5 pr-11 py-2.5 text-sm text-slate-800 dark:text-white font-mono focus:outline-none focus:border-blue-500"
                   />
 
-                  {/* Espacio desplegable de sumar o restar */}
-                  {showDeudaCalculator && (
-                    <div className="flex items-center gap-1.5 p-2 bg-slate-50 dark:bg-slate-950/80 rounded-2xl border border-slate-200 dark:border-slate-800 animate-scaleUp">
+                  <button
+                    type="button"
+                    onClick={() => setShowDeudaCalcPopup(!showDeudaCalcPopup)}
+                    title="Calculadora (+ / -)"
+                    className={`absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-xl transition-all ${
+                      showDeudaCalcPopup
+                        ? 'bg-blue-600 text-white shadow-sm'
+                        : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700'
+                    }`}
+                  >
+                    <Calculator className="w-4 h-4" />
+                  </button>
+
+                  {/* Pop-up de Calculadora */}
+                  {showDeudaCalcPopup && (
+                    <div className="absolute right-0 top-full mt-2 z-30 p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl space-y-2.5 w-64 animate-scaleUp">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                          Ajustar Monto
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setShowDeudaCalcPopup(false)}
+                          className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+
                       <input
                         type="number"
                         step="any"
                         value={deudaCalcDelta}
                         onChange={e => setDeudaCalcDelta(e.target.value)}
                         placeholder="Valor a sumar o restar..."
-                        className="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs px-3 py-1.5 rounded-xl text-slate-800 dark:text-white font-mono focus:outline-none"
+                        className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-xs px-2.5 py-1.5 rounded-xl text-slate-800 dark:text-white font-mono focus:outline-none focus:border-blue-500"
+                        autoFocus
                       />
-                      <button
-                        type="button"
-                        onClick={() => applyDeudaCalc('+')}
-                        className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1 transition-all"
-                        title="Sumar al monto actual"
-                      >
-                        <Plus className="w-3.5 h-3.5" /> Sumar
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => applyDeudaCalc('-')}
-                        className="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs flex items-center gap-1 transition-all"
-                        title="Restar al monto actual"
-                      >
-                        <Minus className="w-3.5 h-3.5" /> Restar
-                      </button>
+
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => applyDeudaCalc('+')}
+                          className="flex-1 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center justify-center gap-1 shadow-sm transition-all"
+                        >
+                          <Plus className="w-3.5 h-3.5" /> Sumar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => applyDeudaCalc('-')}
+                          className="flex-1 py-1.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-white font-bold text-xs flex items-center justify-center gap-1 shadow-sm transition-all"
+                        >
+                          <Minus className="w-3.5 h-3.5" /> Restar
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
               </div>
 
-              {/* Icon Picker con Mosaico Compacto y Categorías */}
+              {/* Icon Picker con Mosaico Compacto */}
               <IconPicker selectedIconId={deudaIcon} onSelectIcon={setDeudaIcon} />
 
               <div className="flex items-center gap-3 pt-3">
@@ -606,7 +634,7 @@ export const BilleteraView: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs py-3 rounded-2xl shadow-sm transition-all"
+                  className="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs py-3 rounded-2xl shadow-sm transition-all"
                 >
                   {editingDeudaObj ? 'Actualizar Deuda' : 'Guardar Deuda'}
                 </button>

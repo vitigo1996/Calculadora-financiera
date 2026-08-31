@@ -153,7 +153,7 @@ export const IconPicker: React.FC<IconPickerProps> = ({ selectedIconId = 'wallet
                     onClick={() => onSelectIcon(item.id)}
                     className={`p-2 rounded-xl border flex items-center gap-2 transition-all text-left ${
                       isSelected
-                        ? 'bg-emerald-500 text-white border-emerald-400 shadow-sm ring-1 ring-emerald-400'
+                        ? 'bg-blue-600 text-white border-blue-500 shadow-sm ring-1 ring-blue-400'
                         : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-850'
                     }`}
                   >

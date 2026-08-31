@@ -30,11 +30,11 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab })
               onClick={() => setActiveTab(tab.id as TabType)}
               className={`flex flex-col items-center justify-center py-1 px-1.5 rounded-2xl transition-all duration-200 ${
                 isActive
-                  ? 'text-emerald-600 dark:text-emerald-400 font-bold scale-105'
+                  ? 'text-blue-600 dark:text-blue-400 font-bold scale-105'
                   : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
               }`}
             >
-              <div className={`p-1.5 rounded-xl transition-colors ${isActive ? 'bg-emerald-100 dark:bg-emerald-500/20' : 'bg-transparent'}`}>
+              <div className={`p-1.5 rounded-xl transition-colors ${isActive ? 'bg-blue-100 dark:bg-blue-500/20' : 'bg-transparent'}`}>
                 <Icon className={`w-5 h-5 ${isActive ? 'stroke-[2.4]' : 'stroke-[1.8]'}`} />
               </div>
               <span className="text-[10px] tracking-tight mt-0.5 whitespace-nowrap">{tab.label}</span>
