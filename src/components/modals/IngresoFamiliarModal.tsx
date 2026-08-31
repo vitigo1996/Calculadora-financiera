@@ -110,8 +110,8 @@ export const IngresoFamiliarModal: React.FC<IngresoFamiliarModalProps> = ({ isOp
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-3xl p-6 max-w-xl w-full shadow-2xl animate-scaleUp max-h-[90vh] overflow-y-auto space-y-5">
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+      <div className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-3xl p-6 max-w-xl w-full shadow-2xl animate-scaleUp max-h-[90vh] overflow-y-auto space-y-5 my-auto">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
           <h3 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
