@@ -50,7 +50,7 @@ interface FinanceContextType {
   updateHousingExpense: (id: string, updated: Partial<HousingExpense>) => void;
   deleteHousingExpense: (id: string) => void;
   moveHousingExpense: (index: number, direction: 'up' | 'down') => void;
-  addObligation: (item: { name: string; period: PaymentPeriod; totalAmount: number; icon?: string }) => void;
+  addObligation: (item: { name: string; period: PaymentPeriod; totalAmount: number; totalDebtBalance?: number; icon?: string }) => void;
   updateObligation: (id: string, updated: Partial<ObligationItem>) => void;
   deleteObligation: (id: string) => void;
   moveObligation: (index: number, direction: 'up' | 'down') => void;
@@ -404,7 +404,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   // Obligations CRUD
-  const addObligation = (item: { name: string; period: PaymentPeriod; totalAmount: number; icon?: string }) => {
+  const addObligation = (item: { name: string; period: PaymentPeriod; totalAmount: number; totalDebtBalance?: number; icon?: string }) => {
     const newOb: ObligationItem = {
       id: `ob-${Date.now()}`,
       ...item
