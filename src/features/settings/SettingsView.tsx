@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useFinance } from '../../context/FinanceContext';
 import { StorageService } from '../../services/storageService';
-import { formatCurrency, convertToBase } from '../../services/financeCalculations';
+import { formatCurrency } from '../../services/financeCalculations';
 import { PersonProfile, ExpenseSplitMethod } from '../../models/finance';
 import {
   Settings as SettingsIcon,
@@ -17,7 +17,6 @@ import {
 
 export const SettingsView: React.FC = () => {
   const { data, baseCurrency, updatePeople, updateExpenseSplitMethod, resetToDefault } = useFinance();
-  const dolarRate = data.dolarRate || 3600;
 
   // Number of contributors dropdown: 1 to 4 max
   const [personCount, setPersonCount] = useState<number>(Math.min(4, Math.max(1, data.people?.length || 2)));
@@ -28,8 +27,8 @@ export const SettingsView: React.FC = () => {
       return data.people.slice(0, 4);
     }
     return [
-      { id: 'p-1', name: 'Yo', monthlyIncome: 4400000, healthPensionRate: 0.08, enabled: true, moneda: 'COP' },
-      { id: 'p-2', name: 'Persona 2', monthlyIncome: 8500000, healthPensionRate: 0.0, enabled: true, moneda: 'COP' }
+      { id: 'p-1', name: 'Yo', monthlyIncome: 4400000, healthPensionRate: 0.08, enabled: true },
+      { id: 'p-2', name: 'Persona 2', monthlyIncome: 8500000, healthPensionRate: 0.0, enabled: true }
     ];
   });
 
@@ -51,8 +50,7 @@ export const SettingsView: React.FC = () => {
             name: `Persona ${i + 1}`,
             monthlyIncome: 0,
             healthPensionRate: 0.0,
-            enabled: true,
-            moneda: baseCurrency
+            enabled: true
           });
         }
       } else if (validCount < updated.length) {
@@ -71,16 +69,13 @@ export const SettingsView: React.FC = () => {
     });
   };
 
-  // Calculate real-time total income converted to base currency
-  const totalCombinedIncome = localPeople.reduce((sum, p) => {
-    const pInBase = convertToBase(p.monthlyIncome || 0, p.moneda || 'COP', baseCurrency, dolarRate);
-    return sum + pInBase;
-  }, 0);
+  // Calculate real-time total income
+  const totalCombinedIncome = localPeople.reduce((sum, p) => sum + (p.monthlyIncome || 0), 0);
 
   // Calculate real-time percentage according to selected split method
   const getPersonRatio = (person: PersonProfile) => {
     if (localPeople.length <= 1) return 100;
-    const pIncomeInBase = convertToBase(person.monthlyIncome || 0, person.moneda || 'COP', baseCurrency, dolarRate);
+    const pIncome = person.monthlyIncome || 0;
 
     if (splitMethod === 'equal') {
       return 100 / localPeople.length;
@@ -88,12 +83,12 @@ export const SettingsView: React.FC = () => {
     if (splitMethod === 'equal_remaining') {
       const avg = totalCombinedIncome / localPeople.length;
       const ratio = totalCombinedIncome > 0
-        ? Math.max(0, Math.min(1, 0.5 + (pIncomeInBase - avg) / (totalCombinedIncome || 1))) * 100
+        ? Math.max(0, Math.min(1, 0.5 + (pIncome - avg) / (totalCombinedIncome || 1))) * 100
         : 100 / localPeople.length;
       return ratio;
     }
     // 'proportional' (default)
-    return totalCombinedIncome > 0 ? (pIncomeInBase / totalCombinedIncome) * 100 : 0;
+    return totalCombinedIncome > 0 ? (pIncome / totalCombinedIncome) * 100 : 0;
   };
 
   // Save changes
@@ -139,19 +134,18 @@ export const SettingsView: React.FC = () => {
           </select>
         </div>
 
-        {/* 2. Lista de Personas: Nombre, Moneda, Ingreso y Porcentaje */}
+        {/* 2. Lista de Personas: Solo Nombre, Ingreso y Porcentaje */}
         <div className="space-y-3">
           {localPeople.map((person, idx) => {
             const ratio = getPersonRatio(person);
             const defaultName = idx === 0 ? 'Yo' : `Persona ${idx + 1}`;
-            const pMoneda = person.moneda || 'COP';
 
             return (
               <div
                 key={person.id || idx}
                 className="bg-slate-50 dark:bg-slate-950/70 p-4 rounded-2xl border border-slate-300 dark:border-slate-800 space-y-3"
               >
-                <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
                   {/* Nombre */}
                   <div>
                     <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 block mb-1">
@@ -165,21 +159,6 @@ export const SettingsView: React.FC = () => {
                       className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
                       required
                     />
-                  </div>
-
-                  {/* Moneda */}
-                  <div>
-                    <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 block mb-1">
-                      Moneda
-                    </label>
-                    <select
-                      value={pMoneda}
-                      onChange={e => updatePersonField(idx, 'moneda', e.target.value as 'COP' | 'USD')}
-                      className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
-                    >
-                      <option value="COP">Pesos ($)</option>
-                      <option value="USD">Dólares ($)</option>
-                    </select>
                   </div>
 
                   {/* Ingreso Mensual */}

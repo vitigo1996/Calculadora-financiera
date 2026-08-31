@@ -12,7 +12,6 @@ import {
   X,
   Calculator,
   GripVertical,
-  CheckCircle2,
   Users,
   User,
   Calendar
@@ -41,8 +40,7 @@ export const GastosFijosView: React.FC = () => {
     addSubscription,
     updateSubscription,
     deleteSubscription,
-    moveSubscription,
-    toggleSubscription
+    moveSubscription
   } = useFinance();
 
   const dolarRate = data.dolarRate || 3600;
@@ -506,7 +504,7 @@ export const GastosFijosView: React.FC = () => {
                   </span>
 
                   <div>
-                    {/* Nombre y al frente el valor de la cuota mensual */}
+                    {/* Nombre y al frente el valor de la cuota mensual sin paréntesis */}
                     <div className="flex flex-wrap items-center gap-2">
                       <h4 className="font-bold text-slate-800 dark:text-white text-sm">{ob.name}</h4>
                       {isDiff && (
@@ -515,7 +513,7 @@ export const GastosFijosView: React.FC = () => {
                         </span>
                       )}
                       <span className="text-xs font-bold text-slate-500 dark:text-slate-400 font-mono">
-                        ({formatCurrency(monthlyPayment, obMoneda)}/mes)
+                        {formatCurrency(monthlyPayment, obMoneda)}/mes
                       </span>
                     </div>
 
@@ -631,23 +629,14 @@ export const GastosFijosView: React.FC = () => {
                   setDraggedSubIdx(null);
                 }}
                 onDragEnd={() => setDraggedSubIdx(null)}
-                className={`p-4 transition-all flex items-center justify-between cursor-grab active:cursor-grabbing ${
-                  isDragging ? 'opacity-40 scale-[0.99]' : ''
-                } ${sub.active ? 'bg-white dark:bg-slate-900' : 'bg-slate-50/50 dark:bg-slate-950/40 opacity-60'}`}
+                className={`p-4 bg-white dark:bg-slate-900 transition-all flex items-center justify-between cursor-grab active:cursor-grabbing ${
+                  isDragging ? 'opacity-40 scale-[0.99]' : 'hover:bg-slate-50/70 dark:hover:bg-slate-850/50'
+                }`}
               >
                 <div className="flex items-center gap-3">
                   <div className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-0.5 cursor-grab active:cursor-grabbing">
                     <GripVertical className="w-3.5 h-3.5" />
                   </div>
-
-                  <button
-                    onClick={() => toggleSubscription(sub.id)}
-                    className={`w-6 h-6 rounded-full flex items-center justify-center transition-colors ${
-                      sub.active ? 'bg-blue-600 text-white' : 'bg-slate-200 dark:bg-slate-800 text-transparent'
-                    }`}
-                  >
-                    <CheckCircle2 className="w-4 h-4" />
-                  </button>
 
                   {/* Quincena si es mensual, o Mes si es anual */}
                   {isYearly ? (
@@ -739,8 +728,8 @@ export const GastosFijosView: React.FC = () => {
                   onChange={e => setHousingCurrency(e.target.value as 'COP' | 'USD')}
                   className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
                 >
-                  <option value="COP">Pesos ($)</option>
-                  <option value="USD">Dólares ($)</option>
+                  <option value="COP">Pesos (COP)</option>
+                  <option value="USD">Dólares (USD)</option>
                 </select>
               </div>
 
@@ -920,8 +909,8 @@ export const GastosFijosView: React.FC = () => {
                   onChange={e => setObligationCurrency(e.target.value as 'COP' | 'USD')}
                   className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
                 >
-                  <option value="COP">Pesos ($)</option>
-                  <option value="USD">Dólares ($)</option>
+                  <option value="COP">Pesos (COP)</option>
+                  <option value="USD">Dólares (USD)</option>
                 </select>
               </div>
 
@@ -1192,8 +1181,8 @@ export const GastosFijosView: React.FC = () => {
                   onChange={e => setSubCurrency(e.target.value as 'COP' | 'USD')}
                   className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
                 >
-                  <option value="COP">Pesos ($)</option>
-                  <option value="USD">Dólares ($)</option>
+                  <option value="COP">Pesos (COP)</option>
+                  <option value="USD">Dólares (USD)</option>
                 </select>
               </div>
 

@@ -81,9 +81,8 @@ export interface CalculatedSummary {
 }
 
 export function calculateSubscriptionMonthlyCost(sub: SubscriptionItem): number {
-  if (!sub.active) return 0;
   const base = sub.totalPrice / (sub.members > 0 ? sub.members : 1);
-  return sub.billing === 'yearly' ? base / 12 : base;
+  return base;
 }
 
 export function calculateCardPurchasesTotal(cc: CreditCardItem): number {
