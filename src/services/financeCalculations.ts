@@ -215,14 +215,18 @@ export function calculateAllFinances(data: AppFinanceData): CalculatedSummary {
   ];
 
   const rawPortItems = data.portfolioItems || [];
+  const baseCurrency = data.baseCurrency || 'COP';
+  const dolarRate = data.dolarRate || 3600;
+
   const calculatedPortItems = rawPortItems.map((item, idx) => {
-    const valor = item.saldo || 0;
+    const itemMoneda = item.moneda || 'COP';
+    const valorCOP = convertToBase(item.saldo || 0, itemMoneda, baseCurrency, dolarRate);
     return {
       id: item.id,
       label: item.nombre,
-      moneda: item.moneda || 'COP',
+      moneda: itemMoneda,
       saldoOriginal: item.saldo,
-      valorCOP: valor,
+      valorCOP,
       icon: item.icon,
       color: item.color || distinctPalette[idx % distinctPalette.length]
     };
@@ -309,29 +313,37 @@ export function calculateAllFinances(data: AppFinanceData): CalculatedSummary {
 
 export function convertToBase(
   amount: number,
-  _itemCurrency?: string,
-  _baseCurrency?: string,
-  _dolarRate?: number
+  itemCurrency: 'COP' | 'USD' = 'COP',
+  baseCurrency: 'COP' | 'USD' = 'COP',
+  dolarRate: number = 3600
 ): number {
+  if (itemCurrency === baseCurrency) return amount;
+  if (itemCurrency === 'USD' && baseCurrency === 'COP') return amount * dolarRate;
+  if (itemCurrency === 'COP' && baseCurrency === 'USD') return dolarRate > 0 ? amount / dolarRate : 0;
   return amount;
 }
 
 export function formatWithEquivalence(
   amount: number,
-  _itemCurrency?: string,
-  _baseCurrency?: string,
-  _dolarRate?: number
+  itemCurrency: 'COP' | 'USD' = 'COP',
+  baseCurrency: 'COP' | 'USD' = 'COP',
+  dolarRate: number = 3600
 ) {
+  const isDifferent = itemCurrency !== baseCurrency;
+  const equivalent = convertToBase(amount, itemCurrency, baseCurrency, dolarRate);
   return {
-    isDifferent: false,
-    itemCurrency: 'COP',
-    baseCurrency: 'COP',
-    equivalentAmount: amount,
-    formattedOriginal: formatCurrency(amount),
-    formattedEquivalent: formatCurrency(amount)
+    isDifferent,
+    itemCurrency,
+    baseCurrency,
+    equivalentAmount: equivalent,
+    formattedOriginal: formatCurrency(amount, itemCurrency),
+    formattedEquivalent: formatCurrency(equivalent, baseCurrency)
   };
 }
 
-export function formatCurrency(amount: number, _currency?: string): string {
+export function formatCurrency(amount: number, currency: 'COP' | 'USD' = 'COP'): string {
+  if (currency === 'USD') {
+    return `$${amount.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+  }
   return `$${Math.round(amount || 0).toLocaleString('es-CO')}`;
 }
