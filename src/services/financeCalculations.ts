@@ -93,6 +93,16 @@ export function calculateCardPurchasesTotal(cc: CreditCardItem): number {
   return 0;
 }
 
+export function calculateCardPaymentDue(cc: CreditCardItem): number {
+  if (cc.billingCutoffAmount !== undefined) {
+    return cc.billingCutoffAmount;
+  }
+  if (cc.minPaymentOverride !== undefined && cc.minPaymentOverride > 0) {
+    return cc.minPaymentOverride;
+  }
+  return calculateCardPurchasesTotal(cc);
+}
+
 export function calculateAllFinances(data: AppFinanceData): CalculatedSummary {
   const activePeople = (data.people || []).filter(p => p.enabled);
   const isShared = data.mode === 'shared' && activePeople.length > 1;
@@ -165,24 +175,24 @@ export function calculateAllFinances(data: AppFinanceData): CalculatedSummary {
   const addiObj = data.creditCards.find(c => c.name.toLowerCase().includes('addi'));
 
   const nuPurchasesSum = nuObj ? calculateCardPurchasesTotal(nuObj) : 0;
-  const g16 = nuPurchasesSum;
-  const h16 = nuPurchasesSum;
+  const nuPagoMinimo = nuObj ? calculateCardPaymentDue(nuObj) : 0;
   const nuCupo = nuObj?.creditLimit || 5000000;
-  const nuDisponible = nuCupo - g16;
+  const nuDisponible = nuCupo - nuPurchasesSum;
 
   const falaPurchasesSum = falaObj ? calculateCardPurchasesTotal(falaObj) : 0;
-  const g17 = falaPurchasesSum;
-  const h17 = falaPurchasesSum;
+  const falaPagoMinimo = falaObj ? calculateCardPaymentDue(falaObj) : 0;
   const falaCupo = falaObj?.creditLimit || 4400000;
-  const falaDisponible = falaCupo - g17;
+  const falaDisponible = falaCupo - falaPurchasesSum;
 
   const addiPurchasesSum = addiObj ? calculateCardPurchasesTotal(addiObj) : 0;
-  const g18_deuda = addiPurchasesSum > 0 ? addiPurchasesSum : 124950;
-  const h18_pago = addiObj?.minPaymentOverride || 41650;
+  const addiDeuda = addiPurchasesSum > 0 ? addiPurchasesSum : 124950;
+  const addiPago = addiObj ? calculateCardPaymentDue(addiObj) : 41650;
   const addiCupo = addiObj?.creditLimit || 8000000;
-  const addiDisponible = addiCupo - g18_deuda;
+  const addiDisponible = addiCupo - addiDeuda;
 
-  const m5_tarjetas = h16 + h17 + h18_pago;
+  // Sum of total credit card payments across all registered cards
+  const totalCardsPayment = (data.creditCards || []).reduce((sum, cc) => sum + calculateCardPaymentDue(cc), 0);
+  const m5_tarjetas = totalCardsPayment > 0 ? totalCardsPayment : (nuPagoMinimo + falaPagoMinimo + addiPago);
 
   // Suscripciones
   const processedSubs = (data.subscriptions || []).map(sub => ({
@@ -200,26 +210,26 @@ export function calculateAllFinances(data: AppFinanceData): CalculatedSummary {
   const m7_totalGastos = m3_saludPension + m4_vivienda + m5_tarjetas + m6_obligaciones;
 
   // M9: Mitad de mes (1st fortnight)
-  const m9_mitadDeMes = (m3_saludPension / 2) + h7 + h8 + h17 + h18_pago + h12 + h13;
+  const firstFortnightCards = (data.creditCards || [])
+    .filter(c => c.period === '1st_fortnight')
+    .reduce((sum, c) => sum + calculateCardPaymentDue(c), 0);
+  const secondFortnightCards = (data.creditCards || [])
+    .filter(c => c.period === '2nd_fortnight')
+    .reduce((sum, c) => sum + calculateCardPaymentDue(c), 0);
+
+  const m9_mitadDeMes = (m3_saludPension / 2) + h7 + h8 + (firstFortnightCards || (falaPagoMinimo + addiPago)) + h12 + h13;
 
   // M10: Fin de mes (2nd fortnight)
-  const m10_finDeMes = (m3_saludPension / 2) + h9 + h16;
+  const m10_finDeMes = (m3_saludPension / 2) + h9 + (secondFortnightCards || nuPagoMinimo);
 
   // M11: Disponible
   const m11_disponible = p1.monthlyIncome - m7_totalGastos;
 
-  // Portafolio Dinámico con Gama de Colores Amplia y Distinguible
+  // Portafolio Dinámico
   const dolarRate = data.dolarRate || 3600;
   const distinctPalette = [
-    '#3b82f6', // Blue
-    '#10b981', // Emerald
-    '#f59e0b', // Amber
-    '#8b5cf6', // Violet
-    '#ec4899', // Pink
-    '#06b6d4', // Cyan
-    '#f97316', // Orange
-    '#14b8a6', // Teal
-    '#6366f1'  // Indigo
+    '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6',
+    '#ec4899', '#06b6d4', '#f97316', '#14b8a6', '#6366f1'
   ];
 
   const rawPortItems = data.portfolioItems || [];
@@ -303,9 +313,9 @@ export function calculateAllFinances(data: AppFinanceData): CalculatedSummary {
       totalDaniela: obligacionesDaniela
     },
     tarjetas: {
-      nu: { deuda: g16, pagoMinimo: h16, cupoTotal: nuCupo, cupoDisponible: nuDisponible, period: nuObj?.period || '2nd_fortnight' },
-      falabella: { deuda: g17, pagoMinimo: h17, cupoTotal: falaCupo, cupoDisponible: falaDisponible, period: falaObj?.period || '1st_fortnight' },
-      addi: { deuda: g18_deuda, pagoMinimo: h18_pago, cupoTotal: addiCupo, cupoDisponible: addiDisponible, period: addiObj?.period || '1st_fortnight' },
+      nu: { deuda: nuPurchasesSum, pagoMinimo: nuPagoMinimo, cupoTotal: nuCupo, cupoDisponible: nuDisponible, period: nuObj?.period || '2nd_fortnight' },
+      falabella: { deuda: falaPurchasesSum, pagoMinimo: falaPagoMinimo, cupoTotal: falaCupo, cupoDisponible: falaDisponible, period: falaObj?.period || '1st_fortnight' },
+      addi: { deuda: addiDeuda, pagoMinimo: addiPago, cupoTotal: addiCupo, cupoDisponible: addiDisponible, period: addiObj?.period || '1st_fortnight' },
       totalPagoDavid: m5_tarjetas
     },
     suscripciones: {

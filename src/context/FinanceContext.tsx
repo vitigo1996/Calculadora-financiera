@@ -14,7 +14,7 @@ import {
 } from '../models/finance';
 import { StorageService } from '../services/storageService';
 import { CurrencyService } from '../services/currencyService';
-import { calculateAllFinances, CalculatedSummary } from '../services/financeCalculations';
+import { calculateAllFinances, CalculatedSummary, calculateCardPurchasesTotal } from '../services/financeCalculations';
 
 interface FinanceContextType {
   data: AppFinanceData;
@@ -41,6 +41,9 @@ interface FinanceContextType {
   updateCreditCard: (id: string, updated: Partial<CreditCardItem>) => void;
   deleteCreditCard: (id: string) => void;
   moveCreditCard: (index: number, direction: 'up' | 'down') => void;
+  performCardCutoff: (cardId: string) => void;
+  payCardCutoff: (cardId: string) => void;
+  cancelCardCutoff: (cardId: string) => void;
   addCardPurchase: (cardId: string, purchase: { concept: string; amount: number }) => void;
   deleteCardPurchase: (cardId: string, purchaseId: string) => void;
   updateHousingExpense: (id: string, updated: Partial<HousingExpense>) => void;
@@ -120,7 +123,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     };
     setData(prev => ({
       ...prev,
-      billeteraItems: [...prev.billeteraItems, newItem]
+      billeteraItems: [newItem, ...prev.billeteraItems] // Added at TOP
     }));
   };
 
@@ -157,7 +160,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     };
     setData(prev => ({
       ...prev,
-      deudaItems: [...prev.deudaItems, newItem]
+      deudaItems: [newItem, ...prev.deudaItems] // Added at TOP
     }));
   };
 
@@ -194,7 +197,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     };
     setData(prev => ({
       ...prev,
-      portfolioItems: [...(prev.portfolioItems || []), newItem]
+      portfolioItems: [newItem, ...(prev.portfolioItems || [])] // Added at TOP
     }));
   };
 
@@ -235,7 +238,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     };
     setData(prev => ({
       ...prev,
-      creditCards: [...prev.creditCards, newCard]
+      creditCards: [newCard, ...prev.creditCards] // Added at TOP
     }));
   };
 
@@ -265,11 +268,80 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     });
   };
 
-  const addCardPurchase = (cardId: string, purchase: { concept: string; amount: number }) => {
-    const newP = { id: `p-${Date.now()}`, ...purchase };
+  // Realizar Corte de Tarjeta: Congela las compras actuales en billingCutoffAmount
+  const performCardCutoff = (cardId: string) => {
     setData(prev => ({
       ...prev,
-      creditCards: prev.creditCards.map(c => (c.id === cardId ? { ...c, purchases: [...c.purchases, newP] } : c))
+      creditCards: prev.creditCards.map(c => {
+        if (c.id === cardId) {
+          const currentTotal = calculateCardPurchasesTotal(c);
+          return {
+            ...c,
+            billingCutoffAmount: currentTotal,
+            billingCutoffDate: new Date().toLocaleDateString('es-CO', { day: '2-digit', month: 'short' }),
+            purchases: (c.purchases || []).map(p => ({ ...p, isAfterCutoff: false }))
+          };
+        }
+        return c;
+      })
+    }));
+  };
+
+  // Pagar Corte de Tarjeta: Liquida el saldo de corte y lo que resta queda para el siguiente periodo
+  const payCardCutoff = (cardId: string) => {
+    setData(prev => ({
+      ...prev,
+      creditCards: prev.creditCards.map(c => {
+        if (c.id === cardId) {
+          // Keep only purchases made after the cutoff
+          const remainingPurchases = (c.purchases || []).filter(p => p.isAfterCutoff === true);
+          return {
+            ...c,
+            billingCutoffAmount: undefined,
+            billingCutoffDate: undefined,
+            purchases: remainingPurchases
+          };
+        }
+        return c;
+      })
+    }));
+  };
+
+  // Cancelar / Deshacer Corte
+  const cancelCardCutoff = (cardId: string) => {
+    setData(prev => ({
+      ...prev,
+      creditCards: prev.creditCards.map(c => {
+        if (c.id === cardId) {
+          return {
+            ...c,
+            billingCutoffAmount: undefined,
+            billingCutoffDate: undefined,
+            purchases: (c.purchases || []).map(p => ({ ...p, isAfterCutoff: false }))
+          };
+        }
+        return c;
+      })
+    }));
+  };
+
+  // Add Card Purchase (prepended to the TOP of purchases list)
+  const addCardPurchase = (cardId: string, purchase: { concept: string; amount: number }) => {
+    const targetCard = data.creditCards.find(c => c.id === cardId);
+    const hasActiveCutoff = targetCard?.billingCutoffAmount !== undefined;
+
+    const newP = {
+      id: `p-${Date.now()}`,
+      ...purchase,
+      date: new Date().toLocaleDateString('es-CO', { day: '2-digit', month: 'short' }),
+      isAfterCutoff: hasActiveCutoff
+    };
+
+    setData(prev => ({
+      ...prev,
+      creditCards: prev.creditCards.map(c =>
+        c.id === cardId ? { ...c, purchases: [newP, ...c.purchases] } : c // Added at TOP
+      )
     }));
   };
 
@@ -339,6 +411,9 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         updateCreditCard,
         deleteCreditCard,
         moveCreditCard,
+        performCardCutoff,
+        payCardCutoff,
+        cancelCardCutoff,
         addCardPurchase,
         deleteCardPurchase,
         updateHousingExpense,

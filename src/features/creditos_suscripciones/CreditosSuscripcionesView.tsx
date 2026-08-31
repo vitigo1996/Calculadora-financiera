@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useFinance } from '../../context/FinanceContext';
-import { formatCurrency, calculateCardPurchasesTotal } from '../../services/financeCalculations';
+import { formatCurrency, calculateCardPurchasesTotal, calculateCardPaymentDue } from '../../services/financeCalculations';
 import { CreditCardItem, PaymentPeriod } from '../../models/finance';
 import {
   CreditCard,
@@ -11,9 +11,9 @@ import {
   X,
   Calculator,
   GripVertical,
-  Calendar,
-  DollarSign,
-  ShoppingBag
+  Scissors,
+  CheckCircle2,
+  RotateCcw
 } from 'lucide-react';
 
 export const CreditosSuscripcionesView: React.FC = () => {
@@ -23,6 +23,9 @@ export const CreditosSuscripcionesView: React.FC = () => {
     updateCreditCard,
     deleteCreditCard,
     moveCreditCard,
+    performCardCutoff,
+    payCardCutoff,
+    cancelCardCutoff,
     addCardPurchase,
     deleteCardPurchase
   } = useFinance();
@@ -106,7 +109,27 @@ export const CreditosSuscripcionesView: React.FC = () => {
     }
   };
 
-  // Add Purchase to active card
+  // Realizar Corte
+  const handleDoCutoff = (card: CreditCardItem) => {
+    const totalCurrent = calculateCardPurchasesTotal(card);
+    if (totalCurrent <= 0) {
+      alert('No hay compras registradas para hacer corte.');
+      return;
+    }
+    if (confirm(`¿Hacer corte en "${card.name}" por COP ${formatCurrency(totalCurrent, 'COP')}? Este será el pago fijado del mes. Las compras que agregues después seguirán restando cupo pero no alterarán este pago.`)) {
+      performCardCutoff(card.id);
+    }
+  };
+
+  // Pagar Corte
+  const handlePayCutoff = (card: CreditCardItem) => {
+    const payAmount = card.billingCutoffAmount || 0;
+    if (confirm(`¿Registrar pago del corte por COP ${formatCurrency(payAmount, 'COP')} en "${card.name}"? Las compras posteriores al corte se convertirán en el saldo del siguiente periodo.`)) {
+      payCardCutoff(card.id);
+    }
+  };
+
+  // Add Purchase to active card (inserted at top)
   const handleAddPurchase = (e: React.FormEvent) => {
     e.preventDefault();
     const val = parseFloat(purchaseAmount);
@@ -175,11 +198,10 @@ export const CreditosSuscripcionesView: React.FC = () => {
         {/* Tarjetas Grid / Cards */}
         <div className="p-5 grid grid-cols-1 md:grid-cols-3 gap-4">
           {data.creditCards.map((cc, idx) => {
-            const isAddi = cc.name.toLowerCase().includes('addi');
             const purchasesSum = calculateCardPurchasesTotal(cc);
-            const deudaTotal = isAddi ? (purchasesSum || 124950) : purchasesSum;
-            const pagoMinimo = isAddi ? (cc.minPaymentOverride || 41650) : deudaTotal;
-            const cupoDisponible = cc.creditLimit - deudaTotal;
+            const pagoDelMes = calculateCardPaymentDue(cc);
+            const cupoDisponible = cc.creditLimit - purchasesSum;
+            const hasCutoff = cc.billingCutoffAmount !== undefined;
             const isSelected = selectedCard?.id === cc.id;
             const isDragging = draggedIndex === idx;
 
@@ -216,11 +238,18 @@ export const CreditosSuscripcionesView: React.FC = () => {
                 </div>
 
                 <div className="my-3">
-                  <span className="text-[11px] text-slate-500 dark:text-slate-400 block font-semibold">
-                    Deuda / Pago del Mes
-                  </span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400 block font-semibold">
+                      Pago del Mes
+                    </span>
+                    {hasCutoff && (
+                      <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-950/60 px-2 py-0.5 rounded-full">
+                        Corte Realizado
+                      </span>
+                    )}
+                  </div>
                   <div className="text-xl font-black font-mono text-blue-700 dark:text-blue-400">
-                    COP {formatCurrency(pagoMinimo, 'COP')}
+                    COP {formatCurrency(pagoDelMes, 'COP')}
                   </div>
                 </div>
 
@@ -254,19 +283,51 @@ export const CreditosSuscripcionesView: React.FC = () => {
       {/* Detalles de la Tarjeta Seleccionada */}
       {selectedCard && (
         <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm p-6 space-y-4 transition-colors">
+          {/* Header con solo el nombre de la tarjeta */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200 dark:border-slate-800">
             <div>
-              <h3 className="font-bold text-slate-800 dark:text-white text-base flex items-center gap-2">
-                <ShoppingBag className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                Compras: {selectedCard.name}
+              <h3 className="font-black text-slate-800 dark:text-white text-lg">
+                {selectedCard.name}
               </h3>
               <span className="text-xs text-slate-500 dark:text-slate-400">
-                Pago en {selectedCard.period === '1st_fortnight' ? '1ª Quincena (Mitad de mes)' : '2ª Quincena (Fin de mes)'}
+                Pago en {selectedCard.period === '1st_fortnight' ? '1ª Quincena' : '2ª Quincena'}
+                {selectedCard.billingCutoffAmount !== undefined && (
+                  <strong className="text-amber-600 dark:text-amber-400 ml-1.5 font-mono">
+                    • Corte: COP {formatCurrency(selectedCard.billingCutoffAmount, 'COP')}
+                  </strong>
+                )}
               </span>
             </div>
 
-            {/* Acciones: Editar Tarjeta y Registrar Compra */}
-            <div className="flex items-center gap-2">
+            {/* Acciones: Corte / Pagar, Editar Tarjeta y Registrar Compra */}
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Botón de Corte / Pagar Tarjeta */}
+              {selectedCard.billingCutoffAmount !== undefined ? (
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => handlePayCutoff(selectedCard)}
+                    className="px-3 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white transition-all flex items-center gap-1.5 shadow-sm"
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Pagar Tarjeta
+                  </button>
+
+                  <button
+                    onClick={() => cancelCardCutoff(selectedCard.id)}
+                    title="Deshacer Corte"
+                    className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => handleDoCutoff(selectedCard)}
+                  className="px-3 py-2 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-400 text-white transition-all flex items-center gap-1.5 shadow-sm"
+                >
+                  <Scissors className="w-3.5 h-3.5" /> Corte
+                </button>
+              )}
+
               <button
                 onClick={() => openEditCard(selectedCard)}
                 className="px-3 py-2 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300/80 dark:border-transparent transition-all flex items-center gap-1.5 shadow-sm"
@@ -283,14 +344,22 @@ export const CreditosSuscripcionesView: React.FC = () => {
             </div>
           </div>
 
-          {/* Tabla de Compras */}
+          {/* Tabla de Compras (Añadidas arriba primero) */}
           {selectedCard.purchases && selectedCard.purchases.length > 0 ? (
             <div className="divide-y divide-slate-200 dark:divide-slate-800">
               {selectedCard.purchases.map(p => (
                 <div key={p.id} className="py-3 flex items-center justify-between">
-                  <span className="text-xs font-medium text-slate-800 dark:text-slate-200">
-                    {p.concept}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium text-slate-800 dark:text-slate-200">
+                      {p.concept}
+                    </span>
+                    {p.isAfterCutoff && (
+                      <span className="text-[10px] font-semibold bg-blue-100 dark:bg-blue-950/70 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full border border-blue-200 dark:border-blue-800/40">
+                        Post-Corte
+                      </span>
+                    )}
+                  </div>
+
                   <div className="flex items-center gap-3">
                     <div className="text-right flex items-center gap-1.5">
                       <span className="text-xs font-semibold font-mono text-slate-500 dark:text-slate-400">

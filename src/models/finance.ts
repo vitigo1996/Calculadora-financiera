@@ -54,13 +54,23 @@ export interface ObligationItem {
   totalDebtBalance?: number;
 }
 
+export interface CreditCardPurchase {
+  id: string;
+  concept: string;
+  amount: number;
+  date?: string;
+  isAfterCutoff?: boolean;
+}
+
 export interface CreditCardItem {
   id: string;
   name: string;
   period: PaymentPeriod;
   creditLimit: number;
   minPaymentOverride?: number;
-  purchases: { id: string; concept: string; amount: number }[];
+  billingCutoffAmount?: number; // Saldo congelado al hacer corte
+  billingCutoffDate?: string;
+  purchases: CreditCardPurchase[];
 }
 
 export interface SubscriptionItem {
