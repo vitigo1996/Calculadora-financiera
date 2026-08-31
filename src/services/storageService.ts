@@ -1,8 +1,9 @@
 import { AppFinanceData } from '../models/finance';
 import { initialFinanceData } from './defaultData';
+import { calculateSubscriptionMonthlyCost } from './financeCalculations';
 import * as XLSX from 'xlsx';
 
-const STORAGE_KEY = 'app_finanzas_data_v1';
+const STORAGE_KEY = 'app_finanzas_data_v2';
 
 export const StorageService = {
   loadData(): AppFinanceData {
@@ -60,9 +61,8 @@ export const StorageService = {
     const housingData = data.housingExpenses.map(h => ({
       Concepto: h.name,
       'Código Referencia': h.referenceCode || '',
-      Quincena: h.period === '1st_fortnight' ? '1ra (Mitad de mes)' : h.period === '2nd_fortnight' ? '2da (Fin de mes)' : 'Mensual',
-      'Monto Total (COP)': h.totalAmount,
-      'Tipo de Reparto': h.splitType
+      Quincena: h.period === '1st_fortnight' ? '1ra (Mitad de mes)' : '2da (Fin de mes)',
+      'Monto Total (COP)': h.totalAmount
     }));
     const wsHousing = XLSX.utils.json_to_sheet(housingData);
     XLSX.utils.book_append_sheet(wb, wsHousing, 'Vivienda');
@@ -99,8 +99,7 @@ export const StorageService = {
       'Costo Total Factura': s.totalPrice,
       'Número de Miembros': s.members,
       Facturación: s.billing === 'yearly' ? 'Anual' : 'Mensual',
-      'Costo Mensual Personal': (s.totalPrice / (s.members || 1)) / (s.billing === 'yearly' ? 12 : 1),
-      Categoría: s.category || '',
+      'Costo Mensual Personal': calculateSubscriptionMonthlyCost(s),
       Activa: s.active ? 'Sí' : 'No'
     }));
     const wsSub = XLSX.utils.json_to_sheet(subData);

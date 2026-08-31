@@ -1,12 +1,11 @@
-export type SplitType = 'proportional' | 'equal' | 'individual_1' | 'individual_2' | 'custom';
-export type PaymentPeriod = '1st_fortnight' | '2nd_fortnight' | 'monthly';
+export type PaymentPeriod = '1st_fortnight' | '2nd_fortnight';
 
 export interface PersonProfile {
   id: string;
   name: string;
   monthlyIncome: number;
-  healthPensionRate: number; // e.g. 0.08 (8%)
-  color: string;
+  healthPensionRate: number; // 0.08 default
+  enabled: boolean;
 }
 
 export interface HousingExpense {
@@ -15,8 +14,6 @@ export interface HousingExpense {
   referenceCode?: string;
   period: PaymentPeriod;
   totalAmount: number;
-  splitType: SplitType;
-  customSplitPercent?: number; // % for person 1
 }
 
 export interface SubscriptionItem {
@@ -26,8 +23,6 @@ export interface SubscriptionItem {
   members: number;
   billing: 'monthly' | 'yearly';
   active: boolean;
-  category?: string;
-  notes?: string;
 }
 
 export interface CreditCardItem {
@@ -47,35 +42,33 @@ export interface ObligationItem {
   person1Amount: number;
   person2Amount: number;
   totalDebtBalance?: number;
-  notes?: string;
 }
 
 export interface InvestmentAsset {
   id: string;
   name: string;
-  type: 'ETF' | 'Crypto' | 'Emergencia' | 'Vivienda' | 'Ahorro' | 'Efectivo' | 'Acciones';
+  type: string;
   currency: 'COP' | 'USD';
   balance: number;
   institution: string;
-  targetPercent?: number;
 }
 
 export interface AnnualExpense {
   id: string;
   name: string;
-  estimatedAmount: number;
-  dueMonth: number; // 1-12
-  notes?: string;
+  estimatedAmount?: number;
 }
 
 export interface AppFinanceData {
-  currencyRateUSD: number; // USD to COP
+  currencyRateUSD: number; // Dólar TRM
+  mode: 'single' | 'shared'; // Solo o Compartido
   people: [PersonProfile, PersonProfile];
   housingExpenses: HousingExpense[];
   subscriptions: SubscriptionItem[];
   creditCards: CreditCardItem[];
   obligations: ObligationItem[];
   portfolio: InvestmentAsset[];
+  deudaAutofinanciera: number;
   annualExpenses: AnnualExpense[];
   lastUpdated: string;
 }

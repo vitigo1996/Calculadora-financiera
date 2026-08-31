@@ -7,7 +7,6 @@ import { BudgetView } from './features/budget/BudgetView';
 import { CreditCardsView } from './features/cards/CreditCardsView';
 import { SubscriptionsView } from './features/subscriptions/SubscriptionsView';
 import { PortfolioView } from './features/portfolio/PortfolioView';
-import { FinancialCalculatorView } from './features/calculator/FinancialCalculatorView';
 import { SettingsView } from './features/settings/SettingsView';
 
 export const AppContent: React.FC = () => {
@@ -25,8 +24,6 @@ export const AppContent: React.FC = () => {
         return <SubscriptionsView />;
       case 'portfolio':
         return <PortfolioView />;
-      case 'calculator':
-        return <FinancialCalculatorView />;
       case 'settings':
         return <SettingsView />;
       default:

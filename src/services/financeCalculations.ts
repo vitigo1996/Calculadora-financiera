@@ -1,47 +1,40 @@
-import { AppFinanceData, HousingExpense, SubscriptionItem, CreditCardItem, ObligationItem, InvestmentAsset } from '../models/finance';
+import { AppFinanceData, SubscriptionItem, CreditCardItem } from '../models/finance';
 
 export interface FinanceSummary {
+  mode: 'single' | 'shared';
+  dolarRate: number;
   p1: {
     name: string;
-    grossIncome: number;
-    healthPension: number;
-    netIncome: number;
+    income: number;
     ratio: number;
-    housingShare: number;
-    obligationsShare: number;
-    creditCardsShare: number;
-    subscriptionsShare: number;
-    totalExpenses: number;
-    fortnight1Need: number;
-    fortnight2Need: number;
-    availableCash: number;
-    savingsRatePercent: number;
+    healthPension: number;
+    housingTotal: number;
+    cardsTotal: number;
+    obligationsTotal: number;
+    totalGastos: number;
+    mitadDeMes: number;
+    finDeMes: number;
+    disponible: number;
   };
   p2: {
     name: string;
-    grossIncome: number;
-    healthPension: number;
-    netIncome: number;
+    income: number;
     ratio: number;
-    housingShare: number;
-    obligationsShare: number;
-    creditCardsShare: number;
-    totalExpenses: number;
+    enabled: boolean;
   };
-  household: {
-    totalGrossIncome: number;
-    totalExpenses: number;
-    totalAvailableCash: number;
-    fortnight1Total: number;
-    fortnight2Total: number;
-  };
+  subscriptionsTotal: number;
   portfolio: {
-    totalNetWorthCOP: number;
-    totalUSD: number;
-    totalCOP: number;
-    emergencyFundCOP: number;
-    emergencyFundMonths: number;
-    distribution: { name: string; type: string; balanceCOP: number; percentage: number; color: string }[];
+    totalPortafolio: number;
+    items: {
+      id: string;
+      name: string;
+      institution: string;
+      currency: string;
+      balance: number;
+      valorCOP: number;
+      percentage: number;
+      color: string;
+    }[];
   };
 }
 
@@ -51,234 +44,134 @@ export function calculateSubscriptionMonthlyCost(sub: SubscriptionItem): number 
   return sub.billing === 'yearly' ? base / 12 : base;
 }
 
-export function calculateCreditCardDebt(cc: CreditCardItem): number {
+export function calculateCreditCardPayment(cc: CreditCardItem): number {
+  if (cc.minPaymentOverride !== undefined) {
+    return cc.minPaymentOverride;
+  }
   if (cc.purchases && cc.purchases.length > 0) {
     return cc.purchases.reduce((sum, p) => sum + p.amount, 0);
   }
   return 0;
 }
 
-export function calculateCreditCardPayment(cc: CreditCardItem): number {
-  if (cc.minPaymentOverride !== undefined) {
-    return cc.minPaymentOverride;
-  }
-  return calculateCreditCardDebt(cc);
-}
-
 export function calculateFinanceSummary(data: AppFinanceData): FinanceSummary {
-  const [p1, p2] = data.people;
-  const totalGrossIncome = p1.monthlyIncome + p2.monthlyIncome;
-  const p1Ratio = totalGrossIncome > 0 ? p1.monthlyIncome / totalGrossIncome : 0.5;
-  const p2Ratio = totalGrossIncome > 0 ? p2.monthlyIncome / totalGrossIncome : 0.5;
+  const isShared = data.mode === 'shared' && data.people[1]?.enabled;
+  const p1 = data.people[0];
+  const p2 = data.people[1];
 
-  const p1HealthPension = p1.monthlyIncome * p1.healthPensionRate;
-  const p2HealthPension = p2.monthlyIncome * p2.healthPensionRate;
+  const p1Income = p1.monthlyIncome;
+  const p2Income = isShared ? p2.monthlyIncome : 0;
+  const totalIncome = p1Income + p2Income;
 
-  // Vivienda Breakdown
-  let p1HousingTotal = 0;
-  let p2HousingTotal = 0;
-  let p1Housing1st = 0;
-  let p1Housing2nd = 0;
-  let householdHousing1st = 0;
-  let householdHousing2nd = 0;
+  const p1Ratio = totalIncome > 0 ? (isShared ? p1Income / totalIncome : 1.0) : 1.0;
+  const p2Ratio = totalIncome > 0 ? (isShared ? p2Income / totalIncome : 0.0) : 0.0;
 
-  data.housingExpenses.forEach(exp => {
-    let p1Share = 0;
-    let p2Share = 0;
+  // M3: Salud / Pensión = H3 * 0.08
+  const healthPension = p1Income * (p1.healthPensionRate || 0.08);
 
-    if (exp.splitType === 'proportional') {
-      p1Share = exp.totalAmount * p1Ratio;
-      p2Share = exp.totalAmount * p2Ratio;
-    } else if (exp.splitType === 'equal') {
-      p1Share = exp.totalAmount * 0.5;
-      p2Share = exp.totalAmount * 0.5;
-    } else if (exp.splitType === 'individual_1') {
-      p1Share = exp.totalAmount;
-      p2Share = 0;
-    } else if (exp.splitType === 'individual_2') {
-      p1Share = 0;
-      p2Share = exp.totalAmount;
-    } else if (exp.splitType === 'custom' && exp.customSplitPercent !== undefined) {
-      p1Share = exp.totalAmount * (exp.customSplitPercent / 100);
-      p2Share = exp.totalAmount * ((100 - exp.customSplitPercent) / 100);
-    }
+  // Vivienda (Filas 7 a 9)
+  // H7: Servicios * H4
+  const servicios = data.housingExpenses.find(h => h.referenceCode === '3628') || data.housingExpenses[0];
+  const internet = data.housingExpenses.find(h => h.referenceCode === '07409278') || data.housingExpenses[1];
+  const arriendo = data.housingExpenses.find(h => h.name.toLowerCase().includes('arriendo')) || data.housingExpenses[2];
 
-    p1HousingTotal += p1Share;
-    p2HousingTotal += p2Share;
+  const h7_servicios = (servicios?.totalAmount || 0) * p1Ratio;
+  const h8_internet = (internet?.totalAmount || 0) * p1Ratio;
+  const h9_arriendo = (arriendo?.totalAmount || 0) * p1Ratio;
 
-    if (exp.period === '1st_fortnight') {
-      p1Housing1st += p1Share;
-      householdHousing1st += exp.totalAmount;
-    } else if (exp.period === '2nd_fortnight') {
-      p1Housing2nd += p1Share;
-      householdHousing2nd += exp.totalAmount;
-    } else {
-      p1Housing1st += p1Share / 2;
-      p1Housing2nd += p1Share / 2;
-      householdHousing1st += exp.totalAmount / 2;
-      householdHousing2nd += exp.totalAmount / 2;
-    }
-  });
+  // M4: Vivienda = SUM(H7:H9)
+  const housingTotal = h7_servicios + h8_internet + h9_arriendo;
 
-  // Suscripciones
-  let p1SubscriptionsTotal = 0;
-  data.subscriptions.forEach(sub => {
-    p1SubscriptionsTotal += calculateSubscriptionMonthlyCost(sub);
-  });
+  // Tarjetas de Crédito (Filas 16 a 18)
+  const nuCard = data.creditCards.find(c => c.name.toLowerCase().includes('nu'));
+  const falabellaCard = data.creditCards.find(c => c.name.toLowerCase().includes('falabella'));
+  const addiCard = data.creditCards.find(c => c.name.toLowerCase().includes('addi'));
 
-  // Tarjetas de Crédito
-  let p1Cards1st = 0;
-  let p1Cards2nd = 0;
-  let householdCards1st = 0;
-  let householdCards2nd = 0;
+  const h16_nu = nuCard ? calculateCreditCardPayment(nuCard) : 0;
+  const h17_falabella = falabellaCard ? calculateCreditCardPayment(falabellaCard) : 0;
+  const h18_addi = addiCard ? calculateCreditCardPayment(addiCard) : 0;
 
-  data.creditCards.forEach(cc => {
-    const payment = calculateCreditCardPayment(cc);
-    if (cc.period === '1st_fortnight') {
-      p1Cards1st += payment;
-      householdCards1st += payment;
-    } else if (cc.period === '2nd_fortnight') {
-      p1Cards2nd += payment;
-      householdCards2nd += payment;
-    } else {
-      p1Cards1st += payment / 2;
-      p1Cards2nd += payment / 2;
-      householdCards1st += payment / 2;
-      householdCards2nd += payment / 2;
-    }
-  });
+  // M5: Tarjetas = SUM(H16:H18)
+  const cardsTotal = h16_nu + h17_falabella + h18_addi;
 
-  const p1CardsTotal = p1Cards1st + p1Cards2nd;
+  // Obligaciones (Filas 12 a 13)
+  const carro = data.obligations.find(o => o.name.toLowerCase().includes('carro'));
+  const icetex = data.obligations.find(o => o.name.toLowerCase().includes('icetex'));
 
-  // Obligaciones
-  let p1ObligationsTotal = 0;
-  let p2ObligationsTotal = 0;
-  let p1Obligations1st = 0;
-  let p1Obligations2nd = 0;
-  let householdObligations1st = 0;
-  let householdObligations2nd = 0;
+  const h12_carro = isShared ? (carro ? carro.totalAmount * p1Ratio : 0) : (carro ? carro.totalAmount : 0);
+  const h13_icetex = icetex ? icetex.person1Amount : 0;
 
-  data.obligations.forEach(ob => {
-    p1ObligationsTotal += ob.person1Amount;
-    p2ObligationsTotal += ob.person2Amount;
+  // M6: Obligaciones = SUM(H12:H13)
+  const obligationsTotal = h12_carro + h13_icetex;
 
-    if (ob.period === '1st_fortnight') {
-      p1Obligations1st += ob.person1Amount;
-      householdObligations1st += (ob.person1Amount + ob.person2Amount);
-    } else if (ob.period === '2nd_fortnight') {
-      p1Obligations2nd += ob.person1Amount;
-      householdObligations2nd += (ob.person1Amount + ob.person2Amount);
-    } else {
-      p1Obligations1st += ob.person1Amount / 2;
-      p1Obligations2nd += ob.person1Amount / 2;
-      householdObligations1st += (ob.person1Amount + ob.person2Amount) / 2;
-      householdObligations2nd += (ob.person1Amount + ob.person2Amount) / 2;
-    }
-  });
+  // M7: Total Gastos = SUM(M3:M6)
+  const totalGastos = healthPension + housingTotal + cardsTotal + obligationsTotal;
 
-  // Fortnight Totals for P1
-  // Salud/Pensión dividida en dos quincenas
-  const p1HealthFortnight = p1HealthPension / 2;
-  const p1Fortnight1Need = p1Housing1st + p1Obligations1st + p1Cards1st + p1HealthFortnight + (p1SubscriptionsTotal / 2);
-  const p1Fortnight2Need = p1Housing2nd + p1Obligations2nd + p1Cards2nd + p1HealthFortnight + (p1SubscriptionsTotal / 2);
+  // M9: Mitad de mes = H7 + H8 + H17 + H18 + H12 + H13 + (M3/2)
+  const mitadDeMes = h7_servicios + h8_internet + h17_falabella + h18_addi + h12_carro + h13_icetex + (healthPension / 2);
 
-  const p1TotalExpenses = p1HealthPension + p1HousingTotal + p1CardsTotal + p1ObligationsTotal + p1SubscriptionsTotal;
-  const p1NetIncome = p1.monthlyIncome - p1HealthPension;
-  const p1AvailableCash = p1.monthlyIncome - p1TotalExpenses;
-  const p1SavingsRate = p1.monthlyIncome > 0 ? (p1AvailableCash / p1.monthlyIncome) * 100 : 0;
+  // M10: Fin de mes = H9 + H16 + (M3/2)
+  const finDeMes = h9_arriendo + h16_nu + (healthPension / 2);
 
-  // P2
-  const p2TotalExpenses = p2HealthPension + p2HousingTotal + p2ObligationsTotal;
-  const p2NetIncome = p2.monthlyIncome - p2HealthPension;
+  // M11: Disponible = H3 - SUM(M3:M6)
+  const disponible = p1Income - totalGastos;
 
-  // Household
-  const householdExpenses = p1TotalExpenses + p2TotalExpenses;
-  const householdAvailable = totalGrossIncome - householdExpenses;
-  const householdFortnight1 = householdHousing1st + householdCards1st + householdObligations1st + (p1HealthPension + p2HealthPension) / 2;
-  const householdFortnight2 = householdHousing2nd + householdCards2nd + householdObligations2nd + (p1HealthPension + p2HealthPension) / 2;
+  // Subscripciones total
+  const subscriptionsTotal = data.subscriptions.reduce((sum, sub) => sum + calculateSubscriptionMonthlyCost(sub), 0);
 
-  // Portfolio & Net Worth
-  let totalNetWorthCOP = 0;
-  let totalUSD = 0;
-  let totalCOP = 0;
-  let emergencyFundCOP = 0;
+  // Portafolio (Filas 14 a 18 de columnas K, L, M, N)
+  const colors = ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#06b6d4', '#ec4899', '#84cc16'];
+  let totalPortafolio = 0;
 
-  const colorPalette = ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ec4899', '#06b6d4', '#84cc16'];
-
-  const assetListWithCOP = data.portfolio.map((asset, idx) => {
-    let balanceCOP = 0;
+  const portfolioItems = data.portfolio.map((asset, idx) => {
+    let valorCOP = asset.balance;
     if (asset.currency === 'USD') {
-      balanceCOP = asset.balance * data.currencyRateUSD;
-      totalUSD += asset.balance;
-    } else {
-      balanceCOP = asset.balance;
-      totalCOP += asset.balance;
+      valorCOP = asset.balance * data.currencyRateUSD;
     }
-    totalNetWorthCOP += balanceCOP;
-
-    if (asset.type === 'Emergencia') {
-      emergencyFundCOP += balanceCOP;
-    }
-
+    totalPortafolio += valorCOP;
     return {
+      id: asset.id,
       name: asset.name,
-      type: asset.type,
-      balanceCOP,
-      color: colorPalette[idx % colorPalette.length]
+      institution: asset.institution,
+      currency: asset.currency,
+      balance: asset.balance,
+      valorCOP,
+      percentage: 0,
+      color: colors[idx % colors.length]
     };
   });
 
-  const distribution = assetListWithCOP.map(item => ({
+  const portfolioWithPercentage = portfolioItems.map(item => ({
     ...item,
-    percentage: totalNetWorthCOP > 0 ? (item.balanceCOP / totalNetWorthCOP) * 100 : 0
+    percentage: totalPortafolio > 0 ? (item.valorCOP / totalPortafolio) * 100 : 0
   }));
 
-  // Emergency Fund Months Coverage (based on P1 expenses or household)
-  const monthlyBurnRate = p1TotalExpenses > 0 ? p1TotalExpenses : 1;
-  const emergencyFundMonths = emergencyFundCOP / monthlyBurnRate;
-
   return {
+    mode: data.mode,
+    dolarRate: data.currencyRateUSD,
     p1: {
       name: p1.name,
-      grossIncome: p1.monthlyIncome,
-      healthPension: p1HealthPension,
-      netIncome: p1NetIncome,
+      income: p1Income,
       ratio: p1Ratio,
-      housingShare: p1HousingTotal,
-      obligationsShare: p1ObligationsTotal,
-      creditCardsShare: p1CardsTotal,
-      subscriptionsShare: p1SubscriptionsTotal,
-      totalExpenses: p1TotalExpenses,
-      fortnight1Need: p1Fortnight1Need,
-      fortnight2Need: p1Fortnight2Need,
-      availableCash: p1AvailableCash,
-      savingsRatePercent: p1SavingsRate
+      healthPension,
+      housingTotal,
+      cardsTotal,
+      obligationsTotal,
+      totalGastos,
+      mitadDeMes,
+      finDeMes,
+      disponible
     },
     p2: {
       name: p2.name,
-      grossIncome: p2.monthlyIncome,
-      healthPension: p2HealthPension,
-      netIncome: p2NetIncome,
+      income: p2Income,
       ratio: p2Ratio,
-      housingShare: p2HousingTotal,
-      obligationsShare: p2ObligationsTotal,
-      creditCardsShare: 0,
-      totalExpenses: p2TotalExpenses
+      enabled: isShared
     },
-    household: {
-      totalGrossIncome,
-      totalExpenses: householdExpenses,
-      totalAvailableCash: householdAvailable,
-      fortnight1Total: householdFortnight1,
-      fortnight2Total: householdFortnight2
-    },
+    subscriptionsTotal,
     portfolio: {
-      totalNetWorthCOP,
-      totalUSD,
-      totalCOP,
-      emergencyFundCOP,
-      emergencyFundMonths,
-      distribution
+      totalPortafolio,
+      items: portfolioWithPercentage
     }
   };
 }

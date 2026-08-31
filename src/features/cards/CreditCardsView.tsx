@@ -1,20 +1,10 @@
 import React, { useState } from 'react';
 import { useFinance } from '../../context/FinanceContext';
-import { formatCurrency, calculateCreditCardDebt, calculateCreditCardPayment } from '../../services/financeCalculations';
-import { CreditCardItem } from '../../models/finance';
-import {
-  CreditCard,
-  Plus,
-  Trash2,
-  AlertCircle,
-  TrendingDown,
-  ShieldCheck,
-  Zap,
-  ShoppingBag
-} from 'lucide-react';
+import { formatCurrency, calculateCreditCardPayment } from '../../services/financeCalculations';
+import { CreditCard, Plus, Trash2, ShoppingBag } from 'lucide-react';
 
 export const CreditCardsView: React.FC = () => {
-  const { data, addCardPurchase, deleteCardPurchase, updateCreditCard, addCreditCard } = useFinance();
+  const { data, addCardPurchase, deleteCardPurchase } = useFinance();
   const [selectedCardId, setSelectedCardId] = useState<string>(data.creditCards[0]?.id || '');
   const [showAddPurchaseModal, setShowAddPurchaseModal] = useState(false);
   const [concept, setConcept] = useState('');
@@ -42,57 +32,23 @@ export const CreditCardsView: React.FC = () => {
     return 'from-blue-900 via-slate-900 to-slate-950 border-blue-500/30';
   };
 
-  const totalCreditLimit = data.creditCards.reduce((s, c) => s + c.creditLimit, 0);
-  const totalDebt = data.creditCards.reduce((s, c) => s + calculateCreditCardDebt(c), 0);
-  const totalAvailableCredit = totalCreditLimit - totalDebt;
-
   return (
     <div className="space-y-6 pb-24 animate-fadeIn">
       {/* Header */}
       <div>
         <h2 className="text-xl font-bold text-white flex items-center gap-2">
-          <CreditCard className="w-5 h-5 text-rose-400" /> Tarjetas de Crédito & Cupos
+          <CreditCard className="w-5 h-5 text-rose-400" /> Tarjetas de Crédito
         </h2>
         <p className="text-xs text-slate-400">
-          Control de cupo disponible, compras diferidas y pagos quincenales
+          Deuda total, pago mínimo, cupo y desglose de compras por tarjeta (Filas 15-18 del Excel)
         </p>
       </div>
 
-      {/* Overview Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-slate-900 p-4 rounded-3xl border border-slate-800 shadow-md">
-          <span className="text-xs text-slate-400 block">Cupo Total Otorgado</span>
-          <span className="text-xl font-bold text-white block mt-1">
-            {formatCurrency(totalCreditLimit, 'COP')}
-          </span>
-          <span className="text-[11px] text-slate-400 block mt-1">{data.creditCards.length} tarjetas bancarias</span>
-        </div>
-
-        <div className="bg-slate-900 p-4 rounded-3xl border border-slate-800 shadow-md">
-          <span className="text-xs text-slate-400 block">Deuda Total Utilizada</span>
-          <span className="text-xl font-bold text-rose-400 block mt-1">
-            {formatCurrency(totalDebt, 'COP')}
-          </span>
-          <span className="text-[11px] text-rose-400/80 block mt-1">
-            {totalCreditLimit > 0 ? ((totalDebt / totalCreditLimit) * 100).toFixed(1) : 0}% de uso de cupo
-          </span>
-        </div>
-
-        <div className="bg-slate-900 p-4 rounded-3xl border border-slate-800 shadow-md">
-          <span className="text-xs text-slate-400 block">Cupo Libre / Disponible</span>
-          <span className="text-xl font-bold text-emerald-400 block mt-1">
-            {formatCurrency(totalAvailableCredit, 'COP')}
-          </span>
-          <span className="text-[11px] text-emerald-400/80 block mt-1">Capacidad crediticia libre</span>
-        </div>
-      </div>
-
-      {/* Visual Card Selector / Carousel */}
+      {/* Cards List Grid (Nu, Falabella, Addi) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {data.creditCards.map(cc => {
-          const debt = calculateCreditCardDebt(cc);
+          const debt = calculateCreditCardPayment(cc);
           const available = cc.creditLimit - debt;
-          const usagePercent = cc.creditLimit > 0 ? (debt / cc.creditLimit) * 100 : 0;
           const isSelected = selectedCard?.id === cc.id;
 
           return (
@@ -108,36 +64,31 @@ export const CreditCardsView: React.FC = () => {
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold uppercase tracking-wider text-slate-200">{cc.name}</span>
                 <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-black/40 text-slate-300 border border-white/10">
-                  {cc.period === '1st_fortnight' ? 'Paga 1ª Quincena' : 'Paga 2ª Quincena'}
+                  {cc.period === '1st_fortnight' ? '1ª Quincena' : '2ª Quincena'}
                 </span>
               </div>
 
               <div className="my-4">
-                <span className="text-[11px] text-slate-300 block">Deuda Actual</span>
+                <span className="text-[11px] text-slate-300 block">Deuda Total / Pago</span>
                 <div className="text-2xl font-extrabold text-white">
                   {formatCurrency(debt, 'COP')}
                 </div>
               </div>
 
-              {/* Progress bar for credit usage */}
-              <div className="space-y-1.5">
-                <div className="flex justify-between text-[11px] text-slate-300">
-                  <span>Disponible: {formatCurrency(available, 'COP')}</span>
-                  <span>{usagePercent.toFixed(0)}%</span>
+              <div className="space-y-1 text-xs text-slate-300">
+                <div className="flex justify-between">
+                  <span>Cupo Total:</span>
+                  <span className="font-semibold">{formatCurrency(cc.creditLimit, 'COP')}</span>
                 </div>
-                <div className="w-full h-2 bg-black/40 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-all duration-500 ${
-                      usagePercent > 70 ? 'bg-rose-500' : usagePercent > 40 ? 'bg-amber-400' : 'bg-emerald-400'
-                    }`}
-                    style={{ width: `${Math.min(usagePercent, 100)}%` }}
-                  ></div>
+                <div className="flex justify-between">
+                  <span>Cupo Disponible:</span>
+                  <span className="font-semibold text-emerald-300">{formatCurrency(available, 'COP')}</span>
                 </div>
               </div>
 
               <div className="mt-3 pt-3 border-t border-white/10 flex justify-between text-[11px] text-slate-300">
-                <span>Cupo: {formatCurrency(cc.creditLimit, 'COP')}</span>
-                <span>{cc.purchases?.length || 0} compras</span>
+                <span>{cc.purchases?.length || 0} compras registradas</span>
+                <span className="font-semibold text-emerald-400">Ver detalle &rarr;</span>
               </div>
             </div>
           );
@@ -158,7 +109,7 @@ export const CreditCardsView: React.FC = () => {
                 </h3>
                 <p className="text-[11px] text-slate-400">
                   {selectedCard.purchases.length} compras activas sumando un pago de{' '}
-                  <strong className="text-white">{formatCurrency(calculateCreditCardDebt(selectedCard), 'COP')}</strong>
+                  <strong className="text-white">{formatCurrency(calculateCreditCardPayment(selectedCard), 'COP')}</strong>
                 </p>
               </div>
             </div>
@@ -185,7 +136,7 @@ export const CreditCardsView: React.FC = () => {
                     </div>
                     <div>
                       <h4 className="font-semibold text-white text-sm">{p.concept}</h4>
-                      <span className="text-[11px] text-slate-400">Gasto con tarjeta</span>
+                      <span className="text-[11px] text-slate-400">Gasto tarjeta</span>
                     </div>
                   </div>
 

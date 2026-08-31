@@ -1,41 +1,29 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { AppFinanceData, PersonProfile, HousingExpense, SubscriptionItem, CreditCardItem, ObligationItem, InvestmentAsset, AnnualExpense } from '../models/finance';
+import { AppFinanceData, PersonProfile, HousingExpense, SubscriptionItem, CreditCardItem, ObligationItem, InvestmentAsset } from '../models/finance';
 import { StorageService } from '../services/storageService';
 import { calculateFinanceSummary, FinanceSummary } from '../services/financeCalculations';
 
 interface FinanceContextType {
   data: AppFinanceData;
   summary: FinanceSummary;
+  setMode: (mode: 'single' | 'shared') => void;
   updatePeople: (people: [PersonProfile, PersonProfile]) => void;
   updateCurrencyRate: (rate: number) => void;
+  updateDeudaAutofinanciera: (amount: number) => void;
   // Housing
-  addHousingExpense: (expense: Omit<HousingExpense, 'id'>) => void;
   updateHousingExpense: (id: string, expense: Partial<HousingExpense>) => void;
-  deleteHousingExpense: (id: string) => void;
   // Subscriptions
-  addSubscription: (sub: Omit<SubscriptionItem, 'id'>) => void;
   updateSubscription: (id: string, sub: Partial<SubscriptionItem>) => void;
-  deleteSubscription: (id: string) => void;
   toggleSubscription: (id: string) => void;
   // Credit Cards
-  addCreditCard: (cc: Omit<CreditCardItem, 'id'>) => void;
-  updateCreditCard: (id: string, cc: Partial<CreditCardItem>) => void;
-  deleteCreditCard: (id: string) => void;
   addCardPurchase: (cardId: string, purchase: { concept: string; amount: number }) => void;
   deleteCardPurchase: (cardId: string, purchaseId: string) => void;
+  updateCreditCard: (id: string, updated: Partial<CreditCardItem>) => void;
   // Obligations
-  addObligation: (ob: Omit<ObligationItem, 'id'>) => void;
   updateObligation: (id: string, ob: Partial<ObligationItem>) => void;
-  deleteObligation: (id: string) => void;
   // Portfolio
-  addAsset: (asset: Omit<InvestmentAsset, 'id'>) => void;
   updateAsset: (id: string, asset: Partial<InvestmentAsset>) => void;
-  deleteAsset: (id: string) => void;
-  // Annual Expenses
-  addAnnualExpense: (exp: Omit<AnnualExpense, 'id'>) => void;
-  updateAnnualExpense: (id: string, exp: Partial<AnnualExpense>) => void;
-  deleteAnnualExpense: (id: string) => void;
-  // Global actions
+  // Global
   resetToDefault: () => void;
   importData: (imported: AppFinanceData) => void;
 }
@@ -51,6 +39,17 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const summary = calculateFinanceSummary(data);
 
+  const setMode = (mode: 'single' | 'shared') => {
+    setData(prev => ({
+      ...prev,
+      mode,
+      people: [
+        prev.people[0],
+        { ...prev.people[1], enabled: mode === 'shared' }
+      ]
+    }));
+  };
+
   const updatePeople = (people: [PersonProfile, PersonProfile]) => {
     setData(prev => ({ ...prev, people }));
   };
@@ -59,10 +58,8 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setData(prev => ({ ...prev, currencyRateUSD: rate }));
   };
 
-  // Housing Actions
-  const addHousingExpense = (expense: Omit<HousingExpense, 'id'>) => {
-    const newItem: HousingExpense = { ...expense, id: `house-${Date.now()}` };
-    setData(prev => ({ ...prev, housingExpenses: [...prev.housingExpenses, newItem] }));
+  const updateDeudaAutofinanciera = (amount: number) => {
+    setData(prev => ({ ...prev, deudaAutofinanciera: amount }));
   };
 
   const updateHousingExpense = (id: string, updated: Partial<HousingExpense>) => {
@@ -72,19 +69,6 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }));
   };
 
-  const deleteHousingExpense = (id: string) => {
-    setData(prev => ({
-      ...prev,
-      housingExpenses: prev.housingExpenses.filter(h => h.id !== id)
-    }));
-  };
-
-  // Subscription Actions
-  const addSubscription = (sub: Omit<SubscriptionItem, 'id'>) => {
-    const newItem: SubscriptionItem = { ...sub, id: `sub-${Date.now()}` };
-    setData(prev => ({ ...prev, subscriptions: [...prev.subscriptions, newItem] }));
-  };
-
   const updateSubscription = (id: string, updated: Partial<SubscriptionItem>) => {
     setData(prev => ({
       ...prev,
@@ -92,37 +76,10 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }));
   };
 
-  const deleteSubscription = (id: string) => {
-    setData(prev => ({
-      ...prev,
-      subscriptions: prev.subscriptions.filter(s => s.id !== id)
-    }));
-  };
-
   const toggleSubscription = (id: string) => {
     setData(prev => ({
       ...prev,
       subscriptions: prev.subscriptions.map(s => s.id === id ? { ...s, active: !s.active } : s)
-    }));
-  };
-
-  // Credit Card Actions
-  const addCreditCard = (cc: Omit<CreditCardItem, 'id'>) => {
-    const newItem: CreditCardItem = { ...cc, id: `cc-${Date.now()}` };
-    setData(prev => ({ ...prev, creditCards: [...prev.creditCards, newItem] }));
-  };
-
-  const updateCreditCard = (id: string, updated: Partial<CreditCardItem>) => {
-    setData(prev => ({
-      ...prev,
-      creditCards: prev.creditCards.map(c => c.id === id ? { ...c, ...updated } : c)
-    }));
-  };
-
-  const deleteCreditCard = (id: string) => {
-    setData(prev => ({
-      ...prev,
-      creditCards: prev.creditCards.filter(c => c.id !== id)
     }));
   };
 
@@ -141,10 +98,11 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }));
   };
 
-  // Obligation Actions
-  const addObligation = (ob: Omit<ObligationItem, 'id'>) => {
-    const newItem: ObligationItem = { ...ob, id: `ob-${Date.now()}` };
-    setData(prev => ({ ...prev, obligations: [...prev.obligations, newItem] }));
+  const updateCreditCard = (id: string, updated: Partial<CreditCardItem>) => {
+    setData(prev => ({
+      ...prev,
+      creditCards: prev.creditCards.map(c => c.id === id ? { ...c, ...updated } : c)
+    }));
   };
 
   const updateObligation = (id: string, updated: Partial<ObligationItem>) => {
@@ -154,50 +112,10 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }));
   };
 
-  const deleteObligation = (id: string) => {
-    setData(prev => ({
-      ...prev,
-      obligations: prev.obligations.filter(o => o.id !== id)
-    }));
-  };
-
-  // Portfolio Actions
-  const addAsset = (asset: Omit<InvestmentAsset, 'id'>) => {
-    const newItem: InvestmentAsset = { ...asset, id: `asset-${Date.now()}` };
-    setData(prev => ({ ...prev, portfolio: [...prev.portfolio, newItem] }));
-  };
-
   const updateAsset = (id: string, updated: Partial<InvestmentAsset>) => {
     setData(prev => ({
       ...prev,
       portfolio: prev.portfolio.map(a => a.id === id ? { ...a, ...updated } : a)
-    }));
-  };
-
-  const deleteAsset = (id: string) => {
-    setData(prev => ({
-      ...prev,
-      portfolio: prev.portfolio.filter(a => a.id !== id)
-    }));
-  };
-
-  // Annual Expenses Actions
-  const addAnnualExpense = (exp: Omit<AnnualExpense, 'id'>) => {
-    const newItem: AnnualExpense = { ...exp, id: `ann-${Date.now()}` };
-    setData(prev => ({ ...prev, annualExpenses: [...prev.annualExpenses, newItem] }));
-  };
-
-  const updateAnnualExpense = (id: string, updated: Partial<AnnualExpense>) => {
-    setData(prev => ({
-      ...prev,
-      annualExpenses: prev.annualExpenses.map(a => a.id === id ? { ...a, ...updated } : a)
-    }));
-  };
-
-  const deleteAnnualExpense = (id: string) => {
-    setData(prev => ({
-      ...prev,
-      annualExpenses: prev.annualExpenses.filter(a => a.id !== id)
     }));
   };
 
@@ -214,29 +132,18 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     <FinanceContext.Provider value={{
       data,
       summary,
+      setMode,
       updatePeople,
       updateCurrencyRate,
-      addHousingExpense,
+      updateDeudaAutofinanciera,
       updateHousingExpense,
-      deleteHousingExpense,
-      addSubscription,
       updateSubscription,
-      deleteSubscription,
       toggleSubscription,
-      addCreditCard,
-      updateCreditCard,
-      deleteCreditCard,
       addCardPurchase,
       deleteCardPurchase,
-      addObligation,
+      updateCreditCard,
       updateObligation,
-      deleteObligation,
-      addAsset,
       updateAsset,
-      deleteAsset,
-      addAnnualExpense,
-      updateAnnualExpense,
-      deleteAnnualExpense,
       resetToDefault,
       importData
     }}>

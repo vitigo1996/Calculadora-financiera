@@ -1,7 +1,7 @@
 import React from 'react';
-import { LayoutDashboard, Receipt, CreditCard, Sparkles, PieChart, Calculator, Settings } from 'lucide-react';
+import { LayoutDashboard, Receipt, CreditCard, Sparkles, PieChart, Settings } from 'lucide-react';
 
-export type TabType = 'dashboard' | 'budget' | 'cards' | 'subscriptions' | 'portfolio' | 'calculator' | 'settings';
+export type TabType = 'dashboard' | 'budget' | 'cards' | 'subscriptions' | 'portfolio' | 'settings';
 
 interface BottomNavProps {
   activeTab: TabType;
@@ -10,12 +10,11 @@ interface BottomNavProps {
 
 export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab }) => {
   const tabs = [
-    { id: 'dashboard', label: 'Resumen', icon: LayoutDashboard },
-    { id: 'budget', label: 'Quincenal', icon: Receipt },
+    { id: 'dashboard', label: 'Presupuesto', icon: LayoutDashboard },
+    { id: 'budget', label: 'Vivienda & Quincenas', icon: Receipt },
     { id: 'cards', label: 'Tarjetas', icon: CreditCard },
-    { id: 'subscriptions', label: 'Suscrip.', icon: Sparkles },
+    { id: 'subscriptions', label: 'Suscripciones', icon: Sparkles },
     { id: 'portfolio', label: 'Portafolio', icon: PieChart },
-    { id: 'calculator', label: 'Calculadora', icon: Calculator },
     { id: 'settings', label: 'Ajustes', icon: Settings },
   ] as const;
 
