@@ -318,41 +318,30 @@ export const BilleteraView: React.FC = () => {
 
   return (
     <div className="space-y-6 pb-24 animate-fadeIn">
-      {/* Header con Título Dinámico y Selector de Sub-menú (Billetera / Registro) */}
-      <div className="flex items-center justify-between gap-3">
-        <h2 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
-          {subView === 'billetera' ? (
-            <>
-              <Wallet className="w-5 h-5 text-blue-600 dark:text-blue-400" /> Billetera
-            </>
-          ) : (
-            <>
-              <History className="w-5 h-5 text-blue-600 dark:text-blue-400" /> Registro
-            </>
-          )}
-        </h2>
-
-        {/* Menú superior con 2 opciones: Billetera y Registro */}
-        <div className="flex bg-slate-100 dark:bg-slate-800/90 p-1 rounded-2xl border border-slate-300/80 dark:border-slate-700/60 shadow-sm">
+      {/* Menú Superior de 2 opciones: Billetera | Registro */}
+      <div className="flex items-center justify-center">
+        <div className="bg-slate-200/80 dark:bg-slate-800 p-1 rounded-2xl flex items-center gap-1 shadow-inner border border-slate-300/80 dark:border-slate-700/60 w-full sm:w-auto">
           <button
+            type="button"
             onClick={() => setSubView('billetera')}
-            className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all ${
+            className={`flex-1 sm:px-8 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
               subView === 'billetera'
                 ? 'bg-blue-600 text-white shadow-sm'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
-            Billetera
+            <Wallet className="w-4 h-4" /> Billetera
           </button>
           <button
+            type="button"
             onClick={() => setSubView('registro')}
-            className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all ${
+            className={`flex-1 sm:px-8 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
               subView === 'registro'
                 ? 'bg-blue-600 text-white shadow-sm'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
-            Registro
+            <History className="w-4 h-4" /> Registro
           </button>
         </div>
       </div>
