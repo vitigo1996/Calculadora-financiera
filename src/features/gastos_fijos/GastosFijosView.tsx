@@ -359,7 +359,7 @@ export const GastosFijosView: React.FC = () => {
                               <strong className={pIdx === 0 ? 'text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-300'}>
                                 {p.name}:
                               </strong>{' '}
-                              COP {formatCurrency(share, 'COP')}
+                              {formatCurrency(share, 'COP')}
                             </span>
                           );
                         })}
@@ -463,10 +463,11 @@ export const GastosFijosView: React.FC = () => {
 
                   <div>
                     <h4 className="font-bold text-slate-800 dark:text-white text-sm">{ob.name}</h4>
-                    {/* Cuota debajo del nombre con reparto si está compartido */}
+                    {/* Valor /mensual debajo del nombre con reparto si está compartido sin el texto COP */}
                     <div className="flex flex-wrap items-center gap-2 mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
                       <span>
-                        Cuota: <strong className="text-slate-700 dark:text-slate-300 font-mono">COP {formatCurrency(monthlyPayment, 'COP')}</strong>
+                        <strong className="text-slate-700 dark:text-slate-300 font-mono">{formatCurrency(monthlyPayment, 'COP')}</strong>
+                        <span className="text-slate-500 dark:text-slate-400 font-normal"> /mensual</span>
                       </span>
                       {activePeople.length > 1 && isSharedOb && (
                         <>
@@ -480,7 +481,7 @@ export const GastosFijosView: React.FC = () => {
                                 <strong className={pIdx === 0 ? 'text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-300'}>
                                   {p.name}:
                                 </strong>{' '}
-                                COP {formatCurrency(share, 'COP')}
+                                {formatCurrency(share, 'COP')}
                               </span>
                             );
                           })}
