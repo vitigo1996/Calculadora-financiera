@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useFinance } from '../../context/FinanceContext';
 import { formatCurrency } from '../../services/financeCalculations';
-import { Wallet, DollarSign, Edit2, AlertCircle, ShieldAlert, ArrowRight } from 'lucide-react';
+import { Wallet, DollarSign, Edit2, TrendingUp, Building2, Coins, ShieldAlert, FileText, Check } from 'lucide-react';
 
 export const BilleteraView: React.FC = () => {
   const { data, summary, updateBilletera, updateAutofinanciera } = useFinance();
@@ -26,240 +26,147 @@ export const BilleteraView: React.FC = () => {
     setEditingKey(null);
   };
 
+  const cuentas = [
+    {
+      key: 'etoroUSD',
+      nombre: 'Etoro',
+      subtitulo: 'Inversiones globales en dólares',
+      saldo: data.billetera.etoroUSD,
+      moneda: 'USD',
+      equivalenteCOP: summary.portafolio.etoroCOP,
+      icon: TrendingUp,
+      color: 'bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/40'
+    },
+    {
+      key: 'plentiUSD',
+      nombre: 'Plenti',
+      subtitulo: 'Dólar digital (USDt)',
+      saldo: data.billetera.plentiUSD,
+      moneda: 'USD',
+      equivalenteCOP: summary.portafolio.plentiCOP,
+      icon: Coins,
+      color: 'bg-sky-100 dark:bg-sky-950/50 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800/40'
+    },
+    {
+      key: 'efectivoCOP',
+      nombre: 'Efectivo',
+      subtitulo: 'Dinero disponible en mano',
+      saldo: data.billetera.efectivoCOP,
+      moneda: 'COP',
+      icon: Wallet,
+      color: 'bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800/40'
+    },
+    {
+      key: 'bancolombiaCOP',
+      nombre: 'Bancolombia',
+      subtitulo: 'Cuenta de ahorros principal',
+      saldo: data.billetera.bancolombiaCOP,
+      moneda: 'COP',
+      icon: Building2,
+      color: 'bg-indigo-100 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800/40'
+    }
+  ];
+
   return (
     <div className="space-y-6 pb-24 animate-fadeIn">
       {/* Header */}
       <div>
-        <h2 className="text-xl font-bold text-white flex items-center gap-2">
-          <Wallet className="w-5 h-5 text-emerald-400" /> Billetera
+        <h2 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
+          <Wallet className="w-5 h-5 text-emerald-600 dark:text-emerald-400" /> Billetera & Cuentas
         </h2>
-        <p className="text-xs text-slate-400">
-          Celdas B2 a C6 (Saldos y Dólar) y celdas B17 a C24 (Deudas y Contingencias)
+        <p className="text-xs text-slate-500 dark:text-slate-400">
+          Disponibilidad en cuentas, saldos en dólares y obligaciones registradas
         </p>
       </div>
 
-      {/* Celdas B2 a C6: Saldos y Divisas */}
-      <div className="bg-slate-900 rounded-3xl border border-slate-800 overflow-hidden shadow-xl">
-        <div className="p-5 border-b border-slate-800 flex items-center justify-between">
-          <h3 className="font-bold text-white text-sm">Saldos & Cuentas (Celdas B2:C6)</h3>
-          <span className="text-xs font-mono text-emerald-400">1 USD = {formatCurrency(data.billetera.dolar, 'COP')}</span>
+      {/* Cuentas y Saldos */}
+      <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
+        <div className="p-5 border-b border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
+          <h3 className="font-bold text-slate-800 dark:text-white text-sm">Disponibilidad en Cuentas</h3>
+          <span className="text-xs text-slate-500 dark:text-slate-400 font-mono">
+            Tasa: 1 USD = {formatCurrency(data.billetera.dolar, 'COP')}
+          </span>
         </div>
 
-        <div className="divide-y divide-slate-800/80">
-          {/* B2:C2 -> Dolar */}
-          <div className="p-4 hover:bg-slate-850/50 transition-colors flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="w-7 h-7 rounded-xl bg-slate-800 flex items-center justify-center font-mono font-bold text-xs text-slate-400">
-                B2
-              </span>
-              <div>
-                <h4 className="font-bold text-white text-sm">Dolar</h4>
-                <span className="text-xs text-slate-400">Tasa de cambio USD/COP (C2)</span>
-              </div>
-            </div>
+        <div className="divide-y divide-slate-100 dark:divide-slate-800/80">
+          {cuentas.map(c => {
+            const Icon = c.icon;
+            const isEditing = editingKey === c.key;
 
-            <div className="flex items-center gap-2">
-              {editingKey === 'dolar' ? (
-                <div className="flex items-center gap-1.5">
-                  <input
-                    type="number"
-                    value={inputValue}
-                    onChange={e => setInputValue(e.target.value)}
-                    className="w-24 bg-slate-950 border border-slate-700 text-xs px-2 py-1 rounded-lg text-white font-mono"
-                    autoFocus
-                  />
-                  <button onClick={() => saveEdit('dolar')} className="p-1 px-2 rounded-lg bg-emerald-500 text-slate-950 font-bold text-xs">
-                    OK
-                  </button>
+            return (
+              <div key={c.key} className="p-4 hover:bg-slate-50/70 dark:hover:bg-slate-850/50 transition-colors flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-2xl border flex items-center justify-center ${c.color}`}>
+                    <Icon className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-slate-800 dark:text-white text-sm">{c.nombre}</h4>
+                    <span className="text-xs text-slate-500 dark:text-slate-400">{c.subtitulo}</span>
+                    {c.equivalenteCOP && (
+                      <span className="block text-[11px] text-emerald-600 dark:text-emerald-400 font-mono mt-0.5">
+                        Equivalente: {formatCurrency(c.equivalenteCOP, 'COP')}
+                      </span>
+                    )}
+                  </div>
                 </div>
-              ) : (
-                <>
-                  <span className="font-mono font-bold text-sm text-emerald-400">
-                    {formatCurrency(data.billetera.dolar, 'COP')}
-                  </span>
-                  <button onClick={() => startEdit('dolar', data.billetera.dolar)} className="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300">
-                    <Edit2 className="w-3.5 h-3.5" />
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
 
-          {/* B3:C3 -> Etoro */}
-          <div className="p-4 hover:bg-slate-850/50 transition-colors flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="w-7 h-7 rounded-xl bg-slate-800 flex items-center justify-center font-mono font-bold text-xs text-slate-400">
-                B3
-              </span>
-              <div>
-                <h4 className="font-bold text-white text-sm">Etoro</h4>
-                <span className="text-xs text-slate-400">Saldo en dólares (C3) &rarr; {formatCurrency(summary.portafolio.etoroCOP, 'COP')}</span>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              {editingKey === 'etoroUSD' ? (
-                <div className="flex items-center gap-1.5">
-                  <input
-                    type="number"
-                    value={inputValue}
-                    onChange={e => setInputValue(e.target.value)}
-                    className="w-24 bg-slate-950 border border-slate-700 text-xs px-2 py-1 rounded-lg text-white font-mono"
-                    autoFocus
-                  />
-                  <button onClick={() => saveEdit('etoroUSD')} className="p-1 px-2 rounded-lg bg-emerald-500 text-slate-950 font-bold text-xs">
-                    OK
-                  </button>
+                <div className="flex items-center gap-2">
+                  {isEditing ? (
+                    <div className="flex items-center gap-1.5">
+                      <input
+                        type="number"
+                        value={inputValue}
+                        onChange={e => setInputValue(e.target.value)}
+                        className="w-28 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-xs px-2.5 py-1.5 rounded-xl text-slate-800 dark:text-white font-mono focus:outline-none focus:border-emerald-500"
+                        autoFocus
+                      />
+                      <button
+                        onClick={() => saveEdit(c.key)}
+                        className="p-1.5 rounded-xl bg-emerald-600 dark:bg-emerald-500 text-white dark:text-slate-950 font-bold text-xs shadow-sm"
+                      >
+                        <Check className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="text-right">
+                        <span className="font-mono font-bold text-sm text-slate-800 dark:text-white block">
+                          {formatCurrency(c.saldo, c.moneda as any)}
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => startEdit(c.key, c.saldo)}
+                        className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors"
+                        title="Modificar saldo"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </button>
+                    </>
+                  )}
                 </div>
-              ) : (
-                <>
-                  <span className="font-mono font-bold text-sm text-white">
-                    {formatCurrency(data.billetera.etoroUSD, 'USD')}
-                  </span>
-                  <button onClick={() => startEdit('etoroUSD', data.billetera.etoroUSD)} className="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300">
-                    <Edit2 className="w-3.5 h-3.5" />
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* B4:C4 -> Plenti */}
-          <div className="p-4 hover:bg-slate-850/50 transition-colors flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="w-7 h-7 rounded-xl bg-slate-800 flex items-center justify-center font-mono font-bold text-xs text-slate-400">
-                B4
-              </span>
-              <div>
-                <h4 className="font-bold text-white text-sm">Plenti</h4>
-                <span className="text-xs text-slate-400">Saldo USDt (C4) &rarr; {formatCurrency(summary.portafolio.plentiCOP, 'COP')}</span>
               </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              {editingKey === 'plentiUSD' ? (
-                <div className="flex items-center gap-1.5">
-                  <input
-                    type="number"
-                    value={inputValue}
-                    onChange={e => setInputValue(e.target.value)}
-                    className="w-24 bg-slate-950 border border-slate-700 text-xs px-2 py-1 rounded-lg text-white font-mono"
-                    autoFocus
-                  />
-                  <button onClick={() => saveEdit('plentiUSD')} className="p-1 px-2 rounded-lg bg-emerald-500 text-slate-950 font-bold text-xs">
-                    OK
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <span className="font-mono font-bold text-sm text-white">
-                    {formatCurrency(data.billetera.plentiUSD, 'USD')}
-                  </span>
-                  <button onClick={() => startEdit('plentiUSD', data.billetera.plentiUSD)} className="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300">
-                    <Edit2 className="w-3.5 h-3.5" />
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* B5:C5 -> Efectivo */}
-          <div className="p-4 hover:bg-slate-850/50 transition-colors flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="w-7 h-7 rounded-xl bg-slate-800 flex items-center justify-center font-mono font-bold text-xs text-slate-400">
-                B5
-              </span>
-              <div>
-                <h4 className="font-bold text-white text-sm">Efectivo</h4>
-                <span className="text-xs text-slate-400">Efectivo disponible en mano (C5)</span>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              {editingKey === 'efectivoCOP' ? (
-                <div className="flex items-center gap-1.5">
-                  <input
-                    type="number"
-                    value={inputValue}
-                    onChange={e => setInputValue(e.target.value)}
-                    className="w-28 bg-slate-950 border border-slate-700 text-xs px-2 py-1 rounded-lg text-white font-mono"
-                    autoFocus
-                  />
-                  <button onClick={() => saveEdit('efectivoCOP')} className="p-1 px-2 rounded-lg bg-emerald-500 text-slate-950 font-bold text-xs">
-                    OK
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <span className="font-mono font-bold text-sm text-white">
-                    {formatCurrency(data.billetera.efectivoCOP, 'COP')}
-                  </span>
-                  <button onClick={() => startEdit('efectivoCOP', data.billetera.efectivoCOP)} className="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300">
-                    <Edit2 className="w-3.5 h-3.5" />
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* B6:C6 -> Bancolombia */}
-          <div className="p-4 hover:bg-slate-850/50 transition-colors flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="w-7 h-7 rounded-xl bg-slate-800 flex items-center justify-center font-mono font-bold text-xs text-slate-400">
-                B6
-              </span>
-              <div>
-                <h4 className="font-bold text-white text-sm">Bancolombia</h4>
-                <span className="text-xs text-slate-400">Saldo cuenta Bancolombia (C6)</span>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              {editingKey === 'bancolombiaCOP' ? (
-                <div className="flex items-center gap-1.5">
-                  <input
-                    type="number"
-                    value={inputValue}
-                    onChange={e => setInputValue(e.target.value)}
-                    className="w-28 bg-slate-950 border border-slate-700 text-xs px-2 py-1 rounded-lg text-white font-mono"
-                    autoFocus
-                  />
-                  <button onClick={() => saveEdit('bancolombiaCOP')} className="p-1 px-2 rounded-lg bg-emerald-500 text-slate-950 font-bold text-xs">
-                    OK
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <span className="font-mono font-bold text-sm text-white">
-                    {formatCurrency(data.billetera.bancolombiaCOP, 'COP')}
-                  </span>
-                  <button onClick={() => startEdit('bancolombiaCOP', data.billetera.bancolombiaCOP)} className="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300">
-                    <Edit2 className="w-3.5 h-3.5" />
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
+            );
+          })}
         </div>
       </div>
 
-      {/* Celdas B17 a C24: Deudas & Contingencias */}
-      <div className="bg-slate-900 rounded-3xl border border-slate-800 overflow-hidden shadow-xl">
-        <div className="p-5 border-b border-slate-800">
-          <h3 className="font-bold text-white text-sm">Deudas & Gastos Eventuales (Celdas B17:C24)</h3>
-          <p className="text-xs text-slate-400">Autofinanciera, Multas, SOAT y Declaración</p>
+      {/* Deudas & Compromisos Registrados */}
+      <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
+        <div className="p-5 border-b border-slate-100 dark:border-slate-800/80">
+          <h3 className="font-bold text-slate-800 dark:text-white text-sm">Deudas & Gastos Registrados</h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400">Compromisos de largo plazo e imprevistos anuales</p>
         </div>
 
-        <div className="divide-y divide-slate-800/80">
-          {/* B18: Autofinanciera */}
-          <div className="p-4 hover:bg-slate-850/50 transition-colors flex items-center justify-between">
+        <div className="divide-y divide-slate-100 dark:divide-slate-800/80">
+          {/* Autofinanciera */}
+          <div className="p-4 hover:bg-slate-50/70 dark:hover:bg-slate-850/50 transition-colors flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <span className="w-7 h-7 rounded-xl bg-slate-800 flex items-center justify-center font-mono font-bold text-xs text-slate-400">
-                B18
-              </span>
+              <div className="w-10 h-10 rounded-2xl bg-rose-100 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/40 flex items-center justify-center">
+                <ShieldAlert className="w-5 h-5" />
+              </div>
               <div>
-                <h4 className="font-bold text-white text-sm">Autofinanciera</h4>
-                <span className="text-xs text-slate-400">Monto total de deuda (C18)</span>
+                <h4 className="font-bold text-slate-800 dark:text-white text-sm">Autofinanciera</h4>
+                <span className="text-xs text-slate-500 dark:text-slate-400">Saldo total adeudado</span>
               </div>
             </div>
 
@@ -270,19 +177,25 @@ export const BilleteraView: React.FC = () => {
                     type="number"
                     value={inputValue}
                     onChange={e => setInputValue(e.target.value)}
-                    className="w-32 bg-slate-950 border border-slate-700 text-xs px-2 py-1 rounded-lg text-white font-mono"
+                    className="w-32 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-xs px-2.5 py-1.5 rounded-xl text-slate-800 dark:text-white font-mono focus:outline-none"
                     autoFocus
                   />
-                  <button onClick={() => saveEdit('autofinanciera')} className="p-1 px-2 rounded-lg bg-emerald-500 text-slate-950 font-bold text-xs">
-                    OK
+                  <button
+                    onClick={() => saveEdit('autofinanciera')}
+                    className="p-1.5 rounded-xl bg-emerald-600 dark:bg-emerald-500 text-white dark:text-slate-950 font-bold text-xs"
+                  >
+                    <Check className="w-3.5 h-3.5" />
                   </button>
                 </div>
               ) : (
                 <>
-                  <span className="font-mono font-bold text-sm text-rose-400">
+                  <span className="font-mono font-bold text-sm text-rose-600 dark:text-rose-400">
                     {formatCurrency(data.deudas.autofinancieraMonto, 'COP')}
                   </span>
-                  <button onClick={() => startEdit('autofinanciera', data.deudas.autofinancieraMonto)} className="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300">
+                  <button
+                    onClick={() => startEdit('autofinanciera', data.deudas.autofinancieraMonto)}
+                    className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors"
+                  >
                     <Edit2 className="w-3.5 h-3.5" />
                   </button>
                 </>
@@ -290,50 +203,50 @@ export const BilleteraView: React.FC = () => {
             </div>
           </div>
 
-          {/* B22: Multas */}
-          <div className="p-4 hover:bg-slate-850/50 transition-colors flex items-center justify-between">
+          {/* Multas */}
+          <div className="p-4 hover:bg-slate-50/70 dark:hover:bg-slate-850/50 transition-colors flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <span className="w-7 h-7 rounded-xl bg-slate-800 flex items-center justify-center font-mono font-bold text-xs text-slate-400">
-                B22
-              </span>
+              <div className="w-10 h-10 rounded-2xl bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/40 flex items-center justify-center">
+                <FileText className="w-5 h-5" />
+              </div>
               <div>
-                <h4 className="font-bold text-white text-sm">Multas</h4>
-                <span className="text-xs text-slate-400">Contingencia vehicular</span>
+                <h4 className="font-bold text-slate-800 dark:text-white text-sm">Multas</h4>
+                <span className="text-xs text-slate-500 dark:text-slate-400">Imprevistos vehiculares</span>
               </div>
             </div>
-            <span className="text-xs text-slate-400 bg-slate-950 px-3 py-1 rounded-xl border border-slate-800">
+            <span className="text-xs text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-xl border border-slate-200 dark:border-slate-700">
               Registrado
             </span>
           </div>
 
-          {/* B23: Soat y Tecno */}
-          <div className="p-4 hover:bg-slate-850/50 transition-colors flex items-center justify-between">
+          {/* SOAT y Tecnomecánica */}
+          <div className="p-4 hover:bg-slate-50/70 dark:hover:bg-slate-850/50 transition-colors flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <span className="w-7 h-7 rounded-xl bg-slate-800 flex items-center justify-center font-mono font-bold text-xs text-slate-400">
-                B23
-              </span>
+              <div className="w-10 h-10 rounded-2xl bg-sky-100 dark:bg-sky-950/50 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800/40 flex items-center justify-center">
+                <FileText className="w-5 h-5" />
+              </div>
               <div>
-                <h4 className="font-bold text-white text-sm">Soat y Tecno</h4>
-                <span className="text-xs text-slate-400">Gasto anual obligatorio</span>
+                <h4 className="font-bold text-slate-800 dark:text-white text-sm">SOAT y Tecnomecánica</h4>
+                <span className="text-xs text-slate-500 dark:text-slate-400">Gasto anual vehicular obligatorio</span>
               </div>
             </div>
-            <span className="text-xs text-slate-400 bg-slate-950 px-3 py-1 rounded-xl border border-slate-800">
+            <span className="text-xs text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-xl border border-slate-200 dark:border-slate-700">
               Registrado
             </span>
           </div>
 
-          {/* B24: Declaracion */}
-          <div className="p-4 hover:bg-slate-850/50 transition-colors flex items-center justify-between">
+          {/* Declaración de Renta */}
+          <div className="p-4 hover:bg-slate-50/70 dark:hover:bg-slate-850/50 transition-colors flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <span className="w-7 h-7 rounded-xl bg-slate-800 flex items-center justify-center font-mono font-bold text-xs text-slate-400">
-                B24
-              </span>
+              <div className="w-10 h-10 rounded-2xl bg-purple-100 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800/40 flex items-center justify-center">
+                <FileText className="w-5 h-5" />
+              </div>
               <div>
-                <h4 className="font-bold text-white text-sm">Declaracion</h4>
-                <span className="text-xs text-slate-400">Impuesto de renta anual</span>
+                <h4 className="font-bold text-slate-800 dark:text-white text-sm">Declaración de Renta</h4>
+                <span className="text-xs text-slate-500 dark:text-slate-400">Impuestos y honorarios anuales</span>
               </div>
             </div>
-            <span className="text-xs text-slate-400 bg-slate-950 px-3 py-1 rounded-xl border border-slate-800">
+            <span className="text-xs text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-xl border border-slate-200 dark:border-slate-700">
               Registrado
             </span>
           </div>

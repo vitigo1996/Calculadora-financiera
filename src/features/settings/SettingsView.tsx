@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useFinance } from '../../context/FinanceContext';
+import { useTheme } from '../../context/ThemeContext';
 import { StorageService } from '../../services/storageService';
 import { formatCurrency } from '../../services/financeCalculations';
 import {
@@ -12,11 +13,14 @@ import {
   RefreshCw,
   Save,
   CheckCircle2,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Sun,
+  Moon
 } from 'lucide-react';
 
 export const SettingsView: React.FC = () => {
   const { data, setMode, updatePeople, updateBilletera, resetToDefault, importData } = useFinance();
+  const { theme, setTheme } = useTheme();
   const [p1, p2] = data.people;
 
   const [mode, setLocalMode] = useState<'single' | 'shared'>(data.mode);
@@ -52,26 +56,74 @@ export const SettingsView: React.FC = () => {
     <div className="space-y-6 pb-24 animate-fadeIn">
       {/* Header */}
       <div>
-        <h2 className="text-xl font-bold text-white flex items-center gap-2">
-          <Settings className="w-5 h-5 text-slate-300" /> Configuración & Ajustes
+        <h2 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
+          <Settings className="w-5 h-5 text-slate-600 dark:text-slate-300" /> Configuración & Ajustes
         </h2>
-        <p className="text-xs text-slate-400">
-          Configuración de ingresos (Individual / Compartido), sueldos, tasa de cambio y respaldos
+        <p className="text-xs text-slate-500 dark:text-slate-400">
+          Personalización de tema visual, ingresos, miembros del hogar y copias de seguridad
         </p>
       </div>
 
       {savedSuccess && (
-        <div className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 p-3.5 rounded-2xl flex items-center gap-2 text-xs font-semibold animate-scaleUp">
+        <div className="bg-emerald-100 dark:bg-emerald-950/50 border border-emerald-300 dark:border-emerald-500/30 text-emerald-800 dark:text-emerald-400 p-3.5 rounded-2xl flex items-center gap-2 text-xs font-semibold animate-scaleUp">
           <CheckCircle2 className="w-4 h-4" /> ¡Configuración guardada exitosamente!
         </div>
       )}
 
-      {/* Formulario */}
-      <form onSubmit={handleSave} className="bg-slate-900 rounded-3xl p-6 border border-slate-800 shadow-xl space-y-6">
+      {/* Selector de Tema Visual: Claro u Oscuro */}
+      <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-sm transition-colors">
+        <label className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 block mb-3">
+          Tema de la Aplicación
+        </label>
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            onClick={() => setTheme('light')}
+            className={`p-3.5 rounded-2xl border text-left flex items-center gap-3 transition-all ${
+              theme === 'light'
+                ? 'bg-amber-50 border-amber-300 text-slate-800 shadow-sm'
+                : 'bg-slate-50 dark:bg-slate-950/40 border-slate-200 dark:border-slate-800 text-slate-500 hover:border-slate-300'
+            }`}
+          >
+            <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
+              theme === 'light' ? 'bg-amber-100 text-amber-700' : 'bg-slate-200 dark:bg-slate-800 text-slate-500'
+            }`}>
+              <Sun className="w-5 h-5" />
+            </div>
+            <div>
+              <span className="font-bold text-xs block">Modo Claro</span>
+              <span className="text-[11px] text-slate-500">Visual pastel limpio</span>
+            </div>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setTheme('dark')}
+            className={`p-3.5 rounded-2xl border text-left flex items-center gap-3 transition-all ${
+              theme === 'dark'
+                ? 'bg-slate-800 border-indigo-500/50 text-white shadow-sm'
+                : 'bg-slate-50 dark:bg-slate-950/40 border-slate-200 dark:border-slate-800 text-slate-500 hover:border-slate-300'
+            }`}
+          >
+            <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
+              theme === 'dark' ? 'bg-indigo-950 text-indigo-300' : 'bg-slate-200 dark:bg-slate-800 text-slate-500'
+            }`}>
+              <Moon className="w-5 h-5" />
+            </div>
+            <div>
+              <span className="font-bold text-xs block">Modo Oscuro</span>
+              <span className="text-[11px] text-slate-400">Descanso visual elegante</span>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      {/* Formulario de Ingresos & Hogar */}
+      <form onSubmit={handleSave} className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-6 transition-colors">
         {/* Selector de Modo */}
         <div>
-          <label className="text-xs font-bold uppercase tracking-wider text-slate-300 block mb-2">
-            Tipo de Aporte / Ingresos
+          <label className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 block mb-2">
+            Tipo de Presupuesto
           </label>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <button
@@ -79,18 +131,18 @@ export const SettingsView: React.FC = () => {
               onClick={() => setLocalMode('single')}
               className={`p-4 rounded-2xl border text-left flex items-center gap-3 transition-all ${
                 mode === 'single'
-                  ? 'bg-emerald-500/15 border-emerald-500 text-white'
-                  : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:border-slate-700'
+                  ? 'bg-emerald-50 dark:bg-emerald-500/15 border-emerald-300 dark:border-emerald-500 text-slate-800 dark:text-white shadow-sm'
+                  : 'bg-slate-50 dark:bg-slate-950/40 border-slate-200 dark:border-slate-800 text-slate-500 hover:border-slate-300'
               }`}
             >
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                mode === 'single' ? 'bg-emerald-500 text-slate-950' : 'bg-slate-800 text-slate-400'
+                mode === 'single' ? 'bg-emerald-100 dark:bg-emerald-500 text-emerald-800 dark:text-slate-950' : 'bg-slate-200 dark:bg-slate-800 text-slate-500'
               }`}>
                 <User className="w-5 h-5" />
               </div>
               <div>
                 <span className="font-bold text-sm block">Estoy solo (Individual)</span>
-                <span className="text-xs text-slate-400">100% de gastos asumidos por una sola persona</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400">Todos los gastos asumidos por una sola persona</span>
               </div>
             </button>
 
@@ -99,57 +151,57 @@ export const SettingsView: React.FC = () => {
               onClick={() => setLocalMode('shared')}
               className={`p-4 rounded-2xl border text-left flex items-center gap-3 transition-all ${
                 mode === 'shared'
-                  ? 'bg-emerald-500/15 border-emerald-500 text-white'
-                  : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:border-slate-700'
+                  ? 'bg-emerald-50 dark:bg-emerald-500/15 border-emerald-300 dark:border-emerald-500 text-slate-800 dark:text-white shadow-sm'
+                  : 'bg-slate-50 dark:bg-slate-950/40 border-slate-200 dark:border-slate-800 text-slate-500 hover:border-slate-300'
               }`}
             >
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                mode === 'shared' ? 'bg-emerald-500 text-slate-950' : 'bg-slate-800 text-slate-400'
+                mode === 'shared' ? 'bg-emerald-100 dark:bg-emerald-500 text-emerald-800 dark:text-slate-950' : 'bg-slate-200 dark:bg-slate-800 text-slate-500'
               }`}>
                 <Users className="w-5 h-5" />
               </div>
               <div>
                 <span className="font-bold text-sm block">Pareja / Compartido</span>
-                <span className="text-xs text-slate-400">Reparto proporcional según sueldos (David & Daniela)</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400">Reparto proporcional según sueldos (David & Daniela)</span>
               </div>
             </button>
           </div>
         </div>
 
         {/* Persona 1 */}
-        <div className="bg-slate-950/70 p-4 rounded-2xl border border-slate-800 space-y-3">
-          <span className="text-xs font-bold text-emerald-400 block">Persona 1 (Titular Principal - H3)</span>
+        <div className="bg-slate-50 dark:bg-slate-950/70 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
+          <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400 block">Titular Principal</span>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <label className="text-[11px] font-semibold text-slate-300 block mb-1">Nombre</label>
+              <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 block mb-1">Nombre</label>
               <input
                 type="text"
                 value={p1Name}
                 onChange={e => setP1Name(e.target.value)}
-                className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
+                className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-emerald-500"
                 required
               />
             </div>
 
             <div>
-              <label className="text-[11px] font-semibold text-slate-300 block mb-1">Ingreso Mensual (COP)</label>
+              <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 block mb-1">Ingreso Mensual (COP)</label>
               <input
                 type="number"
                 value={p1Income}
                 onChange={e => setP1Income(e.target.value)}
-                className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 font-mono"
+                className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-emerald-500 font-mono"
                 required
               />
             </div>
 
             <div>
-              <label className="text-[11px] font-semibold text-slate-300 block mb-1">% Salud & Pensión</label>
+              <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 block mb-1">% Salud & Pensión</label>
               <input
                 type="number"
                 step="0.5"
                 value={p1Rate}
                 onChange={e => setP1Rate(e.target.value)}
-                className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 font-mono"
+                className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-emerald-500 font-mono"
                 required
               />
             </div>
@@ -158,27 +210,27 @@ export const SettingsView: React.FC = () => {
 
         {/* Persona 2 */}
         {mode === 'shared' && (
-          <div className="bg-slate-950/70 p-4 rounded-2xl border border-slate-800 space-y-3">
-            <span className="text-xs font-bold text-indigo-400 block">Persona 2 (Pareja / Co-aportante - I3)</span>
+          <div className="bg-slate-50 dark:bg-slate-950/70 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
+            <span className="text-xs font-bold text-indigo-700 dark:text-indigo-400 block">Pareja / Co-aportante</span>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="text-[11px] font-semibold text-slate-300 block mb-1">Nombre</label>
+                <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 block mb-1">Nombre</label>
                 <input
                   type="text"
                   value={p2Name}
                   onChange={e => setP2Name(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500"
+                  className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500"
                   required
                 />
               </div>
 
               <div>
-                <label className="text-[11px] font-semibold text-slate-300 block mb-1">Ingreso Mensual (COP)</label>
+                <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 block mb-1">Ingreso Mensual (COP)</label>
                 <input
                   type="number"
                   value={p2Income}
                   onChange={e => setP2Income(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 font-mono"
+                  className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500 font-mono"
                   required
                 />
               </div>
@@ -186,46 +238,46 @@ export const SettingsView: React.FC = () => {
           </div>
         )}
 
-        {/* Dólar TRM */}
-        <div className="bg-slate-950/70 p-4 rounded-2xl border border-slate-800">
-          <label className="text-xs font-semibold text-slate-300 block mb-1 flex items-center gap-1.5">
-            <DollarSign className="w-3.5 h-3.5 text-emerald-400" /> Tasa de Cambio Dólar / COP (C2)
+        {/* Tasa Dólar */}
+        <div className="bg-slate-50 dark:bg-slate-950/70 p-4 rounded-2xl border border-slate-200 dark:border-slate-800">
+          <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1 flex items-center gap-1.5">
+            <DollarSign className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> Tasa de Cambio Dólar (USD / COP)
           </label>
           <input
             type="number"
             value={usdRate}
             onChange={e => setUsdRate(e.target.value)}
             placeholder="3600"
-            className="w-full sm:w-64 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 font-mono"
+            className="w-full sm:w-64 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-emerald-500 font-mono"
             required
           />
         </div>
 
         <button
           type="submit"
-          className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs py-3 rounded-2xl shadow-lg shadow-emerald-500/20 transition-all flex items-center justify-center gap-2"
+          className="w-full bg-emerald-600 hover:bg-emerald-500 dark:bg-emerald-500 dark:hover:bg-emerald-400 text-white dark:text-slate-950 font-bold text-xs py-3 rounded-2xl shadow-sm transition-all flex items-center justify-center gap-2"
         >
           <Save className="w-4 h-4" /> Guardar Ajustes
         </button>
       </form>
 
       {/* Exportar / Restablecer */}
-      <div className="bg-slate-900 rounded-3xl p-6 border border-slate-800 shadow-xl space-y-4">
-        <h3 className="font-bold text-white text-sm flex items-center gap-2">
-          <Download className="w-4 h-4 text-blue-400" /> Exportar Datos & Copias de Seguridad
+      <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-4 transition-colors">
+        <h3 className="font-bold text-slate-800 dark:text-white text-sm flex items-center gap-2">
+          <Download className="w-4 h-4 text-sky-600 dark:text-sky-400" /> Exportar Datos & Copias de Seguridad
         </h3>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
           <button
             onClick={() => StorageService.exportExcel(data)}
-            className="bg-emerald-950/40 hover:bg-emerald-900/50 border border-emerald-500/30 text-emerald-300 p-4 rounded-2xl flex items-center gap-3 transition-colors text-left"
+            className="bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 border border-emerald-200 dark:border-emerald-500/30 text-emerald-800 dark:text-emerald-300 p-4 rounded-2xl flex items-center gap-3 transition-colors text-left"
           >
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 flex items-center justify-center">
               <FileSpreadsheet className="w-5 h-5" />
             </div>
             <div>
-              <span className="font-bold text-xs block text-white">Descargar en Excel (.xlsx)</span>
-              <span className="text-[11px] text-slate-400">Exporta las tablas actuales</span>
+              <span className="font-bold text-xs block text-slate-800 dark:text-white">Descargar en Excel (.xlsx)</span>
+              <span className="text-[11px] text-slate-500 dark:text-slate-400">Exporta las tablas actuales</span>
             </div>
           </button>
 
@@ -235,14 +287,14 @@ export const SettingsView: React.FC = () => {
                 resetToDefault();
               }
             }}
-            className="bg-slate-950 hover:bg-slate-850 border border-slate-800 text-slate-300 p-4 rounded-2xl flex items-center gap-3 transition-colors text-left"
+            className="bg-slate-50 dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-850 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 p-4 rounded-2xl flex items-center gap-3 transition-colors text-left"
           >
-            <div className="w-10 h-10 rounded-xl bg-slate-800 text-slate-400 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 flex items-center justify-center">
               <RefreshCw className="w-5 h-5" />
             </div>
             <div>
-              <span className="font-bold text-xs block text-white">Restablecer al Excel original</span>
-              <span className="text-[11px] text-slate-400">Valores iniciales de David y Daniela</span>
+              <span className="font-bold text-xs block text-slate-800 dark:text-white">Restablecer Datos Originales</span>
+              <span className="text-[11px] text-slate-500 dark:text-slate-400">Valores iniciales de David y Daniela</span>
             </div>
           </button>
         </div>
