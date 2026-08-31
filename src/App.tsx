@@ -7,7 +7,6 @@ import { BilleteraView } from './features/billetera/BilleteraView';
 import { CreditosSuscripcionesView } from './features/creditos_suscripciones/CreditosSuscripcionesView';
 import { PresupuestoView } from './features/presupuesto/PresupuestoView';
 import { PortafolioView } from './features/portafolio/PortafolioView';
-import { SettingsView } from './features/settings/SettingsView';
 
 export const AppContent: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('billetera');
@@ -22,8 +21,6 @@ export const AppContent: React.FC = () => {
         return <CreditosSuscripcionesView />;
       case 'portafolio':
         return <PortafolioView />;
-      case 'ajustes':
-        return <SettingsView />;
       default:
         return <BilleteraView />;
     }

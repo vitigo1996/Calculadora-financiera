@@ -1,7 +1,7 @@
 import React from 'react';
-import { Wallet, CreditCard, Receipt, PieChart, Settings } from 'lucide-react';
+import { Wallet, CreditCard, Receipt, PieChart } from 'lucide-react';
 
-export type TabType = 'billetera' | 'presupuesto' | 'creditos_suscripciones' | 'portafolio' | 'ajustes';
+export type TabType = 'billetera' | 'presupuesto' | 'creditos_suscripciones' | 'portafolio';
 
 interface BottomNavProps {
   activeTab: TabType;
@@ -14,12 +14,11 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab })
     { id: 'presupuesto', label: 'Presupuesto', icon: Receipt },
     { id: 'creditos_suscripciones', label: 'Tarjetas', icon: CreditCard },
     { id: 'portafolio', label: 'Portafolio', icon: PieChart },
-    { id: 'ajustes', label: 'Ajustes', icon: Settings },
   ] as const;
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/90 dark:bg-slate-900/90 backdrop-blur-lg border-t border-slate-200/80 dark:border-slate-800/80 px-2 py-1.5 safe-area-pb transition-colors shadow-sm">
-      <div className="max-w-xl mx-auto flex items-center justify-around">
+      <div className="max-w-md mx-auto flex items-center justify-around">
         {tabs.map(tab => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -27,7 +26,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab })
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as TabType)}
-              className={`flex flex-col items-center justify-center py-1 px-1.5 rounded-2xl transition-all duration-200 ${
+              className={`flex flex-col items-center justify-center py-1 px-3 rounded-2xl transition-all duration-200 ${
                 isActive
                   ? 'text-blue-600 dark:text-blue-400 font-bold scale-105'
                   : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
