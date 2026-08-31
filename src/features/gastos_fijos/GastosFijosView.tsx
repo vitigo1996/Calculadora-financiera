@@ -22,7 +22,7 @@ const MONTHS = [
   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
 ];
 
-export const GastosFijosView: React.FC = () => {
+export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader = false }) => {
   const {
     data,
     summary,
@@ -316,11 +316,13 @@ export const GastosFijosView: React.FC = () => {
   return (
     <div className="space-y-6 pb-24 animate-fadeIn">
       {/* Header */}
-      <div>
-        <h2 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
-          <Home className="w-5 h-5 text-blue-600 dark:text-blue-400" /> Gastos
-        </h2>
-      </div>
+      {!hideHeader && (
+        <div>
+          <h2 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
+            <Home className="w-5 h-5 text-blue-600 dark:text-blue-400" /> Gastos
+          </h2>
+        </div>
+      )}
 
       {/* SECCIÓN 1: VIVIENDA */}
       <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
