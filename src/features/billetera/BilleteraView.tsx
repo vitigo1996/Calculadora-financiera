@@ -2,18 +2,16 @@ import React, { useState } from 'react';
 import { useFinance } from '../../context/FinanceContext';
 import { formatCurrency } from '../../services/financeCalculations';
 import { BilleteraAccountItem, DeudaItem } from '../../models/finance';
+import { getIconComponent, IconPicker } from '../../components/ui/IconPicker';
 import {
   Wallet,
   Edit2,
   Plus,
   Trash2,
-  ShieldAlert,
-  Building2,
-  Coins,
-  TrendingUp,
   Check,
   X,
-  SlidersHorizontal
+  SlidersHorizontal,
+  Settings2
 } from 'lucide-react';
 
 export const BilleteraView: React.FC = () => {
@@ -27,36 +25,30 @@ export const BilleteraView: React.FC = () => {
     deleteDeudaItem
   } = useFinance();
 
+  const dolarRate = data.dolarRate || 3600;
+
   // Billetera Edit Mode & State
   const [isManagingBilleteras, setIsManagingBilleteras] = useState(false);
   const [showAddBilleteraModal, setShowAddBilleteraModal] = useState(false);
-  const [newBilleteraName, setNewBilleteraName] = useState('');
-  const [newBilleteraCurrency, setNewBilleteraCurrency] = useState<'COP' | 'USD'>('COP');
-  const [newBilleteraBalance, setNewBilleteraBalance] = useState('');
+  const [editingBilleteraObj, setEditingBilleteraObj] = useState<BilleteraAccountItem | null>(null);
 
-  // Editing individual balance
-  const [editingBilleteraId, setEditingBilleteraId] = useState<string | null>(null);
-  const [editingBalanceInput, setEditingBalanceInput] = useState('');
+  // Form fields for Billetera (Create / Edit)
+  const [billeteraName, setBilleteraName] = useState('');
+  const [billeteraCurrency, setBilleteraCurrency] = useState<'COP' | 'USD'>('COP');
+  const [billeteraBalance, setBilleteraBalance] = useState('');
+  const [billeteraIcon, setBilleteraIcon] = useState('wallet');
 
   // Deudas Edit Mode & State
   const [isManagingDeudas, setIsManagingDeudas] = useState(false);
   const [showAddDeudaModal, setShowAddDeudaModal] = useState(false);
-  const [newDeudaName, setNewDeudaName] = useState('');
-  const [newDeudaAmount, setNewDeudaAmount] = useState('');
+  const [editingDeudaObj, setEditingDeudaObj] = useState<DeudaItem | null>(null);
 
-  // Editing individual debt amount
-  const [editingDeudaId, setEditingDeudaId] = useState<string | null>(null);
-  const [editingDeudaInput, setEditingDeudaInput] = useState('');
+  // Form fields for Deuda (Create / Edit)
+  const [deudaName, setDeudaName] = useState('');
+  const [deudaAmount, setDeudaAmount] = useState('');
+  const [deudaIcon, setDeudaIcon] = useState('shield_alert');
 
-  // Helper icons/colors
-  const getBilleteraIcon = (name: string) => {
-    const n = name.toLowerCase();
-    if (n.includes('etoro')) return TrendingUp;
-    if (n.includes('plenti') || n.includes('usdt') || n.includes('crypto')) return Coins;
-    if (n.includes('bancolombia') || n.includes('davivienda') || n.includes('banco')) return Building2;
-    return Wallet;
-  };
-
+  // Helper color based on currency and name
   const getBilleteraColor = (name: string, moneda: 'COP' | 'USD') => {
     const n = name.toLowerCase();
     if (moneda === 'USD') {
@@ -68,60 +60,92 @@ export const BilleteraView: React.FC = () => {
     return 'bg-indigo-100 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800/40';
   };
 
-  // Actions for Billeteras
-  const handleAddBilletera = (e: React.FormEvent) => {
+  // Open Create Billetera Modal
+  const openCreateBilletera = () => {
+    setBilleteraName('');
+    setBilleteraCurrency('COP');
+    setBilleteraBalance('');
+    setBilleteraIcon('wallet');
+    setEditingBilleteraObj(null);
+    setShowAddBilleteraModal(true);
+  };
+
+  // Open Edit Billetera Modal
+  const openEditBilletera = (b: BilleteraAccountItem) => {
+    setEditingBilleteraObj(b);
+    setBilleteraName(b.nombre);
+    setBilleteraCurrency(b.moneda);
+    setBilleteraBalance(b.saldo.toString());
+    setBilleteraIcon(b.icon || (b.moneda === 'USD' ? 'coins' : 'wallet'));
+    setShowAddBilleteraModal(true);
+  };
+
+  // Save Billetera (Create or Edit)
+  const handleSaveBilletera = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newBilleteraName.trim()) return;
-    const saldo = parseFloat(newBilleteraBalance) || 0;
-    addBilleteraItem({
-      nombre: newBilleteraName.trim(),
-      moneda: newBilleteraCurrency,
-      saldo
-    });
-    setNewBilleteraName('');
-    setNewBilleteraBalance('');
-    setNewBilleteraCurrency('COP');
+    if (!billeteraName.trim()) return;
+    const saldo = parseFloat(billeteraBalance) || 0;
+
+    if (editingBilleteraObj) {
+      updateBilleteraItem(editingBilleteraObj.id, {
+        nombre: billeteraName.trim(),
+        moneda: billeteraCurrency,
+        saldo,
+        icon: billeteraIcon
+      });
+    } else {
+      addBilleteraItem({
+        nombre: billeteraName.trim(),
+        moneda: billeteraCurrency,
+        saldo,
+        icon: billeteraIcon
+      } as any);
+    }
+
     setShowAddBilleteraModal(false);
+    setEditingBilleteraObj(null);
   };
 
-  const startEditBalance = (b: BilleteraAccountItem) => {
-    setEditingBilleteraId(b.id);
-    setEditingBalanceInput(b.saldo.toString());
+  // Open Create Deuda Modal
+  const openCreateDeuda = () => {
+    setDeudaName('');
+    setDeudaAmount('');
+    setDeudaIcon('shield_alert');
+    setEditingDeudaObj(null);
+    setShowAddDeudaModal(true);
   };
 
-  const saveEditBalance = (id: string) => {
-    const val = parseFloat(editingBalanceInput);
-    if (!isNaN(val) && val >= 0) {
-      updateBilleteraItem(id, { saldo: val });
-    }
-    setEditingBilleteraId(null);
+  // Open Edit Deuda Modal
+  const openEditDeuda = (d: DeudaItem) => {
+    setEditingDeudaObj(d);
+    setDeudaName(d.nombre);
+    setDeudaAmount((d.monto || 0).toString());
+    setDeudaIcon(d.icon || 'shield_alert');
+    setShowAddDeudaModal(true);
   };
 
-  // Actions for Deudas
-  const handleAddDeuda = (e: React.FormEvent) => {
+  // Save Deuda (Create or Edit)
+  const handleSaveDeuda = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newDeudaName.trim()) return;
-    const monto = parseFloat(newDeudaAmount) || 0;
-    addDeudaItem({
-      nombre: newDeudaName.trim(),
-      monto
-    });
-    setNewDeudaName('');
-    setNewDeudaAmount('');
-    setShowAddDeudaModal(false);
-  };
+    if (!deudaName.trim()) return;
+    const monto = parseFloat(deudaAmount) || 0;
 
-  const startEditDeuda = (d: DeudaItem) => {
-    setEditingDeudaId(d.id);
-    setEditingDeudaInput((d.monto || 0).toString());
-  };
-
-  const saveEditDeuda = (id: string) => {
-    const val = parseFloat(editingDeudaInput);
-    if (!isNaN(val) && val >= 0) {
-      updateDeudaItem(id, { monto: val });
+    if (editingDeudaObj) {
+      updateDeudaItem(editingDeudaObj.id, {
+        nombre: deudaName.trim(),
+        monto,
+        icon: deudaIcon
+      });
+    } else {
+      addDeudaItem({
+        nombre: deudaName.trim(),
+        monto,
+        icon: deudaIcon
+      } as any);
     }
-    setEditingDeudaId(null);
+
+    setShowAddDeudaModal(false);
+    setEditingDeudaObj(null);
   };
 
   return (
@@ -153,7 +177,7 @@ export const BilleteraView: React.FC = () => {
 
             {isManagingBilleteras && (
               <button
-                onClick={() => setShowAddBilleteraModal(true)}
+                onClick={openCreateBilletera}
                 className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/40 hover:bg-emerald-200 transition-all flex items-center gap-1"
               >
                 <Plus className="w-3.5 h-3.5" /> Agregar
@@ -164,8 +188,9 @@ export const BilleteraView: React.FC = () => {
 
         <div className="divide-y divide-slate-100 dark:divide-slate-800/80">
           {data.billeteraItems.map(item => {
-            const Icon = getBilleteraIcon(item.nombre);
-            const isEditing = editingBilleteraId === item.id;
+            const Icon = getIconComponent(item.icon);
+            const isUSD = item.moneda === 'USD';
+            const equivalentCOP = isUSD ? item.saldo * dolarRate : null;
 
             return (
               <div
@@ -177,62 +202,44 @@ export const BilleteraView: React.FC = () => {
                     <Icon className="w-5 h-5" />
                   </div>
                   <div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <h4 className="font-bold text-slate-800 dark:text-white text-sm">{item.nombre}</h4>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-                        {item.moneda}
-                      </span>
+                      {isUSD && equivalentCOP !== null && (
+                        <span className="text-[11px] font-mono font-semibold px-2 py-0.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/40">
+                          ≈ {formatCurrency(equivalentCOP, 'COP')}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2">
-                  {isEditing ? (
-                    <div className="flex items-center gap-1.5">
-                      <input
-                        type="number"
-                        value={editingBalanceInput}
-                        onChange={e => setEditingBalanceInput(e.target.value)}
-                        className="w-28 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-xs px-2.5 py-1.5 rounded-xl text-slate-800 dark:text-white font-mono focus:outline-none focus:border-emerald-500"
-                        autoFocus
-                      />
-                      <button
-                        onClick={() => saveEditBalance(item.id)}
-                        className="p-1.5 rounded-xl bg-emerald-600 dark:bg-emerald-500 text-white dark:text-slate-950 font-bold text-xs shadow-sm"
-                      >
-                        <Check className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="text-right">
-                        <span className="font-mono font-bold text-sm text-slate-800 dark:text-white block">
-                          {formatCurrency(item.saldo, item.moneda)}
-                        </span>
-                      </div>
+                  <div className="text-right">
+                    <span className="font-mono font-bold text-sm text-slate-800 dark:text-white block">
+                      {formatCurrency(item.saldo, item.moneda)}
+                    </span>
+                  </div>
 
-                      <button
-                        onClick={() => startEditBalance(item)}
-                        className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors"
-                        title="Modificar saldo"
-                      >
-                        <Edit2 className="w-3.5 h-3.5" />
-                      </button>
+                  <button
+                    onClick={() => openEditBilletera(item)}
+                    className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors"
+                    title="Editar billetera e ícono"
+                  >
+                    <Edit2 className="w-3.5 h-3.5" />
+                  </button>
 
-                      {isManagingBilleteras && (
-                        <button
-                          onClick={() => {
-                            if (confirm(`¿Eliminar la billetera "${item.nombre}"?`)) {
-                              deleteBilleteraItem(item.id);
-                            }
-                          }}
-                          className="p-2 rounded-xl bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/40 transition-colors"
-                          title="Eliminar billetera"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-                    </>
+                  {isManagingBilleteras && (
+                    <button
+                      onClick={() => {
+                        if (confirm(`¿Eliminar la billetera "${item.nombre}"?`)) {
+                          deleteBilleteraItem(item.id);
+                        }
+                      }}
+                      className="p-2 rounded-xl bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/40 transition-colors"
+                      title="Eliminar billetera"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                   )}
                 </div>
               </div>
@@ -261,7 +268,7 @@ export const BilleteraView: React.FC = () => {
 
             {isManagingDeudas && (
               <button
-                onClick={() => setShowAddDeudaModal(true)}
+                onClick={openCreateDeuda}
                 className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/40 hover:bg-rose-200 transition-all flex items-center gap-1"
               >
                 <Plus className="w-3.5 h-3.5" /> Agregar
@@ -272,7 +279,7 @@ export const BilleteraView: React.FC = () => {
 
         <div className="divide-y divide-slate-100 dark:divide-slate-800/80">
           {data.deudaItems.map(item => {
-            const isEditing = editingDeudaId === item.id;
+            const Icon = getIconComponent(item.icon || 'shield_alert');
             const hasAmount = item.monto !== undefined && item.monto > 0;
 
             return (
@@ -282,58 +289,38 @@ export const BilleteraView: React.FC = () => {
               >
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-2xl bg-rose-100 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/40 flex items-center justify-center">
-                    <ShieldAlert className="w-5 h-5" />
+                    <Icon className="w-5 h-5" />
                   </div>
                   <h4 className="font-bold text-slate-800 dark:text-white text-sm">{item.nombre}</h4>
                 </div>
 
                 <div className="flex items-center gap-2">
-                  {isEditing ? (
-                    <div className="flex items-center gap-1.5">
-                      <input
-                        type="number"
-                        value={editingDeudaInput}
-                        onChange={e => setEditingDeudaInput(e.target.value)}
-                        className="w-32 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-xs px-2.5 py-1.5 rounded-xl text-slate-800 dark:text-white font-mono focus:outline-none"
-                        autoFocus
-                      />
-                      <button
-                        onClick={() => saveEditDeuda(item.id)}
-                        className="p-1.5 rounded-xl bg-rose-600 dark:bg-rose-500 text-white font-bold text-xs"
-                      >
-                        <Check className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  ) : (
-                    <>
-                      {hasAmount ? (
-                        <span className="font-mono font-bold text-sm text-rose-600 dark:text-rose-400">
-                          {formatCurrency(item.monto || 0, 'COP')}
-                        </span>
-                      ) : null}
+                  {hasAmount ? (
+                    <span className="font-mono font-bold text-sm text-rose-600 dark:text-rose-400">
+                      {formatCurrency(item.monto || 0, 'COP')}
+                    </span>
+                  ) : null}
 
-                      <button
-                        onClick={() => startEditDeuda(item)}
-                        className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors"
-                        title="Modificar valor"
-                      >
-                        <Edit2 className="w-3.5 h-3.5" />
-                      </button>
+                  <button
+                    onClick={() => openEditDeuda(item)}
+                    className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors"
+                    title="Editar deuda e ícono"
+                  >
+                    <Edit2 className="w-3.5 h-3.5" />
+                  </button>
 
-                      {isManagingDeudas && (
-                        <button
-                          onClick={() => {
-                            if (confirm(`¿Eliminar la deuda "${item.nombre}"?`)) {
-                              deleteDeudaItem(item.id);
-                            }
-                          }}
-                          className="p-2 rounded-xl bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/40 transition-colors"
-                          title="Eliminar deuda"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-                    </>
+                  {isManagingDeudas && (
+                    <button
+                      onClick={() => {
+                        if (confirm(`¿Eliminar la deuda "${item.nombre}"?`)) {
+                          deleteDeudaItem(item.id);
+                        }
+                      }}
+                      className="p-2 rounded-xl bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/40 transition-colors"
+                      title="Eliminar deuda"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                   )}
                 </div>
               </div>
@@ -342,12 +329,14 @@ export const BilleteraView: React.FC = () => {
         </div>
       </div>
 
-      {/* Modal: Crear Billetera */}
+      {/* Modal: Crear / Editar Billetera con IconPicker */}
       {showAddBilleteraModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl animate-scaleUp">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl animate-scaleUp max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-slate-800 dark:text-white">Nueva Billetera</h3>
+              <h3 className="text-lg font-bold text-slate-800 dark:text-white">
+                {editingBilleteraObj ? 'Editar Billetera' : 'Nueva Billetera'}
+              </h3>
               <button
                 onClick={() => setShowAddBilleteraModal(false)}
                 className="p-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-800 dark:hover:text-white"
@@ -356,13 +345,13 @@ export const BilleteraView: React.FC = () => {
               </button>
             </div>
 
-            <form onSubmit={handleAddBilletera} className="space-y-4">
+            <form onSubmit={handleSaveBilletera} className="space-y-4">
               <div>
                 <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">Nombre</label>
                 <input
                   type="text"
-                  value={newBilleteraName}
-                  onChange={e => setNewBilleteraName(e.target.value)}
+                  value={billeteraName}
+                  onChange={e => setBilleteraName(e.target.value)}
                   placeholder="Ej. Nequi, Daviplata, Binance, Interactive Brokers"
                   className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-emerald-500"
                   required
@@ -374,10 +363,10 @@ export const BilleteraView: React.FC = () => {
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
-                    onClick={() => setNewBilleteraCurrency('COP')}
+                    onClick={() => setBilleteraCurrency('COP')}
                     className={`py-2.5 rounded-2xl text-xs font-bold border transition-all ${
-                      newBilleteraCurrency === 'COP'
-                        ? 'bg-emerald-100 dark:bg-emerald-950/60 border-emerald-500 text-emerald-800 dark:text-emerald-300'
+                      billeteraCurrency === 'COP'
+                        ? 'bg-emerald-100 dark:bg-emerald-950/60 border-emerald-500 text-emerald-800 dark:text-emerald-300 shadow-sm'
                         : 'bg-slate-50 dark:bg-slate-950/40 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
                     }`}
                   >
@@ -386,10 +375,10 @@ export const BilleteraView: React.FC = () => {
 
                   <button
                     type="button"
-                    onClick={() => setNewBilleteraCurrency('USD')}
+                    onClick={() => setBilleteraCurrency('USD')}
                     className={`py-2.5 rounded-2xl text-xs font-bold border transition-all ${
-                      newBilleteraCurrency === 'USD'
-                        ? 'bg-emerald-100 dark:bg-emerald-950/60 border-emerald-500 text-emerald-800 dark:text-emerald-300'
+                      billeteraCurrency === 'USD'
+                        ? 'bg-emerald-100 dark:bg-emerald-950/60 border-emerald-500 text-emerald-800 dark:text-emerald-300 shadow-sm'
                         : 'bg-slate-50 dark:bg-slate-950/40 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
                     }`}
                   >
@@ -399,16 +388,21 @@ export const BilleteraView: React.FC = () => {
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">Saldo Inicial</label>
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                  Saldo {billeteraCurrency === 'USD' ? '(en Dólares USD)' : '(en Pesos COP)'}
+                </label>
                 <input
                   type="number"
                   step="any"
-                  value={newBilleteraBalance}
-                  onChange={e => setNewBilleteraBalance(e.target.value)}
+                  value={billeteraBalance}
+                  onChange={e => setBilleteraBalance(e.target.value)}
                   placeholder="0"
                   className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white font-mono focus:outline-none focus:border-emerald-500"
                 />
               </div>
+
+              {/* Icon Picker */}
+              <IconPicker selectedIconId={billeteraIcon} onSelectIcon={setBilleteraIcon} />
 
               <div className="flex items-center gap-3 pt-3">
                 <button
@@ -422,7 +416,7 @@ export const BilleteraView: React.FC = () => {
                   type="submit"
                   className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs py-3 rounded-2xl shadow-sm transition-all"
                 >
-                  Guardar Billetera
+                  {editingBilleteraObj ? 'Actualizar Billetera' : 'Guardar Billetera'}
                 </button>
               </div>
             </form>
@@ -430,12 +424,14 @@ export const BilleteraView: React.FC = () => {
         </div>
       )}
 
-      {/* Modal: Crear Deuda */}
+      {/* Modal: Crear / Editar Deuda con IconPicker */}
       {showAddDeudaModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl animate-scaleUp">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl animate-scaleUp max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-slate-800 dark:text-white">Nueva Deuda / Obligación</h3>
+              <h3 className="text-lg font-bold text-slate-800 dark:text-white">
+                {editingDeudaObj ? 'Editar Deuda' : 'Nueva Deuda'}
+              </h3>
               <button
                 onClick={() => setShowAddDeudaModal(false)}
                 className="p-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-800 dark:hover:text-white"
@@ -444,13 +440,13 @@ export const BilleteraView: React.FC = () => {
               </button>
             </div>
 
-            <form onSubmit={handleAddDeuda} className="space-y-4">
+            <form onSubmit={handleSaveDeuda} className="space-y-4">
               <div>
                 <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">Nombre</label>
                 <input
                   type="text"
-                  value={newDeudaName}
-                  onChange={e => setNewDeudaName(e.target.value)}
+                  value={deudaName}
+                  onChange={e => setDeudaName(e.target.value)}
                   placeholder="Ej. Crédito Libre Inversión, Impuesto Predial"
                   className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-rose-500"
                   required
@@ -462,12 +458,15 @@ export const BilleteraView: React.FC = () => {
                 <input
                   type="number"
                   step="any"
-                  value={newDeudaAmount}
-                  onChange={e => setNewDeudaAmount(e.target.value)}
+                  value={deudaAmount}
+                  onChange={e => setDeudaAmount(e.target.value)}
                   placeholder="0 (o valor adeudado)"
                   className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white font-mono focus:outline-none focus:border-rose-500"
                 />
               </div>
+
+              {/* Icon Picker */}
+              <IconPicker selectedIconId={deudaIcon} onSelectIcon={setDeudaIcon} />
 
               <div className="flex items-center gap-3 pt-3">
                 <button
@@ -481,7 +480,7 @@ export const BilleteraView: React.FC = () => {
                   type="submit"
                   className="flex-1 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs py-3 rounded-2xl shadow-sm transition-all"
                 >
-                  Guardar Deuda
+                  {editingDeudaObj ? 'Actualizar Deuda' : 'Guardar Deuda'}
                 </button>
               </div>
             </form>

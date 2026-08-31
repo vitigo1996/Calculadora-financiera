@@ -13,12 +13,14 @@ export interface BilleteraAccountItem {
   nombre: string;
   moneda: 'COP' | 'USD';
   saldo: number;
+  icon?: string;
 }
 
 export interface DeudaItem {
   id: string;
   nombre: string;
   monto?: number;
+  icon?: string;
 }
 
 export interface HousingExpense {

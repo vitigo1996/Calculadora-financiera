@@ -24,47 +24,55 @@ export const initialFinanceData: AppFinanceData = {
       id: 'acc-etoro',
       nombre: 'Etoro',
       moneda: 'USD',
-      saldo: 5037.0
+      saldo: 5037.0,
+      icon: 'trending_up'
     },
     {
       id: 'acc-plenti',
       nombre: 'Plenti',
       moneda: 'USD',
-      saldo: 1500.0
+      saldo: 1500.0,
+      icon: 'coins'
     },
     {
       id: 'acc-efectivo',
       nombre: 'Efectivo',
       moneda: 'COP',
-      saldo: 130000.0
+      saldo: 130000.0,
+      icon: 'banknote'
     },
     {
       id: 'acc-bancolombia',
       nombre: 'Bancolombia',
       moneda: 'COP',
-      saldo: 350000.0
+      saldo: 350000.0,
+      icon: 'building'
     }
   ],
   deudaItems: [
     {
       id: 'deuda-auto',
       nombre: 'Autofinanciera',
-      monto: 24166570.0
+      monto: 24166570.0,
+      icon: 'car'
     },
     {
       id: 'deuda-multas',
       nombre: 'Multas',
-      monto: 0
+      monto: 0,
+      icon: 'shield_alert'
     },
     {
       id: 'deuda-soat',
       nombre: 'Soat y Tecno',
-      monto: 0
+      monto: 0,
+      icon: 'file_text'
     },
     {
       id: 'deuda-declaracion',
       nombre: 'Declaracion',
-      monto: 0
+      monto: 0,
+      icon: 'scale'
     }
   ],
   housingExpenses: [
