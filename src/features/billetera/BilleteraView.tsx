@@ -74,7 +74,7 @@ export const BilleteraView: React.FC = () => {
   const [movementName, setMovementName] = useState('');
   const [movementAmount, setMovementAmount] = useState('');
   const [movementSourceId, setMovementSourceId] = useState('');
-  const [movementDestType, setMovementDestType] = useState<'none' | 'card' | 'obligation'>('none');
+  const [movementDestType, setMovementDestType] = useState<'none' | 'card' | 'obligation'>('obligation');
   const [movementDestId, setMovementDestId] = useState('');
   const [showMovementCalcPopup, setShowMovementCalcPopup] = useState(false);
   const [movementCalcDelta, setMovementCalcDelta] = useState('');
@@ -273,8 +273,11 @@ export const BilleteraView: React.FC = () => {
     setMovementName('');
     setMovementAmount('');
     setMovementSourceId(data.billeteraItems[0]?.id || '');
-    setMovementDestType('none');
-    setMovementDestId('');
+    setMovementDestType('obligation');
+    const firstHousing = data.housingExpenses[0]?.id ? `h-${data.housingExpenses[0].id}` : '';
+    const firstOb = data.obligations[0]?.id ? `o-${data.obligations[0].id}` : '';
+    const firstDeuda = data.deudaItems[0]?.id ? `d-${data.deudaItems[0].id}` : '';
+    setMovementDestId(firstHousing || firstOb || firstDeuda || '');
     setMovementCalcDelta('');
     setShowMovementCalcPopup(false);
     setShowAddMovementModal(true);
@@ -614,10 +617,10 @@ export const BilleteraView: React.FC = () => {
                           Hacia:{' '}
                           <strong className="text-slate-800 dark:text-slate-200">
                             {mov.destinationType === 'none'
-                              ? 'Compra/Pago'
+                              ? 'Compra'
                               : mov.destinationType === 'card'
                               ? `💳 ${mov.destinationName || 'Tarjeta'}`
-                              : `🏠 ${mov.destinationName || 'Vivienda/Obligaciones'}`}
+                              : `🏠 ${mov.destinationName || 'Pago'}`}
                           </strong>
                         </span>
                       </div>
@@ -795,12 +798,33 @@ export const BilleteraView: React.FC = () => {
                 </select>
               </div>
 
-              {/* Destino */}
+              {/* Destino: Orden -> Pagos, Compra, Tarjetas */}
               <div>
                 <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
                   Destino
                 </label>
                 <div className="grid grid-cols-3 gap-2">
+                  {/* 1. Pagos */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMovementDestType('obligation');
+                      const firstHousing = data.housingExpenses[0]?.id ? `h-${data.housingExpenses[0].id}` : '';
+                      const firstOb = data.obligations[0]?.id ? `o-${data.obligations[0].id}` : '';
+                      const firstDeuda = data.deudaItems[0]?.id ? `d-${data.deudaItems[0].id}` : '';
+                      setMovementDestId(firstHousing || firstOb || firstDeuda || '');
+                    }}
+                    className={`py-2 px-1.5 rounded-2xl text-[11px] font-bold border flex flex-col items-center justify-center gap-1 transition-all ${
+                      movementDestType === 'obligation'
+                        ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                        : 'bg-slate-50 dark:bg-slate-950/40 border-slate-300 dark:border-slate-800 text-slate-600 dark:text-slate-400'
+                    }`}
+                  >
+                    <Home className="w-3.5 h-3.5" />
+                    <span>Pagos</span>
+                  </button>
+
+                  {/* 2. Compra */}
                   <button
                     type="button"
                     onClick={() => {
@@ -814,9 +838,10 @@ export const BilleteraView: React.FC = () => {
                     }`}
                   >
                     <ShoppingBag className="w-3.5 h-3.5" />
-                    <span>Compra/Pago</span>
+                    <span>Compra</span>
                   </button>
 
+                  {/* 3. Tarjetas */}
                   <button
                     type="button"
                     onClick={() => {
@@ -832,26 +857,54 @@ export const BilleteraView: React.FC = () => {
                     <CreditCard className="w-3.5 h-3.5" />
                     <span>Tarjetas</span>
                   </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMovementDestType('obligation');
-                      const firstHousing = data.housingExpenses[0]?.id ? `h-${data.housingExpenses[0].id}` : '';
-                      const firstOb = data.obligations[0]?.id ? `o-${data.obligations[0].id}` : '';
-                      setMovementDestId(firstHousing || firstOb || '');
-                    }}
-                    className={`py-2 px-1.5 rounded-2xl text-[11px] font-bold border flex flex-col items-center justify-center gap-1 transition-all ${
-                      movementDestType === 'obligation'
-                        ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
-                        : 'bg-slate-50 dark:bg-slate-950/40 border-slate-300 dark:border-slate-800 text-slate-600 dark:text-slate-400'
-                    }`}
-                  >
-                    <Home className="w-3.5 h-3.5" />
-                    <span>Vivienda/Obligaciones</span>
-                  </button>
                 </div>
               </div>
+
+              {/* Sub-selector de Pagos (Vivienda, Obligaciones, Deudas) */}
+              {movementDestType === 'obligation' && (
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                    Selecciona el Pago
+                  </label>
+                  <select
+                    value={movementDestId}
+                    onChange={e => setMovementDestId(e.target.value)}
+                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
+                    required
+                  >
+                    {data.housingExpenses.length > 0 && (
+                      <optgroup label="Vivienda">
+                        {data.housingExpenses.map(h => (
+                          <option key={h.id} value={`h-${h.id}`}>
+                            {h.name} ({formatCurrency(h.totalAmount, h.moneda || 'COP')})
+                          </option>
+                        ))}
+                      </optgroup>
+                    )}
+                    {data.obligations.length > 0 && (
+                      <optgroup label="Obligaciones">
+                        {data.obligations.map(ob => {
+                          const val = ob.davidAmount !== undefined && ob.davidAmount !== ob.totalAmount && ob.totalDebtBalance ? ob.davidAmount : ob.totalAmount;
+                          return (
+                            <option key={ob.id} value={`o-${ob.id}`}>
+                              {ob.name} ({formatCurrency(val, ob.moneda || 'COP')}/mes)
+                            </option>
+                          );
+                        })}
+                      </optgroup>
+                    )}
+                    {data.deudaItems.length > 0 && (
+                      <optgroup label="Deudas">
+                        {data.deudaItems.map(d => (
+                          <option key={d.id} value={`d-${d.id}`}>
+                            {d.nombre} ({formatCurrency(d.monto || 0, d.moneda || 'COP')})
+                          </option>
+                        ))}
+                      </optgroup>
+                    )}
+                  </select>
+                </div>
+              )}
 
               {/* Sub-selector de Tarjeta */}
               {movementDestType === 'card' && (
@@ -865,54 +918,15 @@ export const BilleteraView: React.FC = () => {
                     className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
                     required
                   >
-                    {data.creditCards.map(card => (
-                      <option key={card.id} value={card.id}>
-                        {card.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              {/* Sub-selector de Vivienda / Obligaciones */}
-              {movementDestType === 'obligation' && (
-                <div>
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                    Selecciona Vivienda u Obligación
-                  </label>
-                  <select
-                    value={movementDestId}
-                    onChange={e => setMovementDestId(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
-                    required
-                  >
-                    {data.housingExpenses.length > 0 && (
-                      <optgroup label="Vivienda">
-                        {data.housingExpenses.map(h => (
-                          <option key={h.id} value={`h-${h.id}`}>
-                            {h.name}
-                          </option>
-                        ))}
-                      </optgroup>
-                    )}
-                    {data.obligations.length > 0 && (
-                      <optgroup label="Obligaciones">
-                        {data.obligations.map(ob => (
-                          <option key={ob.id} value={`o-${ob.id}`}>
-                            {ob.name}
-                          </option>
-                        ))}
-                      </optgroup>
-                    )}
-                    {data.deudaItems.length > 0 && (
-                      <optgroup label="Otras Deudas">
-                        {data.deudaItems.map(d => (
-                          <option key={d.id} value={`d-${d.id}`}>
-                            {d.nombre}
-                          </option>
-                        ))}
-                      </optgroup>
-                    )}
+                    {data.creditCards.map(card => {
+                      const cutoffDue = card.billingCutoffAmount;
+                      const hasCutoff = cutoffDue !== undefined;
+                      return (
+                        <option key={card.id} value={card.id}>
+                          {card.name} {hasCutoff ? `(Corte pendiente: ${formatCurrency(cutoffDue, card.moneda || 'COP')})` : ''}
+                        </option>
+                      );
+                    })}
                   </select>
                 </div>
               )}

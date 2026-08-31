@@ -205,7 +205,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         date: new Date().toISOString()
       };
 
-      // Descontar saldo de la cuenta de origen en Billetera
+      // 1. Descontar saldo de la cuenta de origen en Billetera
       const updatedBilletera = (prev.billeteraItems || []).map(acc => {
         if (acc.id === movement.sourceAccountId) {
           return {
@@ -216,9 +216,92 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         return acc;
       });
 
+      // 2. Si el destino es Tarjeta de Crédito, aplicar el pago
+      let updatedCreditCards = prev.creditCards;
+      if (movement.destinationType === 'card' && movement.destinationId) {
+        updatedCreditCards = (prev.creditCards || []).map(c => {
+          if (c.id === movement.destinationId) {
+            if (c.billingCutoffAmount !== undefined) {
+              // Si ya se hizo corte, restar a la deuda congelada del corte
+              const newCutoff = c.billingCutoffAmount - movement.amount;
+              if (newCutoff <= 0) {
+                // Corte pagado totalmente: quitar corte y pasar compras post-corte a regulares
+                const remainingPurchases = (c.purchases || [])
+                  .filter(p => p.isAfterCutoff === true)
+                  .map(p => ({ ...p, isAfterCutoff: false }));
+                return {
+                  ...c,
+                  billingCutoffAmount: undefined,
+                  billingCutoffDate: undefined,
+                  purchases: remainingPurchases
+                };
+              } else {
+                return {
+                  ...c,
+                  billingCutoffAmount: newCutoff
+                };
+              }
+            } else {
+              // Si NO se ha hecho corte, restar al total gastado para la cuota mensual
+              let amountToDeduct = movement.amount;
+              const updatedPurchases = [...(c.purchases || [])];
+              for (let i = updatedPurchases.length - 1; i >= 0 && amountToDeduct > 0; i--) {
+                if (updatedPurchases[i].amount <= amountToDeduct) {
+                  amountToDeduct -= updatedPurchases[i].amount;
+                  updatedPurchases.splice(i, 1);
+                } else {
+                  updatedPurchases[i] = {
+                    ...updatedPurchases[i],
+                    amount: updatedPurchases[i].amount - amountToDeduct
+                  };
+                  amountToDeduct = 0;
+                }
+              }
+              return {
+                ...c,
+                purchases: updatedPurchases
+              };
+            }
+          }
+          return c;
+        });
+      }
+
+      // 3. Si el destino es Deuda / Obligación, restar al saldo adeudado
+      let updatedDeudas = prev.deudaItems;
+      let updatedObligations = prev.obligations;
+      if (movement.destinationType === 'obligation' && movement.destinationId) {
+        if (movement.destinationId.startsWith('d-')) {
+          const rawId = movement.destinationId.replace('d-', '');
+          updatedDeudas = (prev.deudaItems || []).map(d => {
+            if (d.id === rawId) {
+              return {
+                ...d,
+                monto: Math.max(0, (d.monto || 0) - movement.amount)
+              };
+            }
+            return d;
+          });
+        } else if (movement.destinationId.startsWith('o-')) {
+          const rawId = movement.destinationId.replace('o-', '');
+          updatedObligations = (prev.obligations || []).map(ob => {
+            if (ob.id === rawId && ob.totalDebtBalance !== undefined) {
+              return {
+                ...ob,
+                totalDebtBalance: Math.max(0, ob.totalDebtBalance - movement.amount)
+              };
+            }
+            return ob;
+          });
+        }
+      }
+
       return {
         ...prev,
         billeteraItems: updatedBilletera,
+        creditCards: updatedCreditCards,
+        deudaItems: updatedDeudas,
+        obligations: updatedObligations,
         expenseMovements: [newMovement, ...(prev.expenseMovements || [])]
       };
     });
