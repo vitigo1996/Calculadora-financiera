@@ -10,11 +10,9 @@ import {
   Minus,
   Trash2,
   X,
-  SlidersHorizontal,
   Calculator,
   ArrowDownLeft,
-  ArrowUpRight,
-  Check
+  ArrowUpRight
 } from 'lucide-react';
 
 export const BilleteraView: React.FC = () => {
@@ -30,8 +28,7 @@ export const BilleteraView: React.FC = () => {
 
   const dolarRate = data.dolarRate || 3600;
 
-  // Billetera Edit Mode & State
-  const [isManagingBilleteras, setIsManagingBilleteras] = useState(false);
+  // Billetera State & Modals
   const [showAddBilleteraModal, setShowAddBilleteraModal] = useState(false);
   const [editingBilleteraObj, setEditingBilleteraObj] = useState<BilleteraAccountItem | null>(null);
 
@@ -43,8 +40,7 @@ export const BilleteraView: React.FC = () => {
   const [showBilleteraCalcPopup, setShowBilleteraCalcPopup] = useState(false);
   const [billeteraCalcDelta, setBilleteraCalcDelta] = useState('');
 
-  // Deudas Edit Mode & State
-  const [isManagingDeudas, setIsManagingDeudas] = useState(false);
+  // Deudas State & Modals
   const [showAddDeudaModal, setShowAddDeudaModal] = useState(false);
   const [editingDeudaObj, setEditingDeudaObj] = useState<DeudaItem | null>(null);
 
@@ -224,33 +220,13 @@ export const BilleteraView: React.FC = () => {
         <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
           <h3 className="font-bold text-slate-800 dark:text-white text-sm">Billetera</h3>
 
-          {/* Botones: Agregar a la izquierda y Listo a la derecha en modo edición */}
-          <div className="flex items-center gap-2">
-            {isManagingBilleteras ? (
-              <>
-                <button
-                  onClick={openCreateBilletera}
-                  className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800/40 hover:bg-blue-200 transition-all flex items-center gap-1 shadow-sm"
-                >
-                  <Plus className="w-3.5 h-3.5" /> Agregar
-                </button>
-
-                <button
-                  onClick={() => setIsManagingBilleteras(false)}
-                  className="px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-600 text-white shadow-sm hover:bg-blue-500 transition-all flex items-center gap-1"
-                >
-                  <Check className="w-3.5 h-3.5" /> Listo
-                </button>
-              </>
-            ) : (
-              <button
-                onClick={() => setIsManagingBilleteras(true)}
-                className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-300/80 dark:border-transparent transition-all flex items-center gap-1.5"
-              >
-                <SlidersHorizontal className="w-3.5 h-3.5" /> Editar
-              </button>
-            )}
-          </div>
+          {/* Botón directo de Agregar */}
+          <button
+            onClick={openCreateBilletera}
+            className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800/40 hover:bg-blue-200 transition-all flex items-center gap-1 shadow-sm"
+          >
+            <Plus className="w-3.5 h-3.5" /> Agregar
+          </button>
         </div>
 
         <div className="divide-y divide-slate-200 dark:divide-slate-800">
@@ -298,20 +274,6 @@ export const BilleteraView: React.FC = () => {
                   >
                     <Edit2 className="w-3.5 h-3.5" />
                   </button>
-
-                  {isManagingBilleteras && (
-                    <button
-                      onClick={() => {
-                        if (confirm(`¿Eliminar la billetera "${item.nombre}"?`)) {
-                          deleteBilleteraItem(item.id);
-                        }
-                      }}
-                      className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-rose-100 dark:hover:bg-rose-950/50 text-slate-500 hover:text-rose-600 border border-slate-300/80 dark:border-transparent transition-colors"
-                      title="Eliminar billetera"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  )}
                 </div>
               </div>
             );
@@ -324,33 +286,13 @@ export const BilleteraView: React.FC = () => {
         <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
           <h3 className="font-bold text-slate-800 dark:text-white text-sm">Deudas</h3>
 
-          {/* Botones: Agregar a la izquierda y Listo a la derecha en modo edición */}
-          <div className="flex items-center gap-2">
-            {isManagingDeudas ? (
-              <>
-                <button
-                  onClick={openCreateDeuda}
-                  className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800/40 hover:bg-blue-200 transition-all flex items-center gap-1 shadow-sm"
-                >
-                  <Plus className="w-3.5 h-3.5" /> Agregar
-                </button>
-
-                <button
-                  onClick={() => setIsManagingDeudas(false)}
-                  className="px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-600 text-white shadow-sm hover:bg-blue-500 transition-all flex items-center gap-1"
-                >
-                  <Check className="w-3.5 h-3.5" /> Listo
-                </button>
-              </>
-            ) : (
-              <button
-                onClick={() => setIsManagingDeudas(true)}
-                className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-300/80 dark:border-transparent transition-all flex items-center gap-1.5"
-              >
-                <SlidersHorizontal className="w-3.5 h-3.5" /> Editar
-              </button>
-            )}
-          </div>
+          {/* Botón directo de Agregar */}
+          <button
+            onClick={openCreateDeuda}
+            className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800/40 hover:bg-blue-200 transition-all flex items-center gap-1 shadow-sm"
+          >
+            <Plus className="w-3.5 h-3.5" /> Agregar
+          </button>
         </div>
 
         <div className="divide-y divide-slate-200 dark:divide-slate-800">
@@ -409,20 +351,6 @@ export const BilleteraView: React.FC = () => {
                   >
                     <Edit2 className="w-3.5 h-3.5" />
                   </button>
-
-                  {isManagingDeudas && (
-                    <button
-                      onClick={() => {
-                        if (confirm(`¿Eliminar la deuda "${item.nombre}"?`)) {
-                          deleteDeudaItem(item.id);
-                        }
-                      }}
-                      className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-rose-100 dark:hover:bg-rose-950/50 text-slate-500 hover:text-rose-600 border border-slate-300/80 dark:border-transparent transition-colors"
-                      title="Eliminar deuda"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  )}
                 </div>
               </div>
             );

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useFinance } from '../../context/FinanceContext';
 import { useTheme } from '../../context/ThemeContext';
 import { StorageService } from '../../services/storageService';
+import { formatCurrency } from '../../services/financeCalculations';
 import {
   Settings,
   User,
@@ -13,11 +14,12 @@ import {
   CheckCircle2,
   FileSpreadsheet,
   Sun,
-  Moon
+  Moon,
+  Globe
 } from 'lucide-react';
 
 export const SettingsView: React.FC = () => {
-  const { data, setMode, updatePeople, updateDolarRate, resetToDefault } = useFinance();
+  const { data, setMode, updatePeople, resetToDefault, isFetchingRate, refreshLiveDolarRate } = useFinance();
   const { theme, setTheme } = useTheme();
   const [p1, p2] = data.people;
 
@@ -29,7 +31,6 @@ export const SettingsView: React.FC = () => {
   const [p2Name, setP2Name] = useState(p2.name);
   const [p2Income, setP2Income] = useState(p2.monthlyIncome.toString());
 
-  const [usdRate, setUsdRate] = useState((data.dolarRate || 3600).toString());
   const [savedSuccess, setSavedSuccess] = useState(false);
 
   const handleSave = (e: React.FormEvent) => {
@@ -37,14 +38,12 @@ export const SettingsView: React.FC = () => {
     const inc1 = parseFloat(p1Income) || 0;
     const rate1 = (parseFloat(p1Rate) || 0) / 100;
     const inc2 = parseFloat(p2Income) || 0;
-    const usd = parseFloat(usdRate) || 3600;
 
     setMode(mode);
     updatePeople([
       { ...p1, name: p1Name, monthlyIncome: inc1, healthPensionRate: rate1, enabled: true },
       { ...p2, name: p2Name, monthlyIncome: inc2, enabled: mode === 'shared' }
     ]);
-    updateDolarRate(usd);
 
     setSavedSuccess(true);
     setTimeout(() => setSavedSuccess(false), 3000);
@@ -236,19 +235,31 @@ export const SettingsView: React.FC = () => {
           </div>
         )}
 
-        {/* Tasa Dólar */}
-        <div className="bg-slate-50 dark:bg-slate-950/70 p-4 rounded-2xl border border-slate-300 dark:border-slate-800">
-          <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1 flex items-center gap-1.5">
-            <DollarSign className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" /> Tasa de Cambio Dólar (USD / COP)
-          </label>
-          <input
-            type="number"
-            value={usdRate}
-            onChange={e => setUsdRate(e.target.value)}
-            placeholder="3600"
-            className="w-full sm:w-64 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 font-mono"
-            required
-          />
+        {/* Tasa Dólar TRM en Vivo (Informativa y Oficial) */}
+        <div className="bg-slate-50 dark:bg-slate-950/70 p-4 rounded-2xl border border-slate-300 dark:border-slate-800 flex items-center justify-between">
+          <div>
+            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+              <Globe className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" /> Tasa de Cambio TRM en Vivo (USD / COP)
+            </label>
+            <span className="text-[11px] text-slate-500 dark:text-slate-400 block mt-0.5">
+              Actualizada automáticamente desde internet
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="font-mono font-bold text-sm text-blue-700 dark:text-blue-400">
+              COP {formatCurrency(data.dolarRate || 3600, 'COP')}
+            </span>
+            <button
+              type="button"
+              onClick={refreshLiveDolarRate}
+              disabled={isFetchingRate}
+              title="Actualizar TRM"
+              className="p-2 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-blue-600 transition-all"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isFetchingRate ? 'animate-spin text-blue-600' : ''}`} />
+            </button>
+          </div>
         </div>
 
         <button
