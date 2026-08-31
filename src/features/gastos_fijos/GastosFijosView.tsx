@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useFinance } from '../../context/FinanceContext';
-import { formatCurrency, calculateSubscriptionMonthlyCost } from '../../services/financeCalculations';
+import { formatCurrency, calculateSubscriptionMonthlyCost, convertToBase } from '../../services/financeCalculations';
 import { HousingExpense, ObligationItem, SubscriptionItem, PaymentPeriod } from '../../models/finance';
 import {
   Home,
@@ -27,6 +27,7 @@ export const GastosFijosView: React.FC = () => {
   const {
     data,
     summary,
+    baseCurrency,
     addHousingExpense,
     updateHousingExpense,
     deleteHousingExpense,
@@ -44,6 +45,8 @@ export const GastosFijosView: React.FC = () => {
     toggleSubscription
   } = useFinance();
 
+  const dolarRate = data.dolarRate || 3600;
+
   // Active people for dynamic proportional splits
   const activePeople = (data.people || []).filter(p => p.enabled);
   const totalCombinedIncome = activePeople.reduce((sum, p) => sum + (p.monthlyIncome || 0), 0);
@@ -58,8 +61,8 @@ export const GastosFijosView: React.FC = () => {
   const [editingHousingObj, setEditingHousingObj] = useState<HousingExpense | null>(null);
   const [housingName, setHousingName] = useState('');
   const [housingTotal, setHousingTotal] = useState('');
+  const [housingCurrency, setHousingCurrency] = useState<'COP' | 'USD'>('COP');
   const [housingPeriod, setHousingPeriod] = useState<PaymentPeriod>('1st_fortnight');
-  const [housingIsShared, setHousingIsShared] = useState(true);
   const [showHousingCalc, setShowHousingCalc] = useState(false);
   const [housingCalcDelta, setHousingCalcDelta] = useState('');
 
@@ -69,8 +72,8 @@ export const GastosFijosView: React.FC = () => {
   const [obligationName, setObligationName] = useState('');
   const [obligationMonthlyPayment, setObligationMonthlyPayment] = useState('');
   const [obligationTotalDebt, setObligationTotalDebt] = useState('');
+  const [obligationCurrency, setObligationCurrency] = useState<'COP' | 'USD'>('COP');
   const [obligationPeriod, setObligationPeriod] = useState<PaymentPeriod>('1st_fortnight');
-  const [obligationIsShared, setObligationIsShared] = useState(true);
   const [showObligationMonthlyCalc, setShowObligationMonthlyCalc] = useState(false);
   const [obligationMonthlyCalcDelta, setObligationMonthlyCalcDelta] = useState('');
   const [showObligationDebtCalc, setShowObligationDebtCalc] = useState(false);
@@ -81,6 +84,7 @@ export const GastosFijosView: React.FC = () => {
   const [editingSubObj, setEditingSubObj] = useState<SubscriptionItem | null>(null);
   const [subName, setSubName] = useState('');
   const [subPrice, setSubPrice] = useState('');
+  const [subCurrency, setSubCurrency] = useState<'COP' | 'USD'>('COP');
   const [subBilling, setSubBilling] = useState<'monthly' | 'yearly'>('monthly');
   const [subMembers, setSubMembers] = useState('1');
   const [subPeriod, setSubPeriod] = useState<PaymentPeriod>('1st_fortnight');
@@ -108,8 +112,8 @@ export const GastosFijosView: React.FC = () => {
     setEditingHousingObj(null);
     setHousingName('');
     setHousingTotal('');
+    setHousingCurrency(baseCurrency);
     setHousingPeriod('1st_fortnight');
-    setHousingIsShared(true);
     setHousingCalcDelta('');
     setShowHousingCalc(false);
     setShowHousingModal(true);
@@ -120,8 +124,8 @@ export const GastosFijosView: React.FC = () => {
     setEditingHousingObj(h);
     setHousingName(h.name);
     setHousingTotal(h.totalAmount.toString());
+    setHousingCurrency(h.moneda || 'COP');
     setHousingPeriod(h.period);
-    setHousingIsShared(h.isShared !== false);
     setHousingCalcDelta('');
     setShowHousingCalc(false);
     setShowHousingModal(true);
@@ -137,12 +141,14 @@ export const GastosFijosView: React.FC = () => {
       updateHousingExpense(editingHousingObj.id, {
         name: housingName.trim(),
         totalAmount: total,
+        moneda: housingCurrency,
         period: housingPeriod
       });
     } else {
       addHousingExpense({
         name: housingName.trim(),
         totalAmount: total,
+        moneda: housingCurrency,
         period: housingPeriod
       });
     }
@@ -166,8 +172,8 @@ export const GastosFijosView: React.FC = () => {
     setObligationName('');
     setObligationMonthlyPayment('');
     setObligationTotalDebt('');
+    setObligationCurrency(baseCurrency);
     setObligationPeriod('1st_fortnight');
-    setObligationIsShared(true);
     setObligationMonthlyCalcDelta('');
     setShowObligationMonthlyCalc(false);
     setObligationDebtCalcDelta('');
@@ -189,8 +195,8 @@ export const GastosFijosView: React.FC = () => {
       : (ob.name.toLowerCase().includes('icetex') ? 3471648 : ob.totalAmount);
     setObligationTotalDebt(debtVal ? debtVal.toString() : '');
 
+    setObligationCurrency(ob.moneda || 'COP');
     setObligationPeriod(ob.period);
-    setObligationIsShared(ob.isShared !== false);
     setObligationMonthlyCalcDelta('');
     setShowObligationMonthlyCalc(false);
     setObligationDebtCalcDelta('');
@@ -211,6 +217,7 @@ export const GastosFijosView: React.FC = () => {
         totalAmount: monthlyVal,
         davidAmount: monthlyVal,
         totalDebtBalance: totalDebtVal > 0 ? totalDebtVal : undefined,
+        moneda: obligationCurrency,
         period: obligationPeriod
       });
     } else {
@@ -218,6 +225,7 @@ export const GastosFijosView: React.FC = () => {
         name: obligationName.trim(),
         totalAmount: monthlyVal,
         totalDebtBalance: totalDebtVal > 0 ? totalDebtVal : undefined,
+        moneda: obligationCurrency,
         period: obligationPeriod
       });
     }
@@ -240,6 +248,7 @@ export const GastosFijosView: React.FC = () => {
     setEditingSubObj(null);
     setSubName('');
     setSubPrice('');
+    setSubCurrency(baseCurrency);
     setSubBilling('monthly');
     setSubMembers('1');
     setSubPeriod('1st_fortnight');
@@ -254,6 +263,7 @@ export const GastosFijosView: React.FC = () => {
     setEditingSubObj(sub);
     setSubName(sub.name);
     setSubPrice(sub.totalPrice.toString());
+    setSubCurrency(sub.moneda || 'COP');
     setSubBilling(sub.billing);
     setSubMembers(sub.members.toString());
     setSubPeriod(sub.period || '1st_fortnight');
@@ -274,6 +284,7 @@ export const GastosFijosView: React.FC = () => {
       updateSubscription(editingSubObj.id, {
         name: subName.trim(),
         totalPrice: price,
+        moneda: subCurrency,
         billing: subBilling,
         members,
         period: subBilling === 'yearly' ? undefined : subPeriod,
@@ -283,6 +294,7 @@ export const GastosFijosView: React.FC = () => {
       addSubscription({
         name: subName.trim(),
         totalPrice: price,
+        moneda: subCurrency,
         billing: subBilling,
         members,
         period: subBilling === 'yearly' ? undefined : subPeriod,
@@ -330,6 +342,9 @@ export const GastosFijosView: React.FC = () => {
           {data.housingExpenses.map((item, idx) => {
             const isDragging = draggedHousingIdx === idx;
             const isSharedItem = item.isShared !== false;
+            const itemMoneda = item.moneda || 'COP';
+            const isDiff = itemMoneda !== baseCurrency;
+            const equivalentInBase = convertToBase(item.totalAmount, itemMoneda, baseCurrency, dolarRate);
 
             return (
               <div
@@ -363,8 +378,15 @@ export const GastosFijosView: React.FC = () => {
                   </span>
 
                   <div>
-                    <h4 className="font-bold text-slate-800 dark:text-white text-sm">{item.name}</h4>
-                    {/* Reparto proporcional limpio sin texto COP */}
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-bold text-slate-800 dark:text-white text-sm">{item.name}</h4>
+                      {isDiff && (
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300">
+                          {itemMoneda}
+                        </span>
+                      )}
+                    </div>
+                    {/* Reparto proporcional */}
                     {activePeople.length > 1 && isSharedItem && (
                       <div className="flex flex-wrap items-center gap-2 mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
                         {activePeople.map((p, pIdx) => {
@@ -376,7 +398,7 @@ export const GastosFijosView: React.FC = () => {
                               <strong className={pIdx === 0 ? 'text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-300'}>
                                 {p.name}:
                               </strong>{' '}
-                              {formatCurrency(share, 'COP')}
+                              {formatCurrency(share, itemMoneda)}
                             </span>
                           );
                         })}
@@ -387,9 +409,14 @@ export const GastosFijosView: React.FC = () => {
 
                 <div className="flex items-center gap-2">
                   <div className="text-right">
-                    <span className="font-mono font-bold text-sm text-slate-800 dark:text-white">
-                      {formatCurrency(item.totalAmount, 'COP')}
+                    <span className="font-mono font-bold text-sm text-slate-800 dark:text-white block">
+                      {formatCurrency(item.totalAmount, itemMoneda)}
                     </span>
+                    {isDiff && (
+                      <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 block">
+                        (≈ {formatCurrency(equivalentInBase, baseCurrency)})
+                      </span>
+                    )}
                   </div>
 
                   {/* Botón de toggle Compartido / Individual */}
@@ -443,6 +470,9 @@ export const GastosFijosView: React.FC = () => {
               : ob.totalAmount;
             const totalDebt = ob.totalDebtBalance || (ob.name.toLowerCase().includes('icetex') ? 3471648 : ob.totalAmount);
             const isSharedOb = ob.isShared !== false;
+            const obMoneda = ob.moneda || 'COP';
+            const isDiff = obMoneda !== baseCurrency;
+            const debtInBase = convertToBase(totalDebt, obMoneda, baseCurrency, dolarRate);
 
             return (
               <div
@@ -479,8 +509,13 @@ export const GastosFijosView: React.FC = () => {
                     {/* Nombre y al frente el valor de la cuota mensual */}
                     <div className="flex flex-wrap items-center gap-2">
                       <h4 className="font-bold text-slate-800 dark:text-white text-sm">{ob.name}</h4>
+                      {isDiff && (
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300">
+                          {obMoneda}
+                        </span>
+                      )}
                       <span className="text-xs font-bold text-slate-500 dark:text-slate-400 font-mono">
-                        ({formatCurrency(monthlyPayment, 'COP')}/mes)
+                        ({formatCurrency(monthlyPayment, obMoneda)}/mes)
                       </span>
                     </div>
 
@@ -496,7 +531,7 @@ export const GastosFijosView: React.FC = () => {
                               <strong className={pIdx === 0 ? 'text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-300'}>
                                 {p.name}:
                               </strong>{' '}
-                              {formatCurrency(share, 'COP')}
+                              {formatCurrency(share, obMoneda)}
                             </span>
                           );
                         })}
@@ -508,9 +543,14 @@ export const GastosFijosView: React.FC = () => {
                 {/* Total de la deuda a la derecha */}
                 <div className="flex items-center gap-2">
                   <div className="text-right">
-                    <span className="font-mono font-bold text-sm text-slate-800 dark:text-white">
-                      {formatCurrency(totalDebt, 'COP')}
+                    <span className="font-mono font-bold text-sm text-slate-800 dark:text-white block">
+                      {formatCurrency(totalDebt, obMoneda)}
                     </span>
+                    {isDiff && (
+                      <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 block">
+                        (≈ {formatCurrency(debtInBase, baseCurrency)})
+                      </span>
+                    )}
                   </div>
 
                   {/* Botón de toggle Compartido / Individual */}
@@ -559,7 +599,7 @@ export const GastosFijosView: React.FC = () => {
             </button>
 
             <span className="text-xs text-slate-500 dark:text-slate-400">
-              Total: <strong className="text-blue-600 dark:text-blue-400 font-mono font-bold">{formatCurrency(summary.suscripciones.totalMonthly, 'COP')}</strong>
+              Total: <strong className="text-blue-600 dark:text-blue-400 font-mono font-bold">{formatCurrency(summary.suscripciones.totalMonthly, baseCurrency)}</strong>
             </span>
           </div>
         </div>
@@ -569,6 +609,9 @@ export const GastosFijosView: React.FC = () => {
             const monthlyCost = calculateSubscriptionMonthlyCost(sub);
             const isDragging = draggedSubIdx === idx;
             const isYearly = sub.billing === 'yearly';
+            const subMoneda = sub.moneda || 'COP';
+            const isDiff = subMoneda !== baseCurrency;
+            const costInBase = convertToBase(monthlyCost, subMoneda, baseCurrency, dolarRate);
 
             return (
               <div
@@ -618,7 +661,14 @@ export const GastosFijosView: React.FC = () => {
                   )}
 
                   <div>
-                    <h4 className="font-bold text-slate-800 dark:text-white text-sm">{sub.name}</h4>
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-bold text-slate-800 dark:text-white text-sm">{sub.name}</h4>
+                      {isDiff && (
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300">
+                          {subMoneda}
+                        </span>
+                      )}
+                    </div>
                     <span className="text-[11px] text-slate-500 dark:text-slate-400">
                       {isYearly ? 'Anual' : 'Mensual'}
                       {sub.members > 1 && ` • ${sub.members} personas`}
@@ -628,9 +678,14 @@ export const GastosFijosView: React.FC = () => {
 
                 <div className="flex items-center gap-2">
                   <div className="text-right">
-                    <span className="font-mono font-bold text-sm text-slate-800 dark:text-white">
-                      {formatCurrency(monthlyCost, 'COP')}
+                    <span className="font-mono font-bold text-sm text-slate-800 dark:text-white block">
+                      {formatCurrency(monthlyCost, subMoneda)}
                     </span>
+                    {isDiff && (
+                      <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 block">
+                        (≈ {formatCurrency(costInBase, baseCurrency)})
+                      </span>
+                    )}
                   </div>
 
                   <button
@@ -674,6 +729,19 @@ export const GastosFijosView: React.FC = () => {
                   className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
                   required
                 />
+              </div>
+
+              {/* Selector de Moneda */}
+              <div>
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">Moneda</label>
+                <select
+                  value={housingCurrency}
+                  onChange={e => setHousingCurrency(e.target.value as 'COP' | 'USD')}
+                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
+                >
+                  <option value="COP">Pesos ($)</option>
+                  <option value="USD">Dólares ($)</option>
+                </select>
               </div>
 
               {/* Valor Total con Calculadora */}
@@ -842,6 +910,19 @@ export const GastosFijosView: React.FC = () => {
                   className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
                   required
                 />
+              </div>
+
+              {/* Selector de Moneda */}
+              <div>
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">Moneda</label>
+                <select
+                  value={obligationCurrency}
+                  onChange={e => setObligationCurrency(e.target.value as 'COP' | 'USD')}
+                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
+                >
+                  <option value="COP">Pesos ($)</option>
+                  <option value="USD">Dólares ($)</option>
+                </select>
               </div>
 
               {/* Cuota Mensual con Calculadora */}
@@ -1101,6 +1182,19 @@ export const GastosFijosView: React.FC = () => {
                   className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
                   required
                 />
+              </div>
+
+              {/* Selector de Moneda */}
+              <div>
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">Moneda</label>
+                <select
+                  value={subCurrency}
+                  onChange={e => setSubCurrency(e.target.value as 'COP' | 'USD')}
+                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
+                >
+                  <option value="COP">Pesos ($)</option>
+                  <option value="USD">Dólares ($)</option>
+                </select>
               </div>
 
               {/* Precio con Calculadora */}

@@ -5,7 +5,7 @@ import { formatCurrency } from '../../services/financeCalculations';
 import { TrendingUp, Sun, Moon, RefreshCw, Globe } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
-  const { data, isFetchingRate, refreshLiveDolarRate } = useFinance();
+  const { data, baseCurrency, setBaseCurrency, isFetchingRate, refreshLiveDolarRate } = useFinance();
   const { theme, toggleTheme } = useTheme();
 
   return (
@@ -23,20 +23,35 @@ export const Navbar: React.FC = () => {
           </div>
         </div>
 
-        {/* Action Controls: Theme Toggle & Dólar TRM en Vivo (Solo Lectura con actualización automática/manual) */}
+        {/* Action Controls: Base Currency, TRM en Vivo, Theme Toggle */}
         <div className="flex items-center gap-2">
-          {/* Theme Toggle Button */}
-          <button
-            onClick={toggleTheme}
-            title={theme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
-            className="p-2 rounded-2xl bg-slate-100 dark:bg-slate-800/80 border border-slate-300/80 dark:border-slate-700/60 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-all shadow-sm"
-          >
-            {theme === 'dark' ? (
-              <Sun className="w-4 h-4 text-amber-300" />
-            ) : (
-              <Moon className="w-4 h-4 text-blue-500" />
-            )}
-          </button>
+          {/* Selector de Moneda Base */}
+          <div className="flex items-center bg-slate-100 dark:bg-slate-800/90 rounded-2xl border border-slate-300/80 dark:border-slate-700/60 p-0.5 shadow-sm">
+            <button
+              type="button"
+              onClick={() => setBaseCurrency('COP')}
+              title="Establecer COP como moneda base"
+              className={`px-2.5 py-1 rounded-xl text-xs font-bold transition-all ${
+                baseCurrency === 'COP'
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              COP
+            </button>
+            <button
+              type="button"
+              onClick={() => setBaseCurrency('USD')}
+              title="Establecer USD como moneda base"
+              className={`px-2.5 py-1 rounded-xl text-xs font-bold transition-all ${
+                baseCurrency === 'USD'
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              USD
+            </button>
+          </div>
 
           {/* Dólar TRM en Vivo (No editable) con botón de refresco */}
           <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800/90 rounded-2xl border border-slate-300/80 dark:border-slate-700/60 px-3 py-1.5 shadow-sm">
@@ -55,6 +70,19 @@ export const Navbar: React.FC = () => {
               <RefreshCw className={`w-3.5 h-3.5 ${isFetchingRate ? 'animate-spin text-blue-600' : ''}`} />
             </button>
           </div>
+
+          {/* Theme Toggle Button */}
+          <button
+            onClick={toggleTheme}
+            title={theme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+            className="p-2 rounded-2xl bg-slate-100 dark:bg-slate-800/80 border border-slate-300/80 dark:border-slate-700/60 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-all shadow-sm"
+          >
+            {theme === 'dark' ? (
+              <Sun className="w-4 h-4 text-amber-300" />
+            ) : (
+              <Moon className="w-4 h-4 text-blue-500" />
+            )}
+          </button>
         </div>
       </div>
     </header>

@@ -339,6 +339,36 @@ export function calculateAllFinances(data: AppFinanceData): CalculatedSummary {
   };
 }
 
+export function convertToBase(
+  amount: number,
+  itemCurrency: 'COP' | 'USD' = 'COP',
+  baseCurrency: 'COP' | 'USD' = 'COP',
+  dolarRate: number = 3600
+): number {
+  if (itemCurrency === baseCurrency) return amount;
+  if (itemCurrency === 'USD' && baseCurrency === 'COP') return amount * dolarRate;
+  if (itemCurrency === 'COP' && baseCurrency === 'USD') return dolarRate > 0 ? amount / dolarRate : 0;
+  return amount;
+}
+
+export function formatWithEquivalence(
+  amount: number,
+  itemCurrency: 'COP' | 'USD' = 'COP',
+  baseCurrency: 'COP' | 'USD' = 'COP',
+  dolarRate: number = 3600
+) {
+  const isDifferent = itemCurrency !== baseCurrency;
+  const equivalent = convertToBase(amount, itemCurrency, baseCurrency, dolarRate);
+  return {
+    isDifferent,
+    itemCurrency,
+    baseCurrency,
+    equivalentAmount: equivalent,
+    formattedOriginal: formatCurrency(amount, itemCurrency),
+    formattedEquivalent: formatCurrency(equivalent, baseCurrency)
+  };
+}
+
 export function formatCurrency(amount: number, currency: 'COP' | 'USD' = 'COP'): string {
   if (currency === 'USD') {
     return `$${amount.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;

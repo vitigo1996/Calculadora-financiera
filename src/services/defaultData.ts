@@ -2,6 +2,7 @@ import { AppFinanceData } from '../models/finance';
 
 export const initialFinanceData: AppFinanceData = {
   mode: 'shared',
+  baseCurrency: 'COP',
   expenseSplitMethod: 'proportional',
   people: [
     {

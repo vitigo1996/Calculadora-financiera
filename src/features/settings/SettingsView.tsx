@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useFinance } from '../../context/FinanceContext';
 import { StorageService } from '../../services/storageService';
-import { formatCurrency } from '../../services/financeCalculations';
+import { formatCurrency, convertToBase } from '../../services/financeCalculations';
 import { PersonProfile, ExpenseSplitMethod } from '../../models/finance';
 import {
   Settings as SettingsIcon,
@@ -16,7 +16,8 @@ import {
 } from 'lucide-react';
 
 export const SettingsView: React.FC = () => {
-  const { data, updatePeople, updateExpenseSplitMethod, resetToDefault } = useFinance();
+  const { data, baseCurrency, updatePeople, updateExpenseSplitMethod, resetToDefault } = useFinance();
+  const dolarRate = data.dolarRate || 3600;
 
   // Number of contributors dropdown: 1 to 4 max
   const [personCount, setPersonCount] = useState<number>(Math.min(4, Math.max(1, data.people?.length || 2)));
@@ -27,8 +28,8 @@ export const SettingsView: React.FC = () => {
       return data.people.slice(0, 4);
     }
     return [
-      { id: 'p-1', name: 'Yo', monthlyIncome: 4400000, healthPensionRate: 0.08, enabled: true },
-      { id: 'p-2', name: 'Persona 2', monthlyIncome: 8500000, healthPensionRate: 0.0, enabled: true }
+      { id: 'p-1', name: 'Yo', monthlyIncome: 4400000, healthPensionRate: 0.08, enabled: true, moneda: 'COP' },
+      { id: 'p-2', name: 'Persona 2', monthlyIncome: 8500000, healthPensionRate: 0.0, enabled: true, moneda: 'COP' }
     ];
   });
 
@@ -50,7 +51,8 @@ export const SettingsView: React.FC = () => {
             name: `Persona ${i + 1}`,
             monthlyIncome: 0,
             healthPensionRate: 0.0,
-            enabled: true
+            enabled: true,
+            moneda: baseCurrency
           });
         }
       } else if (validCount < updated.length) {
@@ -69,24 +71,29 @@ export const SettingsView: React.FC = () => {
     });
   };
 
-  // Calculate real-time total income
-  const totalCombinedIncome = localPeople.reduce((sum, p) => sum + (p.monthlyIncome || 0), 0);
+  // Calculate real-time total income converted to base currency
+  const totalCombinedIncome = localPeople.reduce((sum, p) => {
+    const pInBase = convertToBase(p.monthlyIncome || 0, p.moneda || 'COP', baseCurrency, dolarRate);
+    return sum + pInBase;
+  }, 0);
 
   // Calculate real-time percentage according to selected split method
   const getPersonRatio = (person: PersonProfile) => {
     if (localPeople.length <= 1) return 100;
+    const pIncomeInBase = convertToBase(person.monthlyIncome || 0, person.moneda || 'COP', baseCurrency, dolarRate);
+
     if (splitMethod === 'equal') {
       return 100 / localPeople.length;
     }
     if (splitMethod === 'equal_remaining') {
       const avg = totalCombinedIncome / localPeople.length;
       const ratio = totalCombinedIncome > 0
-        ? Math.max(0, Math.min(1, 0.5 + (person.monthlyIncome - avg) / (totalCombinedIncome || 1))) * 100
+        ? Math.max(0, Math.min(1, 0.5 + (pIncomeInBase - avg) / (totalCombinedIncome || 1))) * 100
         : 100 / localPeople.length;
       return ratio;
     }
     // 'proportional' (default)
-    return totalCombinedIncome > 0 ? (person.monthlyIncome / totalCombinedIncome) * 100 : 0;
+    return totalCombinedIncome > 0 ? (pIncomeInBase / totalCombinedIncome) * 100 : 0;
   };
 
   // Save changes
@@ -132,18 +139,19 @@ export const SettingsView: React.FC = () => {
           </select>
         </div>
 
-        {/* 2. Lista de Personas: Solo Nombre, Ingreso y Porcentaje */}
+        {/* 2. Lista de Personas: Nombre, Moneda, Ingreso y Porcentaje */}
         <div className="space-y-3">
           {localPeople.map((person, idx) => {
             const ratio = getPersonRatio(person);
             const defaultName = idx === 0 ? 'Yo' : `Persona ${idx + 1}`;
+            const pMoneda = person.moneda || 'COP';
 
             return (
               <div
                 key={person.id || idx}
                 className="bg-slate-50 dark:bg-slate-950/70 p-4 rounded-2xl border border-slate-300 dark:border-slate-800 space-y-3"
               >
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
                   {/* Nombre */}
                   <div>
                     <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 block mb-1">
@@ -157,6 +165,21 @@ export const SettingsView: React.FC = () => {
                       className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
                       required
                     />
+                  </div>
+
+                  {/* Moneda */}
+                  <div>
+                    <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 block mb-1">
+                      Moneda
+                    </label>
+                    <select
+                      value={pMoneda}
+                      onChange={e => updatePersonField(idx, 'moneda', e.target.value as 'COP' | 'USD')}
+                      className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
+                    >
+                      <option value="COP">Pesos ($)</option>
+                      <option value="USD">Dólares ($)</option>
+                    </select>
                   </div>
 
                   {/* Ingreso Mensual */}
@@ -198,7 +221,7 @@ export const SettingsView: React.FC = () => {
               Ingreso Total
             </span>
             <span className="font-mono font-black text-lg text-blue-700 dark:text-blue-400">
-              {formatCurrency(totalCombinedIncome, 'COP')}
+              {formatCurrency(totalCombinedIncome, baseCurrency)}
             </span>
           </div>
 
@@ -213,55 +236,46 @@ export const SettingsView: React.FC = () => {
               className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
             >
               <option value="proportional">Proporcional a Ingresos (% según gana cada uno)</option>
-              <option value="equal">Partes Iguales (50/50 o en partes iguales)</option>
-              <option value="equal_remaining">Remanente Igual (Mismo dinero libre restante)</option>
+              <option value="equal">50 / 50 Equitativo (Partes iguales)</option>
+              <option value="equal_remaining">Excedente Libre Equitativo (Mismo dinero libre al final)</option>
             </select>
           </div>
         </div>
 
+        {/* Botón Guardar Cambios */}
         <button
           type="submit"
-          className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs py-3 rounded-2xl shadow-sm transition-all flex items-center justify-center gap-2"
+          className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm py-3.5 rounded-2xl shadow-sm transition-all flex items-center justify-center gap-2"
         >
           <Save className="w-4 h-4" /> Guardar Ajustes
         </button>
       </form>
 
-      {/* Exportar / Restablecer */}
+      {/* Zona de Mantenimiento / Backup */}
       <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-300 dark:border-slate-800 shadow-sm space-y-4 transition-colors">
-        <h3 className="font-bold text-slate-800 dark:text-white text-sm flex items-center gap-2">
-          <Download className="w-4 h-4 text-blue-600 dark:text-blue-400" /> Exportar Datos & Copias de Seguridad
+        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 flex items-center gap-1.5">
+          <FileSpreadsheet className="w-4 h-4 text-blue-600 dark:text-blue-400" /> Exportación & Mantenimiento
         </h3>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <button
-            onClick={() => StorageService.exportExcel(data)}
-            className="bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/50 border border-blue-200 dark:border-blue-500/30 text-blue-800 dark:text-blue-300 p-4 rounded-2xl flex items-center gap-3 transition-colors text-left"
+            onClick={() => StorageService.exportJSON(data)}
+            className="w-full py-3 px-4 rounded-2xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold transition-colors flex items-center justify-center gap-2"
           >
-            <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 flex items-center justify-center">
-              <FileSpreadsheet className="w-5 h-5" />
-            </div>
-            <div>
-              <span className="font-bold text-xs block text-slate-800 dark:text-white">Descargar en Excel (.xlsx)</span>
-              <span className="text-[11px] text-slate-500 dark:text-slate-400">Exporta las tablas actuales</span>
-            </div>
+            <Download className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+            Descargar Copia de Seguridad (.json)
           </button>
 
           <button
             onClick={() => {
-              if (confirm('¿Deseas restaurar todos los datos iniciales?')) {
+              if (confirm('¿Restablecer todos los datos a la configuración inicial por defecto?')) {
                 resetToDefault();
               }
             }}
-            className="bg-slate-50 dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-850 border border-slate-300 dark:border-slate-800 text-slate-700 dark:text-slate-300 p-4 rounded-2xl flex items-center gap-3 transition-colors text-left"
+            className="w-full py-3 px-4 rounded-2xl border border-rose-200 dark:border-rose-900/40 bg-rose-50/50 dark:bg-rose-950/20 hover:bg-rose-100 dark:hover:bg-rose-950/40 text-rose-600 dark:text-rose-400 text-xs font-bold transition-colors flex items-center justify-center gap-2"
           >
-            <div className="w-10 h-10 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 flex items-center justify-center">
-              <RefreshCw className="w-5 h-5" />
-            </div>
-            <div>
-              <span className="font-bold text-xs block text-slate-800 dark:text-white">Restablecer Datos</span>
-              <span className="text-[11px] text-slate-500 dark:text-slate-400">Valores iniciales predeterminados</span>
-            </div>
+            <RefreshCw className="w-4 h-4" />
+            Restablecer Valores de Fábrica
           </button>
         </div>
       </div>

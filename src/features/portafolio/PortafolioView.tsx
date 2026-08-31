@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { useFinance } from '../../context/FinanceContext';
-import { formatCurrency } from '../../services/financeCalculations';
+import { formatCurrency, convertToBase } from '../../services/financeCalculations';
 import { PortfolioAccountItem } from '../../models/finance';
 import { getIconComponent, IconPicker } from '../../components/ui/IconPicker';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import {
-  PieChart as PieChartIcon,
+  TrendingUp as PieChartIcon,
   Edit2,
   Plus,
   Minus,
@@ -32,6 +32,7 @@ export const PortafolioView: React.FC = () => {
   const {
     data,
     summary,
+    baseCurrency,
     addPortfolioItem,
     updatePortfolioItem,
     deletePortfolioItem,
@@ -213,8 +214,9 @@ export const PortafolioView: React.FC = () => {
         <div className="divide-y divide-slate-200 dark:divide-slate-800">
           {(data.portfolioItems || []).map((item, idx) => {
             const Icon = getIconComponent(item.icon || 'trending_up');
-            const isUSD = item.moneda === 'USD';
-            const equivalentCOP = isUSD ? item.saldo * dolarRate : null;
+            const itemMoneda = item.moneda || 'COP';
+            const isDiff = itemMoneda !== baseCurrency;
+            const equivalentInBase = convertToBase(item.saldo, itemMoneda, baseCurrency, dolarRate);
             const isDragging = draggedIndex === idx;
 
             return (
@@ -241,9 +243,9 @@ export const PortafolioView: React.FC = () => {
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
                       <h4 className="font-bold text-slate-800 dark:text-white text-sm">{item.nombre}</h4>
-                      {isUSD && equivalentCOP !== null && (
-                        <span className="text-xs font-mono text-slate-500 dark:text-slate-400">
-                          {formatCurrency(equivalentCOP, 'COP')}
+                      {isDiff && (
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300">
+                          {itemMoneda}
                         </span>
                       )}
                     </div>
@@ -251,10 +253,15 @@ export const PortafolioView: React.FC = () => {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <div className="text-right flex items-center gap-1.5">
-                    <span className="font-mono font-bold text-sm text-slate-800 dark:text-white">
-                      {formatCurrency(item.saldo, item.moneda)}
+                  <div className="text-right">
+                    <span className="font-mono font-bold text-sm text-slate-800 dark:text-white block">
+                      {formatCurrency(item.saldo, itemMoneda)}
                     </span>
+                    {isDiff && (
+                      <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 block">
+                        (≈ {formatCurrency(equivalentInBase, baseCurrency)})
+                      </span>
+                    )}
                   </div>
 
                   <button

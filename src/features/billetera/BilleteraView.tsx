@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useFinance } from '../../context/FinanceContext';
-import { formatCurrency } from '../../services/financeCalculations';
+import { formatCurrency, convertToBase } from '../../services/financeCalculations';
 import { BilleteraAccountItem, DeudaItem } from '../../models/finance';
 import { getIconComponent, IconPicker } from '../../components/ui/IconPicker';
 import {
@@ -19,6 +19,7 @@ import {
 export const BilleteraView: React.FC = () => {
   const {
     data,
+    baseCurrency,
     addBilleteraItem,
     updateBilleteraItem,
     deleteBilleteraItem,
@@ -277,8 +278,9 @@ export const BilleteraView: React.FC = () => {
         <div className="divide-y divide-slate-200 dark:divide-slate-800">
           {data.billeteraItems.map((item, idx) => {
             const Icon = getIconComponent(item.icon);
-            const isUSD = item.moneda === 'USD';
-            const equivalentCOP = isUSD ? item.saldo * dolarRate : null;
+            const itemMoneda = item.moneda || 'COP';
+            const isDiff = itemMoneda !== baseCurrency;
+            const equivalentInBase = convertToBase(item.saldo, itemMoneda, baseCurrency, dolarRate);
             const isDragging = draggedBilleteraIdx === idx;
 
             return (
@@ -314,9 +316,9 @@ export const BilleteraView: React.FC = () => {
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
                       <h4 className="font-bold text-slate-800 dark:text-white text-sm">{item.nombre}</h4>
-                      {isUSD && equivalentCOP !== null && (
-                        <span className="text-xs font-mono text-slate-500 dark:text-slate-400">
-                          {formatCurrency(equivalentCOP, 'COP')}
+                      {isDiff && (
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300">
+                          {itemMoneda}
                         </span>
                       )}
                     </div>
@@ -325,9 +327,14 @@ export const BilleteraView: React.FC = () => {
 
                 <div className="flex items-center gap-2">
                   <div className="text-right">
-                    <span className="font-mono font-bold text-sm text-slate-800 dark:text-white">
-                      {formatCurrency(item.saldo, item.moneda)}
+                    <span className="font-mono font-bold text-sm text-slate-800 dark:text-white block">
+                      {formatCurrency(item.saldo, itemMoneda)}
                     </span>
+                    {isDiff && (
+                      <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 block">
+                        (≈ {formatCurrency(equivalentInBase, baseCurrency)})
+                      </span>
+                    )}
                   </div>
 
                   <button
@@ -363,7 +370,9 @@ export const BilleteraView: React.FC = () => {
             const Icon = getIconComponent(item.icon || 'shield_alert');
             const hasAmount = item.monto !== undefined && item.monto > 0;
             const isPorCobrar = item.tipo === 'por_cobrar';
-            const moneda = item.moneda || 'COP';
+            const itemMoneda = item.moneda || 'COP';
+            const isDiff = itemMoneda !== baseCurrency;
+            const equivalentInBase = item.monto ? convertToBase(item.monto, itemMoneda, baseCurrency, dolarRate) : 0;
             const isDragging = draggedDeudaIdx === idx;
 
             return (
@@ -400,6 +409,12 @@ export const BilleteraView: React.FC = () => {
                     <div className="flex items-center gap-2">
                       <h4 className="font-bold text-slate-800 dark:text-white text-sm">{item.nombre}</h4>
 
+                      {isDiff && hasAmount && (
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300">
+                          {itemMoneda}
+                        </span>
+                      )}
+
                       {isPorCobrar ? (
                         <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50">
                           <ArrowDownLeft className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
@@ -418,9 +433,14 @@ export const BilleteraView: React.FC = () => {
                 <div className="flex items-center gap-2">
                   {hasAmount ? (
                     <div className="text-right">
-                      <span className="font-mono font-bold text-sm text-slate-800 dark:text-white">
-                        {formatCurrency(item.monto || 0, moneda)}
+                      <span className="font-mono font-bold text-sm text-slate-800 dark:text-white block">
+                        {formatCurrency(item.monto || 0, itemMoneda)}
                       </span>
+                      {isDiff && (
+                        <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 block">
+                          (≈ {formatCurrency(equivalentInBase, baseCurrency)})
+                        </span>
+                      )}
                     </div>
                   ) : null}
 

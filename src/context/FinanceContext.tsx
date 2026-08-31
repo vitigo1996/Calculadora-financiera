@@ -19,7 +19,9 @@ import { calculateAllFinances, CalculatedSummary, calculateCardPurchasesTotal } 
 interface FinanceContextType {
   data: AppFinanceData;
   summary: CalculatedSummary;
+  baseCurrency: 'COP' | 'USD';
   isFetchingRate: boolean;
+  setBaseCurrency: (currency: 'COP' | 'USD') => void;
   refreshLiveDolarRate: () => Promise<boolean>;
   setMode: (mode: 'single' | 'shared') => void;
   updatePeople: (people: PersonProfile[]) => void;
@@ -37,26 +39,26 @@ interface FinanceContextType {
   updatePortfolioItem: (id: string, updated: Partial<PortfolioAccountItem>) => void;
   deletePortfolioItem: (id: string) => void;
   movePortfolioItem: (index: number, direction: 'up' | 'down') => void;
-  addCreditCard: (card: { name: string; period: PaymentPeriod; creditLimit: number; minPaymentOverride?: number }) => void;
+  addCreditCard: (card: { name: string; period: PaymentPeriod; creditLimit: number; moneda?: 'COP' | 'USD'; minPaymentOverride?: number }) => void;
   updateCreditCard: (id: string, updated: Partial<CreditCardItem>) => void;
   deleteCreditCard: (id: string) => void;
   moveCreditCard: (index: number, direction: 'up' | 'down') => void;
   performCardCutoff: (cardId: string) => void;
   payCardCutoff: (cardId: string) => void;
   cancelCardCutoff: (cardId: string) => void;
-  addCardPurchase: (cardId: string, purchase: { concept: string; amount: number }) => void;
+  addCardPurchase: (cardId: string, purchase: { concept: string; amount: number; moneda?: 'COP' | 'USD' }) => void;
   deleteCardPurchase: (cardId: string, purchaseId: string) => void;
-  addHousingExpense: (item: { name: string; period: PaymentPeriod; totalAmount: number; isShared?: boolean; icon?: string }) => void;
+  addHousingExpense: (item: { name: string; period: PaymentPeriod; totalAmount: number; moneda?: 'COP' | 'USD'; isShared?: boolean; icon?: string }) => void;
   updateHousingExpense: (id: string, updated: Partial<HousingExpense>) => void;
   deleteHousingExpense: (id: string) => void;
   moveHousingExpense: (index: number, direction: 'up' | 'down') => void;
   toggleHousingShared: (id: string) => void;
-  addObligation: (item: { name: string; period: PaymentPeriod; totalAmount: number; totalDebtBalance?: number; isShared?: boolean; icon?: string }) => void;
+  addObligation: (item: { name: string; period: PaymentPeriod; totalAmount: number; totalDebtBalance?: number; moneda?: 'COP' | 'USD'; isShared?: boolean; icon?: string }) => void;
   updateObligation: (id: string, updated: Partial<ObligationItem>) => void;
   deleteObligation: (id: string) => void;
   moveObligation: (index: number, direction: 'up' | 'down') => void;
   toggleObligationShared: (id: string) => void;
-  addSubscription: (item: { name: string; totalPrice: number; members: number; billing: 'monthly' | 'yearly'; period?: PaymentPeriod; billingMonth?: string; icon?: string }) => void;
+  addSubscription: (item: { name: string; totalPrice: number; members: number; billing: 'monthly' | 'yearly'; period?: PaymentPeriod; billingMonth?: string; moneda?: 'COP' | 'USD'; icon?: string }) => void;
   updateSubscription: (id: string, updated: Partial<SubscriptionItem>) => void;
   deleteSubscription: (id: string) => void;
   moveSubscription: (index: number, direction: 'up' | 'down') => void;
@@ -70,6 +72,15 @@ const FinanceContext = createContext<FinanceContextType | undefined>(undefined);
 export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [data, setData] = useState<AppFinanceData>(() => StorageService.loadData());
   const [isFetchingRate, setIsFetchingRate] = useState(false);
+
+  const baseCurrency: 'COP' | 'USD' = data.baseCurrency || 'COP';
+
+  const setBaseCurrency = (currency: 'COP' | 'USD') => {
+    setData(prev => ({
+      ...prev,
+      baseCurrency: currency
+    }));
+  };
 
   // Auto-fetch live dollar on load if internet is available
   const refreshLiveDolarRate = useCallback(async () => {
@@ -239,12 +250,13 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     });
   };
 
-  const addCreditCard = (card: { name: string; period: PaymentPeriod; creditLimit: number; minPaymentOverride?: number }) => {
+  const addCreditCard = (card: { name: string; period: PaymentPeriod; creditLimit: number; moneda?: 'COP' | 'USD'; minPaymentOverride?: number }) => {
     const newCard: CreditCardItem = {
       id: `cc-${Date.now()}`,
       name: card.name,
       period: card.period,
       creditLimit: card.creditLimit,
+      moneda: card.moneda || 'COP',
       minPaymentOverride: card.minPaymentOverride,
       purchases: []
     };
@@ -339,13 +351,14 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   // Add Card Purchase (inserted at TOP)
-  const addCardPurchase = (cardId: string, purchase: { concept: string; amount: number }) => {
+  const addCardPurchase = (cardId: string, purchase: { concept: string; amount: number; moneda?: 'COP' | 'USD' }) => {
     const targetCard = data.creditCards.find(c => c.id === cardId);
     const hasActiveCutoff = targetCard?.billingCutoffAmount !== undefined;
 
     const newP = {
       id: `p-${Date.now()}`,
       ...purchase,
+      moneda: purchase.moneda || targetCard?.moneda || 'COP',
       date: new Date().toLocaleDateString('es-CO', { day: '2-digit', month: 'short' }),
       isAfterCutoff: hasActiveCutoff
     };
@@ -368,10 +381,11 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   // Housing CRUD
-  const addHousingExpense = (item: { name: string; period: PaymentPeriod; totalAmount: number; isShared?: boolean; icon?: string }) => {
+  const addHousingExpense = (item: { name: string; period: PaymentPeriod; totalAmount: number; moneda?: 'COP' | 'USD'; isShared?: boolean; icon?: string }) => {
     const newH: HousingExpense = {
       id: `house-${Date.now()}`,
       isShared: item.isShared !== undefined ? item.isShared : true,
+      moneda: item.moneda || 'COP',
       ...item
     };
     setData(prev => ({
@@ -416,10 +430,11 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   // Obligations CRUD
-  const addObligation = (item: { name: string; period: PaymentPeriod; totalAmount: number; totalDebtBalance?: number; isShared?: boolean; icon?: string }) => {
+  const addObligation = (item: { name: string; period: PaymentPeriod; totalAmount: number; totalDebtBalance?: number; moneda?: 'COP' | 'USD'; isShared?: boolean; icon?: string }) => {
     const newOb: ObligationItem = {
       id: `ob-${Date.now()}`,
       isShared: item.isShared !== undefined ? item.isShared : true,
+      moneda: item.moneda || 'COP',
       ...item
     };
     setData(prev => ({
@@ -464,12 +479,13 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   // Subscriptions CRUD
-  const addSubscription = (item: { name: string; totalPrice: number; members: number; billing: 'monthly' | 'yearly'; period?: PaymentPeriod; billingMonth?: string; icon?: string }) => {
+  const addSubscription = (item: { name: string; totalPrice: number; members: number; billing: 'monthly' | 'yearly'; period?: PaymentPeriod; billingMonth?: string; moneda?: 'COP' | 'USD'; icon?: string }) => {
     const newSub: SubscriptionItem = {
       id: `sub-${Date.now()}`,
       active: true,
       period: item.period || '1st_fortnight',
       billingMonth: item.billingMonth,
+      moneda: item.moneda || 'COP',
       ...item
     };
     setData(prev => ({
@@ -525,7 +541,9 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       value={{
         data,
         summary,
+        baseCurrency,
         isFetchingRate,
+        setBaseCurrency,
         refreshLiveDolarRate,
         setMode,
         updatePeople,

@@ -8,6 +8,7 @@ export interface PersonProfile {
   monthlyIncome: number;
   healthPensionRate: number;
   enabled: boolean;
+  moneda?: 'COP' | 'USD';
 }
 
 export interface BilleteraAccountItem {
@@ -42,6 +43,7 @@ export interface HousingExpense {
   referenceCode?: string;
   period: PaymentPeriod;
   totalAmount: number;
+  moneda?: 'COP' | 'USD';
   isShared?: boolean;
   icon?: string;
 }
@@ -54,6 +56,7 @@ export interface ObligationItem {
   davidAmount?: number;
   danielaAmount?: number;
   totalDebtBalance?: number;
+  moneda?: 'COP' | 'USD';
   isShared?: boolean;
   icon?: string;
 }
@@ -62,6 +65,7 @@ export interface CreditCardPurchase {
   id: string;
   concept: string;
   amount: number;
+  moneda?: 'COP' | 'USD';
   date?: string;
   isAfterCutoff?: boolean;
 }
@@ -71,6 +75,7 @@ export interface CreditCardItem {
   name: string;
   period: PaymentPeriod;
   creditLimit: number;
+  moneda?: 'COP' | 'USD';
   minPaymentOverride?: number;
   billingCutoffAmount?: number; // Saldo congelado al hacer corte
   billingCutoffDate?: string;
@@ -85,12 +90,14 @@ export interface SubscriptionItem {
   billing: 'monthly' | 'yearly';
   period?: PaymentPeriod;
   billingMonth?: string;
+  moneda?: 'COP' | 'USD';
   active: boolean;
   icon?: string;
 }
 
 export interface AppFinanceData {
   mode: 'single' | 'shared';
+  baseCurrency?: 'COP' | 'USD';
   expenseSplitMethod?: ExpenseSplitMethod;
   people: PersonProfile[];
   dolarRate: number; // Tasa USD/COP
