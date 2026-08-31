@@ -95,6 +95,19 @@ export interface SubscriptionItem {
   icon?: string;
 }
 
+export interface ExpenseMovement {
+  id: string;
+  name: string;
+  amount: number;
+  moneda: 'COP' | 'USD';
+  sourceAccountId: string;
+  sourceAccountName: string;
+  destinationType: 'none' | 'card' | 'obligation';
+  destinationId?: string;
+  destinationName?: string;
+  date: string;
+}
+
 export interface AppFinanceData {
   mode: 'single' | 'shared';
   baseCurrency?: 'COP' | 'USD';
@@ -103,6 +116,7 @@ export interface AppFinanceData {
   dolarRate: number; // Tasa USD/COP
   dolarRateLiveUpdated?: string;
   billeteraItems: BilleteraAccountItem[];
+  expenseMovements?: ExpenseMovement[];
   deudaItems: DeudaItem[];
   portfolioItems: PortfolioAccountItem[];
   housingExpenses: HousingExpense[];

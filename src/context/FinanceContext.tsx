@@ -31,6 +31,9 @@ interface FinanceContextType {
   updateBilleteraItem: (id: string, updated: Partial<BilleteraAccountItem>) => void;
   deleteBilleteraItem: (id: string) => void;
   moveBilleteraItem: (index: number, direction: 'up' | 'down') => void;
+  addExpenseMovement: (movement: { name: string; amount: number; moneda: 'COP' | 'USD'; sourceAccountId: string; destinationType: 'none' | 'card' | 'obligation'; destinationId?: string; destinationName?: string }) => void;
+  deleteExpenseMovement: (id: string) => void;
+  clearExpenseMovements: () => void;
   addDeudaItem: (item: { nombre: string; monto?: number; moneda: 'COP' | 'USD'; tipo: 'por_cobrar' | 'por_pagar'; icon?: string }) => void;
   updateDeudaItem: (id: string, updated: Partial<DeudaItem>) => void;
   deleteDeudaItem: (id: string) => void;
@@ -174,6 +177,65 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       list[targetIndex] = temp;
       return { ...prev, billeteraItems: list };
     });
+  };
+
+  const addExpenseMovement = (movement: {
+    name: string;
+    amount: number;
+    moneda: 'COP' | 'USD';
+    sourceAccountId: string;
+    destinationType: 'none' | 'card' | 'obligation';
+    destinationId?: string;
+    destinationName?: string;
+  }) => {
+    setData(prev => {
+      const sourceAcc = (prev.billeteraItems || []).find(b => b.id === movement.sourceAccountId);
+      const sourceAccountName = sourceAcc ? sourceAcc.nombre : 'Billetera';
+
+      const newMovement = {
+        id: `mov-${Date.now()}`,
+        name: movement.name.trim(),
+        amount: movement.amount,
+        moneda: movement.moneda,
+        sourceAccountId: movement.sourceAccountId,
+        sourceAccountName,
+        destinationType: movement.destinationType,
+        destinationId: movement.destinationId,
+        destinationName: movement.destinationName,
+        date: new Date().toISOString()
+      };
+
+      // Descontar saldo de la cuenta de origen en Billetera
+      const updatedBilletera = (prev.billeteraItems || []).map(acc => {
+        if (acc.id === movement.sourceAccountId) {
+          return {
+            ...acc,
+            saldo: Math.max(0, acc.saldo - movement.amount)
+          };
+        }
+        return acc;
+      });
+
+      return {
+        ...prev,
+        billeteraItems: updatedBilletera,
+        expenseMovements: [newMovement, ...(prev.expenseMovements || [])]
+      };
+    });
+  };
+
+  const deleteExpenseMovement = (id: string) => {
+    setData(prev => ({
+      ...prev,
+      expenseMovements: (prev.expenseMovements || []).filter(m => m.id !== id)
+    }));
+  };
+
+  const clearExpenseMovements = () => {
+    setData(prev => ({
+      ...prev,
+      expenseMovements: []
+    }));
   };
 
   const addDeudaItem = (item: { nombre: string; monto?: number; moneda: 'COP' | 'USD'; tipo: 'por_cobrar' | 'por_pagar'; icon?: string }) => {
@@ -553,6 +615,9 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         updateBilleteraItem,
         deleteBilleteraItem,
         moveBilleteraItem,
+        addExpenseMovement,
+        deleteExpenseMovement,
+        clearExpenseMovements,
         addDeudaItem,
         updateDeudaItem,
         deleteDeudaItem,
