@@ -133,9 +133,9 @@ export const PresupuestoView: React.FC = () => {
               </div>
             </div>
 
-            {/* Disponible */}
+            {/* Libre */}
             <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-300 dark:border-blue-500/30 shadow-sm transition-colors">
-              <span className="text-xs font-semibold text-blue-700 dark:text-blue-400 block">Disponible</span>
+              <span className="text-xs font-semibold text-blue-700 dark:text-blue-400 block">Libre</span>
               <div className="text-2xl sm:text-3xl font-black text-slate-800 dark:text-white mt-1 font-mono">
                 {formatCurrency(pres.m11_disponible, baseCurrency)}
               </div>

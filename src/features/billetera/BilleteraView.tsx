@@ -39,6 +39,9 @@ export const BilleteraView: React.FC = () => {
 
   const dolarRate = data.dolarRate || 3600;
 
+  // Submenu: Billetera vs Registro
+  const [subView, setSubView] = useState<'billetera' | 'registro'>('billetera');
+
   // Drag and drop states
   const [draggedBilleteraIdx, setDraggedBilleteraIdx] = useState<number | null>(null);
   const [draggedDeudaIdx, setDraggedDeudaIdx] = useState<number | null>(null);
@@ -315,340 +318,377 @@ export const BilleteraView: React.FC = () => {
 
   return (
     <div className="space-y-6 pb-24 animate-fadeIn">
-      {/* Header */}
-      <div>
+      {/* Header con Título Dinámico y Selector de Sub-menú (Billetera / Registro) */}
+      <div className="flex items-center justify-between gap-3">
         <h2 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
-          <Wallet className="w-5 h-5 text-blue-600 dark:text-blue-400" /> Billetera
-        </h2>
-      </div>
-
-      {/* SECCIÓN 1: BILLETERA (Mis Cuentas) */}
-      <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
-        <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-          <h3 className="font-bold text-slate-800 dark:text-white text-sm">Mis Cuentas</h3>
-
-          {/* Botón directo de Agregar */}
-          <button
-            onClick={openCreateBilletera}
-            className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800/40 hover:bg-blue-200 transition-all flex items-center gap-1 shadow-sm"
-          >
-            <Plus className="w-3.5 h-3.5" /> Agregar
-          </button>
-        </div>
-
-        <div className="divide-y divide-slate-200 dark:divide-slate-800">
-          {data.billeteraItems.map((item, idx) => {
-            const isDragging = draggedBilleteraIdx === idx;
-            const Icon = getIconComponent(item.icon);
-            const itemMoneda = item.moneda || 'COP';
-            const isDiff = itemMoneda !== baseCurrency;
-            const equivalentInBase = convertToBase(item.saldo, itemMoneda, baseCurrency, dolarRate);
-
-            return (
-              <div
-                key={item.id}
-                draggable
-                onDragStart={e => {
-                  setDraggedBilleteraIdx(idx);
-                  e.dataTransfer.effectAllowed = 'move';
-                }}
-                onDragOver={e => {
-                  e.preventDefault();
-                  e.dataTransfer.dropEffect = 'move';
-                }}
-                onDrop={e => {
-                  e.preventDefault();
-                  handleBilleteraDrop(idx);
-                }}
-                onDragEnd={() => setDraggedBilleteraIdx(null)}
-                className={`p-4 bg-white dark:bg-slate-900 transition-all flex items-center justify-between cursor-grab active:cursor-grabbing ${
-                  isDragging ? 'opacity-40 scale-[0.99] bg-blue-50/50 dark:bg-blue-950/30' : ''
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  {/* Grip Handle */}
-                  <div className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-1 cursor-grab active:cursor-grabbing">
-                    <GripVertical className="w-4 h-4" />
-                  </div>
-
-                  <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${getItemIconStyle()}`}>
-                    <Icon className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-bold text-slate-800 dark:text-white text-sm">{item.nombre}</h4>
-                      {isDiff && (
-                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300">
-                          {itemMoneda}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <div className="text-right">
-                    <span className="font-mono font-bold text-sm text-slate-800 dark:text-white block">
-                      {formatCurrency(item.saldo, itemMoneda)}
-                    </span>
-                    {isDiff && (
-                      <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 block">
-                        (≈ {formatCurrency(equivalentInBase, baseCurrency)})
-                      </span>
-                    )}
-                  </div>
-
-                  <button
-                    onClick={() => openEditBilletera(item)}
-                    className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-300/80 dark:border-transparent transition-colors"
-                    title="Editar saldo y cuenta"
-                  >
-                    <Edit2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* SECCIÓN 2: DEUDAS Y COBROS */}
-      <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
-        <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-          <h3 className="font-bold text-slate-800 dark:text-white text-sm">Deudas y Cobros</h3>
-
-          {/* Botón directo de Agregar */}
-          <button
-            onClick={openCreateDeuda}
-            className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800/40 hover:bg-blue-200 transition-all flex items-center gap-1 shadow-sm"
-          >
-            <Plus className="w-3.5 h-3.5" /> Agregar
-          </button>
-        </div>
-
-        <div className="divide-y divide-slate-200 dark:divide-slate-800">
-          {data.deudaItems.map((item, idx) => {
-            const isDragging = draggedDeudaIdx === idx;
-            const Icon = getIconComponent(item.icon);
-            const isPorCobrar = item.tipo === 'por_cobrar';
-            const hasAmount = item.monto !== undefined && item.monto > 0;
-            const itemMoneda = item.moneda || 'COP';
-            const isDiff = itemMoneda !== baseCurrency;
-            const equivalentInBase = convertToBase(item.monto || 0, itemMoneda, baseCurrency, dolarRate);
-
-            return (
-              <div
-                key={item.id}
-                draggable
-                onDragStart={e => {
-                  setDraggedDeudaIdx(idx);
-                  e.dataTransfer.effectAllowed = 'move';
-                }}
-                onDragOver={e => {
-                  e.preventDefault();
-                  e.dataTransfer.dropEffect = 'move';
-                }}
-                onDrop={e => {
-                  e.preventDefault();
-                  handleDeudaDrop(idx);
-                }}
-                onDragEnd={() => setDraggedDeudaIdx(null)}
-                className={`p-4 bg-white dark:bg-slate-900 transition-all flex items-center justify-between cursor-grab active:cursor-grabbing ${
-                  isDragging ? 'opacity-40 scale-[0.99] bg-blue-50/50 dark:bg-blue-950/30' : ''
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  {/* Grip Handle */}
-                  <div className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-1 cursor-grab active:cursor-grabbing">
-                    <GripVertical className="w-4 h-4" />
-                  </div>
-
-                  <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${getItemIconStyle()}`}>
-                    <Icon className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-bold text-slate-800 dark:text-white text-sm">{item.nombre}</h4>
-
-                      {isDiff && hasAmount && (
-                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300">
-                          {itemMoneda}
-                        </span>
-                      )}
-
-                      {isPorCobrar ? (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50">
-                          <ArrowDownLeft className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-                          Me Deben
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800/50">
-                          <ArrowUpRight className="w-3 h-3 text-rose-600 dark:text-rose-400" />
-                          Debo
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  {hasAmount ? (
-                    <div className="text-right">
-                      <span className="font-mono font-bold text-sm text-slate-800 dark:text-white block">
-                        {formatCurrency(item.monto || 0, itemMoneda)}
-                      </span>
-                      {isDiff && (
-                        <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 block">
-                          (≈ {formatCurrency(equivalentInBase, baseCurrency)})
-                        </span>
-                      )}
-                    </div>
-                  ) : null}
-
-                  <button
-                    onClick={() => openEditDeuda(item)}
-                    className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-300/80 dark:border-transparent transition-colors"
-                    title="Editar deuda y monto"
-                  >
-                    <Edit2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* SECCIÓN 3: REGISTRO (Movimientos / Historial) */}
-      <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
-        <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between flex-wrap gap-2">
-          <h3 className="font-bold text-slate-800 dark:text-white text-sm flex items-center gap-2">
-            <History className="w-4 h-4 text-blue-600 dark:text-blue-400" /> Registro
-          </h3>
-
-          <div className="flex items-center gap-2">
-            {movements.length > 0 && (
-              <button
-                onClick={() => {
-                  if (confirm('¿Limpiar todo el historial registrado?')) {
-                    clearExpenseMovements();
-                  }
-                }}
-                className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/40 hover:bg-rose-100 transition-all flex items-center gap-1 shadow-sm"
-              >
-                <Trash2 className="w-3.5 h-3.5" /> Limpiar Historial
-              </button>
-            )}
-
-            <button
-              onClick={openCreateMovement}
-              className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800/40 hover:bg-blue-200 transition-all flex items-center gap-1 shadow-sm"
-            >
-              <Plus className="w-3.5 h-3.5" /> Registrar
-            </button>
-          </div>
-        </div>
-
-        <div className="divide-y divide-slate-200 dark:divide-slate-800">
-          {movements.length === 0 ? (
-            <div className="p-8 text-center text-slate-400 dark:text-slate-500 text-xs">
-              No hay movimientos registrados. Haz clic en <strong>Registrar</strong> para añadir uno.
-            </div>
+          {subView === 'billetera' ? (
+            <>
+              <Wallet className="w-5 h-5 text-blue-600 dark:text-blue-400" /> Billetera
+            </>
           ) : (
-            movements.map(mov => {
-              const isIncome = mov.type === 'income';
-              const movMoneda = mov.moneda || 'COP';
-              const isDiff = movMoneda !== baseCurrency;
-              const equivalentInBase = convertToBase(mov.amount, movMoneda, baseCurrency, dolarRate);
-              const formattedDate = new Date(mov.date).toLocaleDateString('es-CO', {
-                day: '2-digit',
-                month: 'short',
-                hour: '2-digit',
-                minute: '2-digit'
-              });
+            <>
+              <History className="w-5 h-5 text-blue-600 dark:text-blue-400" /> Registro
+            </>
+          )}
+        </h2>
 
-              return (
-                <div
-                  key={mov.id}
-                  className="p-4 transition-colors flex items-center justify-between"
-                >
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`w-9 h-9 rounded-2xl flex items-center justify-center shadow-sm ${
-                        isIncome
-                          ? 'bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40'
-                          : 'bg-rose-100 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/40'
-                      }`}
-                    >
-                      {isIncome ? <ArrowDownLeft className="w-4 h-4" /> : <ArrowUpRight className="w-4 h-4" />}
+        {/* Menú superior con 2 opciones: Billetera y Registro */}
+        <div className="flex bg-slate-100 dark:bg-slate-800/90 p-1 rounded-2xl border border-slate-300/80 dark:border-slate-700/60 shadow-sm">
+          <button
+            onClick={() => setSubView('billetera')}
+            className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all ${
+              subView === 'billetera'
+                ? 'bg-blue-600 text-white shadow-sm'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+            }`}
+          >
+            Billetera
+          </button>
+          <button
+            onClick={() => setSubView('registro')}
+            className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all ${
+              subView === 'registro'
+                ? 'bg-blue-600 text-white shadow-sm'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+            }`}
+          >
+            Registro
+          </button>
+        </div>
+      </div>
+
+      {/* CONTENIDO SEGÚN LA PESTAÑA ACTIVA */}
+      {subView === 'billetera' ? (
+        <div className="space-y-6">
+          {/* SECCIÓN 1: BILLETERA */}
+          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
+            <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+              <h3 className="font-bold text-slate-800 dark:text-white text-sm">Billetera</h3>
+
+              {/* Botón directo de Agregar */}
+              <button
+                onClick={openCreateBilletera}
+                className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800/40 hover:bg-blue-200 transition-all flex items-center gap-1 shadow-sm"
+              >
+                <Plus className="w-3.5 h-3.5" /> Agregar
+              </button>
+            </div>
+
+            <div className="divide-y divide-slate-200 dark:divide-slate-800">
+              {data.billeteraItems.map((item, idx) => {
+                const isDragging = draggedBilleteraIdx === idx;
+                const Icon = getIconComponent(item.icon);
+                const itemMoneda = item.moneda || 'COP';
+                const isDiff = itemMoneda !== baseCurrency;
+                const equivalentInBase = convertToBase(item.saldo, itemMoneda, baseCurrency, dolarRate);
+
+                return (
+                  <div
+                    key={item.id}
+                    draggable
+                    onDragStart={e => {
+                      setDraggedBilleteraIdx(idx);
+                      e.dataTransfer.effectAllowed = 'move';
+                    }}
+                    onDragOver={e => {
+                      e.preventDefault();
+                      e.dataTransfer.dropEffect = 'move';
+                    }}
+                    onDrop={e => {
+                      e.preventDefault();
+                      handleBilleteraDrop(idx);
+                    }}
+                    onDragEnd={() => setDraggedBilleteraIdx(null)}
+                    className={`p-4 bg-white dark:bg-slate-900 transition-all flex items-center justify-between cursor-grab active:cursor-grabbing ${
+                      isDragging ? 'opacity-40 scale-[0.99] bg-blue-50/50 dark:bg-blue-950/30' : ''
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      {/* Grip Handle */}
+                      <div className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-1 cursor-grab active:cursor-grabbing">
+                        <GripVertical className="w-4 h-4" />
+                      </div>
+
+                      <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${getItemIconStyle()}`}>
+                        <Icon className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-bold text-slate-800 dark:text-white text-sm">{item.nombre}</h4>
+                          {isDiff && (
+                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300">
+                              {itemMoneda}
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </div>
 
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-bold text-slate-800 dark:text-white text-sm">{mov.name}</h4>
+                    <div className="flex items-center gap-2">
+                      <div className="text-right">
+                        <span className="font-mono font-bold text-sm text-slate-800 dark:text-white block">
+                          {formatCurrency(item.saldo, itemMoneda)}
+                        </span>
                         {isDiff && (
-                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300">
-                            {movMoneda}
+                          <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 block">
+                            (≈ {formatCurrency(equivalentInBase, baseCurrency)})
                           </span>
                         )}
                       </div>
 
-                      {/* Sin emojis: solo De y Hacia */}
-                      <div className="flex flex-wrap items-center gap-1.5 mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
-                        <span className="inline-flex items-center gap-1 text-slate-400 dark:text-slate-500">
-                          <Calendar className="w-3 h-3" /> {formattedDate}
-                        </span>
-                        <span>•</span>
-                        <span className="font-medium text-slate-600 dark:text-slate-300">
-                          De: <strong className="text-blue-600 dark:text-blue-400">{mov.sourceAccountName}</strong>
-                        </span>
-                        {!isIncome && mov.destinationType && (
-                          <>
-                            <span>•</span>
-                            <span className="font-medium text-slate-600 dark:text-slate-300">
-                              Hacia:{' '}
-                              <strong className="text-slate-800 dark:text-slate-200">
-                                {mov.destinationType === 'card'
-                                  ? `Tarjeta ${mov.destinationName || ''}`
-                                  : 'Pagos'}
-                              </strong>
+                      <button
+                        onClick={() => openEditBilletera(item)}
+                        className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-300/80 dark:border-transparent transition-colors"
+                        title="Editar saldo y cuenta"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* SECCIÓN 2: DEUDAS */}
+          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
+            <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+              <h3 className="font-bold text-slate-800 dark:text-white text-sm">Deudas</h3>
+
+              {/* Botón directo de Agregar */}
+              <button
+                onClick={openCreateDeuda}
+                className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800/40 hover:bg-blue-200 transition-all flex items-center gap-1 shadow-sm"
+              >
+                <Plus className="w-3.5 h-3.5" /> Agregar
+              </button>
+            </div>
+
+            <div className="divide-y divide-slate-200 dark:divide-slate-800">
+              {data.deudaItems.map((item, idx) => {
+                const isDragging = draggedDeudaIdx === idx;
+                const Icon = getIconComponent(item.icon);
+                const isPorCobrar = item.tipo === 'por_cobrar';
+                const hasAmount = item.monto !== undefined && item.monto > 0;
+                const itemMoneda = item.moneda || 'COP';
+                const isDiff = itemMoneda !== baseCurrency;
+                const equivalentInBase = convertToBase(item.monto || 0, itemMoneda, baseCurrency, dolarRate);
+
+                return (
+                  <div
+                    key={item.id}
+                    draggable
+                    onDragStart={e => {
+                      setDraggedDeudaIdx(idx);
+                      e.dataTransfer.effectAllowed = 'move';
+                    }}
+                    onDragOver={e => {
+                      e.preventDefault();
+                      e.dataTransfer.dropEffect = 'move';
+                    }}
+                    onDrop={e => {
+                      e.preventDefault();
+                      handleDeudaDrop(idx);
+                    }}
+                    onDragEnd={() => setDraggedDeudaIdx(null)}
+                    className={`p-4 bg-white dark:bg-slate-900 transition-all flex items-center justify-between cursor-grab active:cursor-grabbing ${
+                      isDragging ? 'opacity-40 scale-[0.99] bg-blue-50/50 dark:bg-blue-950/30' : ''
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      {/* Grip Handle */}
+                      <div className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-1 cursor-grab active:cursor-grabbing">
+                        <GripVertical className="w-4 h-4" />
+                      </div>
+
+                      <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${getItemIconStyle()}`}>
+                        <Icon className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-bold text-slate-800 dark:text-white text-sm">{item.nombre}</h4>
+
+                          {isDiff && hasAmount && (
+                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300">
+                              {itemMoneda}
                             </span>
-                          </>
-                        )}
+                          )}
+
+                          {isPorCobrar ? (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50">
+                              <ArrowDownLeft className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                              Me Deben
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800/50">
+                              <ArrowUpRight className="w-3 h-3 text-rose-600 dark:text-rose-400" />
+                              Debo
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="flex items-center gap-2">
-                    <div className="text-right">
-                      <span
-                        className={`font-mono font-bold text-sm block ${
-                          isIncome ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
+                    <div className="flex items-center gap-2">
+                      {hasAmount ? (
+                        <div className="text-right">
+                          <span className="font-mono font-bold text-sm text-slate-800 dark:text-white block">
+                            {formatCurrency(item.monto || 0, itemMoneda)}
+                          </span>
+                          {isDiff && (
+                            <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 block">
+                              (≈ {formatCurrency(equivalentInBase, baseCurrency)})
+                            </span>
+                          )}
+                        </div>
+                      ) : null}
+
+                      <button
+                        onClick={() => openEditDeuda(item)}
+                        className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-300/80 dark:border-transparent transition-colors"
+                        title="Editar deuda y monto"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* SECCIÓN: REGISTRO (Movimientos) */
+        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
+          <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between flex-wrap gap-2">
+            <h3 className="font-bold text-slate-800 dark:text-white text-sm flex items-center gap-2">
+              <History className="w-4 h-4 text-blue-600 dark:text-blue-400" /> Registro
+            </h3>
+
+            <div className="flex items-center gap-2">
+              {movements.length > 0 && (
+                <button
+                  onClick={() => {
+                    if (confirm('¿Limpiar todo el historial registrado?')) {
+                      clearExpenseMovements();
+                    }
+                  }}
+                  className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/40 hover:bg-rose-100 transition-all flex items-center gap-1 shadow-sm"
+                >
+                  <Trash2 className="w-3.5 h-3.5" /> Limpiar Historial
+                </button>
+              )}
+
+              <button
+                onClick={openCreateMovement}
+                className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800/40 hover:bg-blue-200 transition-all flex items-center gap-1 shadow-sm"
+              >
+                <Plus className="w-3.5 h-3.5" /> Registrar
+              </button>
+            </div>
+          </div>
+
+          <div className="divide-y divide-slate-200 dark:divide-slate-800">
+            {movements.length === 0 ? (
+              <div className="p-8 text-center text-slate-400 dark:text-slate-500 text-xs">
+                No hay movimientos registrados. Haz clic en <strong>Registrar</strong> para añadir uno.
+              </div>
+            ) : (
+              movements.map(mov => {
+                const isIncome = mov.type === 'income';
+                const movMoneda = mov.moneda || 'COP';
+                const isDiff = movMoneda !== baseCurrency;
+                const equivalentInBase = convertToBase(mov.amount, movMoneda, baseCurrency, dolarRate);
+                const formattedDate = new Date(mov.date).toLocaleDateString('es-CO', {
+                  day: '2-digit',
+                  month: 'short',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                });
+
+                return (
+                  <div
+                    key={mov.id}
+                    className="p-4 transition-colors flex items-center justify-between"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`w-9 h-9 rounded-2xl flex items-center justify-center shadow-sm ${
+                          isIncome
+                            ? 'bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40'
+                            : 'bg-rose-100 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/40'
                         }`}
                       >
-                        {isIncome ? '+' : '-'}{formatCurrency(mov.amount, movMoneda)}
-                      </span>
-                      {isDiff && (
-                        <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 block">
-                          (≈ {isIncome ? '+' : '-'}{formatCurrency(equivalentInBase, baseCurrency)})
-                        </span>
-                      )}
+                        {isIncome ? <ArrowDownLeft className="w-4 h-4" /> : <ArrowUpRight className="w-4 h-4" />}
+                      </div>
+
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-bold text-slate-800 dark:text-white text-sm">{mov.name}</h4>
+                          {isDiff && (
+                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300">
+                              {movMoneda}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Sin emojis: solo De y Hacia */}
+                        <div className="flex flex-wrap items-center gap-1.5 mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+                          <span className="inline-flex items-center gap-1 text-slate-400 dark:text-slate-500">
+                            <Calendar className="w-3 h-3" /> {formattedDate}
+                          </span>
+                          <span>•</span>
+                          <span className="font-medium text-slate-600 dark:text-slate-300">
+                            De: <strong className="text-blue-600 dark:text-blue-400">{mov.sourceAccountName}</strong>
+                          </span>
+                          {!isIncome && mov.destinationType && (
+                            <>
+                              <span>•</span>
+                              <span className="font-medium text-slate-600 dark:text-slate-300">
+                                Hacia:{' '}
+                                <strong className="text-slate-800 dark:text-slate-200">
+                                  {mov.destinationType === 'card'
+                                    ? `Tarjeta ${mov.destinationName || ''}`
+                                    : 'Pagos'}
+                                </strong>
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </div>
                     </div>
 
-                    <button
-                      onClick={() => deleteExpenseMovement(mov.id)}
-                      className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-rose-100 dark:hover:bg-rose-950/50 text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 border border-slate-300/80 dark:border-transparent transition-colors"
-                      title="Eliminar este registro"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <div className="text-right">
+                        <span
+                          className={`font-mono font-bold text-sm block ${
+                            isIncome ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
+                          }`}
+                        >
+                          {isIncome ? '+' : '-'}{formatCurrency(mov.amount, movMoneda)}
+                        </span>
+                        {isDiff && (
+                          <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 block">
+                            (≈ {isIncome ? '+' : '-'}{formatCurrency(equivalentInBase, baseCurrency)})
+                          </span>
+                        )}
+                      </div>
+
+                      <button
+                        onClick={() => deleteExpenseMovement(mov.id)}
+                        className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-rose-100 dark:hover:bg-rose-950/50 text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 border border-slate-300/80 dark:border-transparent transition-colors"
+                        title="Eliminar este registro"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
-                </div>
-              );
-            })
-          )}
+                );
+              })
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Modal: Registro (Ingreso o Gasto) */}
       {showAddMovementModal && (
@@ -824,7 +864,7 @@ export const BilleteraView: React.FC = () => {
                 </select>
               </div>
 
-              {/* Destino: Solo para Gastos (Compra y Tarjetas) */}
+              {/* Destino: Solo para Gastos (Pagos y Tarjetas) */}
               {movementType === 'expense' && (
                 <div>
                   <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
