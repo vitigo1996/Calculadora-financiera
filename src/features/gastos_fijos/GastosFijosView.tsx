@@ -53,7 +53,6 @@ export const GastosFijosView: React.FC = () => {
   const [housingName, setHousingName] = useState('');
   const [housingTotal, setHousingTotal] = useState('');
   const [housingPeriod, setHousingPeriod] = useState<PaymentPeriod>('1st_fortnight');
-  const [housingIsShared, setHousingIsShared] = useState(true);
   const [showHousingCalc, setShowHousingCalc] = useState(false);
   const [housingCalcDelta, setHousingCalcDelta] = useState('');
 
@@ -64,7 +63,6 @@ export const GastosFijosView: React.FC = () => {
   const [obligationMonthlyPayment, setObligationMonthlyPayment] = useState('');
   const [obligationTotalDebt, setObligationTotalDebt] = useState('');
   const [obligationPeriod, setObligationPeriod] = useState<PaymentPeriod>('1st_fortnight');
-  const [obligationIsShared, setObligationIsShared] = useState(true);
   const [showObligationMonthlyCalc, setShowObligationMonthlyCalc] = useState(false);
   const [obligationMonthlyCalcDelta, setObligationMonthlyCalcDelta] = useState('');
   const [showObligationDebtCalc, setShowObligationDebtCalc] = useState(false);
@@ -102,7 +100,6 @@ export const GastosFijosView: React.FC = () => {
     setHousingName('');
     setHousingTotal('');
     setHousingPeriod('1st_fortnight');
-    setHousingIsShared(true);
     setHousingCalcDelta('');
     setShowHousingCalc(false);
     setShowHousingModal(true);
@@ -114,7 +111,6 @@ export const GastosFijosView: React.FC = () => {
     setHousingName(h.name);
     setHousingTotal(h.totalAmount.toString());
     setHousingPeriod(h.period);
-    setHousingIsShared(h.isShared !== false);
     setHousingCalcDelta('');
     setShowHousingCalc(false);
     setShowHousingModal(true);
@@ -130,15 +126,13 @@ export const GastosFijosView: React.FC = () => {
       updateHousingExpense(editingHousingObj.id, {
         name: housingName.trim(),
         totalAmount: total,
-        period: housingPeriod,
-        isShared: housingIsShared
+        period: housingPeriod
       });
     } else {
       addHousingExpense({
         name: housingName.trim(),
         totalAmount: total,
-        period: housingPeriod,
-        isShared: housingIsShared
+        period: housingPeriod
       });
     }
     setShowHousingModal(false);
@@ -162,7 +156,6 @@ export const GastosFijosView: React.FC = () => {
     setObligationMonthlyPayment('');
     setObligationTotalDebt('');
     setObligationPeriod('1st_fortnight');
-    setObligationIsShared(true);
     setObligationMonthlyCalcDelta('');
     setShowObligationMonthlyCalc(false);
     setObligationDebtCalcDelta('');
@@ -185,7 +178,6 @@ export const GastosFijosView: React.FC = () => {
     setObligationTotalDebt(debtVal ? debtVal.toString() : '');
 
     setObligationPeriod(ob.period);
-    setObligationIsShared(ob.isShared !== false);
     setObligationMonthlyCalcDelta('');
     setShowObligationMonthlyCalc(false);
     setObligationDebtCalcDelta('');
@@ -206,16 +198,14 @@ export const GastosFijosView: React.FC = () => {
         totalAmount: monthlyVal,
         davidAmount: monthlyVal,
         totalDebtBalance: totalDebtVal > 0 ? totalDebtVal : undefined,
-        period: obligationPeriod,
-        isShared: obligationIsShared
+        period: obligationPeriod
       });
     } else {
       addObligation({
         name: obligationName.trim(),
         totalAmount: monthlyVal,
         totalDebtBalance: totalDebtVal > 0 ? totalDebtVal : undefined,
-        period: obligationPeriod,
-        isShared: obligationIsShared
+        period: obligationPeriod
       });
     }
     setShowObligationModal(false);
@@ -357,28 +347,22 @@ export const GastosFijosView: React.FC = () => {
 
                   <div>
                     <h4 className="font-bold text-slate-800 dark:text-white text-sm">{item.name}</h4>
-                    {/* Person shares according to settings or 100% individual */}
-                    {activePeople.length > 1 && (
+                    {/* Person shares according to settings */}
+                    {activePeople.length > 1 && isSharedItem && (
                       <div className="flex flex-wrap items-center gap-2 mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
-                        {isSharedItem ? (
-                          activePeople.map((p, pIdx) => {
-                            const ratio = getPersonRatio(p.monthlyIncome);
-                            const share = item.totalAmount * ratio;
-                            return (
-                              <span key={p.id || pIdx}>
-                                {pIdx > 0 && <span className="mr-2 opacity-40">•</span>}
-                                <strong className={pIdx === 0 ? 'text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-300'}>
-                                  {p.name}:
-                                </strong>{' '}
-                                COP {formatCurrency(share, 'COP')}
-                              </span>
-                            );
-                          })
-                        ) : (
-                          <span className="text-slate-500 dark:text-slate-400 font-semibold">
-                            Individual (100% Yo)
-                          </span>
-                        )}
+                        {activePeople.map((p, pIdx) => {
+                          const ratio = getPersonRatio(p.monthlyIncome);
+                          const share = item.totalAmount * ratio;
+                          return (
+                            <span key={p.id || pIdx}>
+                              {pIdx > 0 && <span className="mr-2 opacity-40">•</span>}
+                              <strong className={pIdx === 0 ? 'text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-300'}>
+                                {p.name}:
+                              </strong>{' '}
+                              COP {formatCurrency(share, 'COP')}
+                            </span>
+                          );
+                        })}
                       </div>
                     )}
                   </div>
@@ -484,28 +468,22 @@ export const GastosFijosView: React.FC = () => {
                       <span>
                         Cuota: <strong className="text-slate-700 dark:text-slate-300 font-mono">COP {formatCurrency(monthlyPayment, 'COP')}</strong>
                       </span>
-                      {activePeople.length > 1 && (
+                      {activePeople.length > 1 && isSharedOb && (
                         <>
                           <span className="opacity-40">•</span>
-                          {isSharedOb ? (
-                            activePeople.map((p, pIdx) => {
-                              const ratio = getPersonRatio(p.monthlyIncome);
-                              const share = monthlyPayment * ratio;
-                              return (
-                                <span key={p.id || pIdx}>
-                                  {pIdx > 0 && <span className="mr-2 opacity-40">•</span>}
-                                  <strong className={pIdx === 0 ? 'text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-300'}>
-                                    {p.name}:
-                                  </strong>{' '}
-                                  COP {formatCurrency(share, 'COP')}
-                                </span>
-                              );
-                            })
-                          ) : (
-                            <span className="text-slate-500 dark:text-slate-400 font-semibold">
-                              Individual (100% Yo)
-                            </span>
-                          )}
+                          {activePeople.map((p, pIdx) => {
+                            const ratio = getPersonRatio(p.monthlyIncome);
+                            const share = monthlyPayment * ratio;
+                            return (
+                              <span key={p.id || pIdx}>
+                                {pIdx > 0 && <span className="mr-2 opacity-40">•</span>}
+                                <strong className={pIdx === 0 ? 'text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-300'}>
+                                  {p.name}:
+                                </strong>{' '}
+                                COP {formatCurrency(share, 'COP')}
+                              </span>
+                            );
+                          })}
                         </>
                       )}
                     </div>
@@ -792,29 +770,6 @@ export const GastosFijosView: React.FC = () => {
                 </select>
               </div>
 
-              {/* Habilitar / Deshabilitar Gasto Compartido */}
-              {activePeople.length > 1 && (
-                <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800">
-                  <div className="flex items-center gap-2">
-                    <Users className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                    <div>
-                      <span className="text-xs font-bold text-slate-800 dark:text-white block">
-                        Gasto Compartido
-                      </span>
-                      <span className="text-[11px] text-slate-500 dark:text-slate-400 block">
-                        Dividir según porcentaje salarial en Ajustes
-                      </span>
-                    </div>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={housingIsShared}
-                    onChange={e => setHousingIsShared(e.target.checked)}
-                    className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
-                  />
-                </div>
-              )}
-
               <div className="flex items-center gap-2 pt-3">
                 {editingHousingObj && (
                   <button
@@ -1073,29 +1028,6 @@ export const GastosFijosView: React.FC = () => {
                   <option value="2nd_fortnight">2ª Quincena (Fin de mes)</option>
                 </select>
               </div>
-
-              {/* Habilitar / Deshabilitar Gasto Compartido */}
-              {activePeople.length > 1 && (
-                <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800">
-                  <div className="flex items-center gap-2">
-                    <Users className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                    <div>
-                      <span className="text-xs font-bold text-slate-800 dark:text-white block">
-                        Gasto Compartido
-                      </span>
-                      <span className="text-[11px] text-slate-500 dark:text-slate-400 block">
-                        Dividir cuota mensual según porcentaje salarial
-                      </span>
-                    </div>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={obligationIsShared}
-                    onChange={e => setObligationIsShared(e.target.checked)}
-                    className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
-                  />
-                </div>
-              )}
 
               <div className="flex items-center gap-2 pt-3">
                 {editingObligationObj && (
