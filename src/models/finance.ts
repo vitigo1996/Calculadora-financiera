@@ -4,7 +4,7 @@ export interface PersonProfile {
   id: string;
   name: string;
   monthlyIncome: number;
-  healthPensionRate: number; // 0.08
+  healthPensionRate: number; // e.g. 0.08
   enabled: boolean;
 }
 
@@ -21,7 +21,7 @@ export interface DeudaItem {
   nombre: string;
   monto?: number;
   moneda: 'COP' | 'USD';
-  tipo: 'por_cobrar' | 'por_pagar'; // por_cobrar = positiva (me deben), por_pagar = negativa (yo debo)
+  tipo: 'por_cobrar' | 'por_pagar'; // por_cobrar = me deben, por_pagar = debo
   icon?: string;
 }
 
@@ -63,7 +63,7 @@ export interface SubscriptionItem {
 
 export interface AppFinanceData {
   mode: 'single' | 'shared';
-  people: [PersonProfile, PersonProfile];
+  people: PersonProfile[];
   dolarRate: number; // Tasa USD/COP
   dolarRateLiveUpdated?: string;
   billeteraItems: BilleteraAccountItem[];

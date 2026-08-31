@@ -19,7 +19,7 @@ interface FinanceContextType {
   isFetchingRate: boolean;
   refreshLiveDolarRate: () => Promise<boolean>;
   setMode: (mode: 'single' | 'shared') => void;
-  updatePeople: (people: [PersonProfile, PersonProfile]) => void;
+  updatePeople: (people: PersonProfile[]) => void;
   updateDolarRate: (rate: number) => void;
   addBilleteraItem: (item: { nombre: string; moneda: 'COP' | 'USD'; saldo: number; icon?: string }) => void;
   updateBilleteraItem: (id: string, updated: Partial<BilleteraAccountItem>) => void;
@@ -78,16 +78,16 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const setMode = (mode: 'single' | 'shared') => {
     setData(prev => ({
       ...prev,
-      mode,
-      people: [
-        prev.people[0],
-        { ...prev.people[1], enabled: mode === 'shared' }
-      ]
+      mode
     }));
   };
 
-  const updatePeople = (people: [PersonProfile, PersonProfile]) => {
-    setData(prev => ({ ...prev, people }));
+  const updatePeople = (people: PersonProfile[]) => {
+    setData(prev => ({
+      ...prev,
+      people,
+      mode: people.length > 1 ? 'shared' : 'single'
+    }));
   };
 
   const updateDolarRate = (rate: number) => {
