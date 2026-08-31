@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useFinance } from '../../context/FinanceContext';
 import { formatCurrency } from '../../services/financeCalculations';
 import { PortfolioAccountItem } from '../../models/finance';
@@ -12,8 +12,7 @@ import {
   Trash2,
   X,
   Calculator,
-  ChevronUp,
-  ChevronDown
+  GripVertical
 } from 'lucide-react';
 
 export const PortafolioView: React.FC = () => {
@@ -28,6 +27,12 @@ export const PortafolioView: React.FC = () => {
 
   const dolarRate = data.dolarRate || 3600;
   const port = summary.portafolio;
+
+  // Drag and Drop state
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+
+  // Hidden native color picker ref
+  const colorInputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
 
   // Modal states for Portafolio item (Create / Edit)
   const [showAddModal, setShowAddModal] = useState(false);
@@ -118,23 +123,60 @@ export const PortafolioView: React.FC = () => {
     }
   };
 
+  // Drag and Drop handlers
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = (e: React.DragEvent, targetIndex: number) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === targetIndex) {
+      setDraggedIndex(null);
+      return;
+    }
+    // Reorder using movePortfolioItem iteratively
+    const diff = targetIndex - draggedIndex;
+    if (diff > 0) {
+      for (let i = draggedIndex; i < targetIndex; i++) {
+        movePortfolioItem(i, 'down');
+      }
+    } else {
+      for (let i = draggedIndex; i > targetIndex; i--) {
+        movePortfolioItem(i, 'up');
+      }
+    }
+    setDraggedIndex(null);
+  };
+
   return (
     <div className="space-y-6 pb-24 animate-fadeIn">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
-          <PieChartIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" /> Portafolio
-        </h2>
+      {/* Título Principal: Total Activos */}
+      <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-6 border border-slate-300 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-colors">
+        <div className="flex items-center gap-3">
+          <div className="w-11 h-11 rounded-2xl bg-blue-100 dark:bg-blue-950/70 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-200 dark:border-blue-800/60 shadow-sm">
+            <PieChartIcon className="w-6 h-6" />
+          </div>
+          <div>
+            <h2 className="text-xl sm:text-2xl font-black text-slate-800 dark:text-white leading-tight">
+              Total Activos
+            </h2>
+          </div>
+        </div>
 
-        <div className="text-right">
-          <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 block">Patrimonio Total</span>
-          <span className="text-xl font-black text-blue-600 dark:text-blue-400 font-mono">
+        <div className="text-left sm:text-right bg-blue-50/80 dark:bg-blue-950/40 p-3 sm:p-0 rounded-2xl sm:bg-transparent border sm:border-0 border-blue-200 dark:border-blue-800/40">
+          <span className="text-2xl sm:text-3xl font-black text-blue-600 dark:text-blue-400 font-mono tracking-tight">
             COP {formatCurrency(port.totalPortafolio, 'COP')}
           </span>
         </div>
       </div>
 
-      {/* Recuadro Portafolio */}
+      {/* Recuadro Portafolio con Filas Arrastrables */}
       <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
         <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
           <h3 className="font-bold text-slate-800 dark:text-white text-sm">Portafolio</h3>
@@ -153,41 +195,24 @@ export const PortafolioView: React.FC = () => {
             const Icon = getIconComponent(item.icon || 'trending_up');
             const isUSD = item.moneda === 'USD';
             const equivalentCOP = isUSD ? item.saldo * dolarRate : null;
-            const isFirst = idx === 0;
-            const isLast = idx === (data.portfolioItems || []).length - 1;
+            const isDragging = draggedIndex === idx;
 
             return (
               <div
                 key={item.id}
-                className="p-4 bg-white dark:bg-slate-900 transition-colors flex items-center justify-between"
+                draggable
+                onDragStart={e => handleDragStart(e, idx)}
+                onDragOver={e => handleDragOver(e, idx)}
+                onDrop={e => handleDrop(e, idx)}
+                onDragEnd={() => setDraggedIndex(null)}
+                className={`p-4 bg-white dark:bg-slate-900 transition-all flex items-center justify-between cursor-grab active:cursor-grabbing ${
+                  isDragging ? 'opacity-40 scale-[0.99] bg-blue-50/50 dark:bg-blue-950/30' : 'hover:bg-slate-50/70 dark:hover:bg-slate-850/50'
+                }`}
               >
                 <div className="flex items-center gap-3">
-                  {/* Controles para reordenar arriba/abajo */}
-                  <div className="flex flex-col gap-0.5">
-                    <button
-                      onClick={() => movePortfolioItem(idx, 'up')}
-                      disabled={isFirst}
-                      title="Mover arriba"
-                      className={`p-1 rounded-lg transition-colors ${
-                        isFirst
-                          ? 'text-slate-300 dark:text-slate-700 cursor-not-allowed'
-                          : 'text-slate-500 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-slate-800'
-                      }`}
-                    >
-                      <ChevronUp className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      onClick={() => movePortfolioItem(idx, 'down')}
-                      disabled={isLast}
-                      title="Mover abajo"
-                      className={`p-1 rounded-lg transition-colors ${
-                        isLast
-                          ? 'text-slate-300 dark:text-slate-700 cursor-not-allowed'
-                          : 'text-slate-500 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-slate-800'
-                      }`}
-                    >
-                      <ChevronDown className="w-3.5 h-3.5" />
-                    </button>
+                  {/* Ícono de agarre arrastrable */}
+                  <div className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 cursor-grab active:cursor-grabbing p-1">
+                    <GripVertical className="w-4 h-4" />
                   </div>
 
                   <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${getItemIconStyle()}`}>
@@ -233,7 +258,7 @@ export const PortafolioView: React.FC = () => {
       {port.items.length > 0 && (
         <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-300 dark:border-slate-800 shadow-sm transition-colors">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-            {/* Columna Izquierda: Etiquetas con colores distinguibles */}
+            {/* Columna Izquierda: Etiquetas con Círculo de Color Clickable */}
             <div className="space-y-2">
               <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-2">
                 Distribución de Activos
@@ -241,14 +266,28 @@ export const PortafolioView: React.FC = () => {
               <div className="space-y-2">
                 {port.items.map((item, i) => (
                   <div
-                    key={i}
+                    key={item.id || i}
                     className="flex items-center justify-between p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 transition-colors"
                   >
                     <div className="flex items-center gap-2.5 truncate">
-                      <span
-                        className="w-3.5 h-3.5 rounded-full flex-shrink-0 shadow-sm ring-1 ring-white/20"
-                        style={{ backgroundColor: item.color }}
-                      ></span>
+                      {/* Círculo de color interactivo / selector de color al clickear */}
+                      <div className="relative flex-shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => colorInputRefs.current[item.id]?.click()}
+                          title="Click para cambiar color"
+                          className="w-5 h-5 rounded-full shadow-sm ring-2 ring-white dark:ring-slate-800 hover:scale-110 active:scale-95 transition-transform flex items-center justify-center cursor-pointer"
+                          style={{ backgroundColor: item.color }}
+                        />
+                        <input
+                          ref={el => (colorInputRefs.current[item.id] = el)}
+                          type="color"
+                          value={item.color}
+                          onChange={e => updatePortfolioItem(item.id, { color: e.target.value })}
+                          className="opacity-0 w-0 h-0 absolute pointer-events-none"
+                        />
+                      </div>
+
                       <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
                         {item.label}
                       </span>
@@ -270,7 +309,7 @@ export const PortafolioView: React.FC = () => {
               </div>
             </div>
 
-            {/* Columna Derecha: Gráfica Donut con Tooltip de Alto Contraste */}
+            {/* Columna Derecha: Gráfica Donut */}
             <div className="h-56 flex items-center justify-center">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
