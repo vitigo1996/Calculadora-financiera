@@ -373,20 +373,27 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
                     </div>
                     {/* Reparto proporcional */}
                     {activePeople.length > 1 && isSharedItem && (
-                      <div className="flex flex-wrap items-center gap-2 mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+                      <div className="flex flex-wrap items-center gap-2 mt-1.5 text-[11px]">
                         {activePeople.map((p, pIdx) => {
                           const ratio = getPersonRatio(p.monthlyIncome);
                           const share = item.totalAmount * ratio;
                           return (
-                            <span key={p.name} className="flex items-center gap-1">
-                              {pIdx === 0 ? <User className="w-3 h-3 text-blue-600 dark:text-blue-400" /> : <Users className="w-3 h-3 text-slate-400" />}
-                              <strong className={pIdx === 0 ? 'text-blue-700 dark:text-blue-300 font-semibold' : 'text-slate-600 dark:text-slate-400 font-medium'}>
-                                {p.name}:
-                              </strong>{' '}
-                              <span className="font-mono text-slate-700 dark:text-slate-300">
-                                {formatCurrency(share)}
-                              </span>
-                            </span>
+                            <div
+                              key={p.name}
+                              className="flex items-center gap-1.5 bg-slate-100/90 dark:bg-slate-800/80 px-2 py-1 rounded-xl border border-slate-200/80 dark:border-slate-800"
+                            >
+                              <div className="flex-shrink-0 text-blue-600 dark:text-blue-400">
+                                {pIdx === 0 ? <User className="w-3.5 h-3.5" /> : <Users className="w-3.5 h-3.5" />}
+                              </div>
+                              <div className="flex flex-col leading-tight">
+                                <span className="font-semibold text-slate-700 dark:text-slate-300 text-[10px]">
+                                  {p.name}
+                                </span>
+                                <span className="font-mono font-bold text-slate-900 dark:text-slate-100 text-[11px]">
+                                  {formatCurrency(share)}
+                                </span>
+                              </div>
+                            </div>
                           );
                         })}
                       </div>
@@ -500,20 +507,27 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
 
                     {/* Reparto proporcional */}
                     {activePeople.length > 1 && isSharedOb && (
-                      <div className="flex flex-wrap items-center gap-2 mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+                      <div className="flex flex-wrap items-center gap-2 mt-1.5 text-[11px]">
                         {activePeople.map((p, pIdx) => {
                           const ratio = getPersonRatio(p.monthlyIncome);
                           const share = monthlyPayment * ratio;
                           return (
-                            <span key={p.name} className="flex items-center gap-1">
-                              {pIdx === 0 ? <User className="w-3 h-3 text-blue-600 dark:text-blue-400" /> : <Users className="w-3 h-3 text-slate-400" />}
-                              <strong className={pIdx === 0 ? 'text-blue-700 dark:text-blue-300 font-semibold' : 'text-slate-600 dark:text-slate-400 font-medium'}>
-                                {p.name}:
-                              </strong>{' '}
-                              <span className="font-mono text-slate-700 dark:text-slate-300">
-                                {formatCurrency(share)}
-                              </span>
-                            </span>
+                            <div
+                              key={p.name}
+                              className="flex items-center gap-1.5 bg-slate-100/90 dark:bg-slate-800/80 px-2 py-1 rounded-xl border border-slate-200/80 dark:border-slate-800"
+                            >
+                              <div className="flex-shrink-0 text-blue-600 dark:text-blue-400">
+                                {pIdx === 0 ? <User className="w-3.5 h-3.5" /> : <Users className="w-3.5 h-3.5" />}
+                              </div>
+                              <div className="flex flex-col leading-tight">
+                                <span className="font-semibold text-slate-700 dark:text-slate-300 text-[10px]">
+                                  {p.name}
+                                </span>
+                                <span className="font-mono font-bold text-slate-900 dark:text-slate-100 text-[11px]">
+                                  {formatCurrency(share)}
+                                </span>
+                              </div>
+                            </div>
                           );
                         })}
                       </div>

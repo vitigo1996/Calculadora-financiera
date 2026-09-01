@@ -28,6 +28,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
     moveCreditCard,
     performCardCutoff,
     cancelCardCutoff,
+    clearCardPurchases,
     addCardPurchase,
     deleteCardPurchase
   } = useFinance();
@@ -338,16 +339,16 @@ export const CreditosSuscripcionesView: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <h3 className="text-base font-bold text-slate-800 dark:text-white flex items-center gap-2">
                     <CreditCard className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                    Compras en {selectedCard.name}
+                    Compras con {selectedCard.name}
                   </h3>
                 </div>
 
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  {selectedCard.period === '1st_fortnight' ? 'Pago en 1ª Quincena' : 'Pago en 2ª Quincena'} • Cupo: {formatCurrency(selectedCard.creditLimit)}
+                  {selectedCard.period === '1st_fortnight' ? 'Pago en 1ª Quincena' : 'Pago en 2ª Quincena'}
                 </p>
               </div>
 
-              {/* Botones de acción: Hacer Corte y Agregar Compra */}
+              {/* Botones de acción: Hacer Corte, Limpiar Registro y Agregar Compra */}
               <div className="flex items-center gap-2 flex-wrap">
                 {/* Hacer Corte / Deshacer Corte */}
                 {selectedCard.billingCutoffAmount !== undefined ? (
@@ -365,6 +366,27 @@ export const CreditosSuscripcionesView: React.FC = () => {
                     title="Fijar corte de facturación actual"
                   >
                     <Scissors className="w-3.5 h-3.5" /> Hacer Corte
+                  </button>
+                )}
+
+                {/* Limpiar Registro (Marca como pagadas manteniendo las compras en el historial) */}
+                {selectedCard.purchases && selectedCard.purchases.length > 0 && (
+                  <button
+                    onClick={() => {
+                      setConfirmConfig({
+                        isOpen: true,
+                        title: 'Limpiar Registro de Tarjeta',
+                        message: `¿Deseas marcar como pagadas las compras de ${selectedCard.name}? El saldo gastado se reiniciará a $ 0 y todas las compras se mantendrán registradas en tu historial.`,
+                        confirmText: 'Sí, limpiar',
+                        cancelText: 'Cancelar',
+                        variant: 'warning',
+                        onConfirm: () => clearCardPurchases(selectedCard.id)
+                      });
+                    }}
+                    className="px-3 py-2 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300/80 dark:border-transparent transition-all flex items-center gap-1.5 shadow-sm"
+                    title="Marcar compras como pagadas conservando el historial"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" /> Limpiar Registro
                   </button>
                 )}
 
@@ -400,23 +422,33 @@ export const CreditosSuscripcionesView: React.FC = () => {
               ) : (
                 <div className="divide-y divide-slate-200 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden">
                   {selectedCard.purchases.map(p => {
+                    const isPaid = p.isPaid === true;
                     return (
                       <div
                         key={p.id}
-                        className="p-3 flex items-center justify-between text-xs transition-colors"
+                        className={`p-3 flex items-center justify-between text-xs transition-colors ${
+                          isPaid ? 'bg-slate-50/50 dark:bg-slate-900/50 opacity-70' : ''
+                        }`}
                       >
-                        <div className="flex items-center gap-2.5">
-                          <span className="font-semibold text-slate-800 dark:text-white">{p.concept}</span>
+                        <div className="flex items-center gap-2 flex-wrap min-w-0 flex-1">
+                          <span className={`font-semibold truncate ${isPaid ? 'line-through text-slate-400 dark:text-slate-500' : 'text-slate-800 dark:text-white'}`}>
+                            {p.concept}
+                          </span>
                           {p.isAfterCutoff && (
-                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 flex-shrink-0">
                               Post-Corte
+                            </span>
+                          )}
+                          {isPaid && (
+                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800/50 flex-shrink-0">
+                              Pagado
                             </span>
                           )}
                         </div>
 
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2.5 flex-shrink-0">
                           <div className="text-right">
-                            <span className="font-mono font-bold text-slate-800 dark:text-white">
+                            <span className={`font-mono font-bold ${isPaid ? 'text-slate-400 dark:text-slate-500' : 'text-slate-800 dark:text-white'}`}>
                               {formatCurrency(p.amount)}
                             </span>
                           </div>

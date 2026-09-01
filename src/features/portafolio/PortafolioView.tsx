@@ -326,13 +326,13 @@ export const PortafolioView: React.FC = () => {
                     key={item.id || i}
                     className="flex items-center justify-between p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 transition-colors"
                   >
-                    <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                    <div className="flex items-center gap-2.5 min-w-0 flex-1 pr-2">
                       {/* Círculo de color interactivo */}
                       <button
                         type="button"
                         onClick={() => setColorPickerTarget({ id: item.id, label: item.label, currentColor: item.color })}
                         title="Click para cambiar color"
-                        className="w-5 h-5 rounded-full shadow-sm ring-2 ring-white dark:ring-slate-800 hover:scale-110 active:scale-95 transition-transform flex-shrink-0 cursor-pointer"
+                        className="w-4 h-4 rounded-full shadow-sm ring-2 ring-white dark:ring-slate-800 hover:scale-110 active:scale-95 transition-transform flex-shrink-0 cursor-pointer"
                         style={{ backgroundColor: item.color }}
                       />
 

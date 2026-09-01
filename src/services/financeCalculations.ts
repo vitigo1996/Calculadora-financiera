@@ -75,7 +75,7 @@ export function calculateCardPurchasesTotal(cc: CreditCardItem): number {
   if (cc.billingCutoffAmount !== undefined) {
     return cc.billingCutoffAmount;
   }
-  return (cc.purchases || []).reduce((sum, p) => sum + (p.amount || 0), 0);
+  return (cc.purchases || []).filter(p => !p.isPaid).reduce((sum, p) => sum + (p.amount || 0), 0);
 }
 
 export function calculateCardPaymentDue(cc: CreditCardItem): number {

@@ -116,27 +116,27 @@ export const PresupuestoView: React.FC = () => {
           </div>
 
           {/* 3 Recuadros: Mitad de Mes, Fin de Mes, Disponible */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {/* Mitad de Mes (1ª Quincena) */}
-            <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm transition-colors">
+            <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm transition-colors overflow-hidden">
               <span className="text-xs font-semibold text-blue-700 dark:text-blue-400 block">Mitad de Mes</span>
-              <div className="text-2xl sm:text-3xl font-black text-blue-700 dark:text-blue-400 mt-1 font-mono">
+              <div className="text-lg sm:text-xl font-black text-blue-700 dark:text-blue-400 mt-1 font-mono tracking-tight break-words">
                 {formatCurrency(pres.m9_mitadDeMes)}
               </div>
             </div>
 
             {/* Fin de Mes (2ª Quincena) */}
-            <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm transition-colors">
+            <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm transition-colors overflow-hidden">
               <span className="text-xs font-semibold text-blue-700 dark:text-blue-400 block">Fin de Mes</span>
-              <div className="text-2xl sm:text-3xl font-black text-blue-700 dark:text-blue-400 mt-1 font-mono">
+              <div className="text-lg sm:text-xl font-black text-blue-700 dark:text-blue-400 mt-1 font-mono tracking-tight break-words">
                 {formatCurrency(pres.m10_finDeMes)}
               </div>
             </div>
 
             {/* Libre */}
-            <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-300 dark:border-blue-500/30 shadow-sm transition-colors">
+            <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl border border-slate-300 dark:border-blue-500/30 shadow-sm transition-colors overflow-hidden">
               <span className="text-xs font-semibold text-blue-700 dark:text-blue-400 block">Libre</span>
-              <div className="text-2xl sm:text-3xl font-black text-slate-800 dark:text-white mt-1 font-mono">
+              <div className="text-lg sm:text-xl font-black text-slate-800 dark:text-white mt-1 font-mono tracking-tight break-words">
                 {formatCurrency(pres.m11_disponible)}
               </div>
             </div>

@@ -13,6 +13,7 @@ import {
   X,
   ArrowDownLeft,
   ArrowUpRight,
+  ArrowLeftRight,
   GripVertical,
   History,
   CreditCard,
@@ -84,12 +85,13 @@ export const BilleteraView: React.FC = () => {
 
   // Movimientos / Registro State & Modal
   const [showAddMovementModal, setShowAddMovementModal] = useState(false);
-  const [movementType, setMovementType] = useState<'expense' | 'income'>('expense');
+  const [movementType, setMovementType] = useState<'expense' | 'income' | 'transfer'>('expense');
   const [movementName, setMovementName] = useState('');
   const [movementAmount, setMovementAmount] = useState('');
   const [movementSourceId, setMovementSourceId] = useState('');
   const [movementDestType, setMovementDestType] = useState<'none' | 'card'>('none');
   const [movementDestId, setMovementDestId] = useState('');
+  const [movementDestTransferId, setMovementDestTransferId] = useState('');
 
   // Uniform neutral blue icon container
   const getItemIconStyle = () => {
@@ -278,33 +280,51 @@ export const BilleteraView: React.FC = () => {
     setMovementType('expense');
     setMovementName('');
     setMovementAmount('');
-    setMovementSourceId(data.billeteraItems[0]?.id || '');
+    const firstAccId = data.billeteraItems[0]?.id || '';
+    setMovementSourceId(firstAccId);
     setMovementDestType('none');
     setMovementDestId(data.creditCards[0]?.id || '');
+    const secondAcc = data.billeteraItems.find(b => b.id !== firstAccId);
+    setMovementDestTransferId(secondAcc ? secondAcc.id : firstAccId);
     setShowAddMovementModal(true);
   };
 
-  // Save Movement (Income or Expense)
+  // Save Movement (Income, Expense, or Transfer)
   const handleSaveMovement = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!movementName.trim()) return;
     const amount = parseFloat(movementAmount) || 0;
     if (amount <= 0) return;
 
+    let destType: 'none' | 'card' | 'account' | undefined = undefined;
+    let destId: string | undefined = undefined;
     let destName: string | undefined = undefined;
-    if (movementType === 'expense' && movementDestType === 'card') {
-      const card = (data.creditCards || []).find(c => c.id === movementDestId) || data.creditCards[0];
-      destName = card ? card.name : undefined;
+
+    if (movementType === 'expense') {
+      destType = movementDestType;
+      if (movementDestType === 'card') {
+        destId = movementDestId;
+        const card = (data.creditCards || []).find(c => c.id === movementDestId) || data.creditCards[0];
+        destName = card ? card.name : undefined;
+      } else {
+        destName = 'Pagos';
+      }
+    } else if (movementType === 'transfer') {
+      destType = 'account';
+      destId = movementDestTransferId;
+      const targetAcc = (data.billeteraItems || []).find(a => a.id === movementDestTransferId);
+      destName = targetAcc ? targetAcc.nombre : 'Cuenta destino';
     }
+
+    const defaultName = movementType === 'transfer' ? 'Transferencia' : (movementType === 'income' ? 'Ingreso' : 'Gasto');
 
     addExpenseMovement({
       type: movementType,
-      name: movementName.trim(),
+      name: movementName.trim() || defaultName,
       amount,
       moneda: 'COP',
       sourceAccountId: movementSourceId || (data.billeteraItems[0]?.id || ''),
-      destinationType: movementType === 'expense' ? movementDestType : undefined,
-      destinationId: (movementType === 'expense' && movementDestType === 'card') ? movementDestId : undefined,
+      destinationType: destType,
+      destinationId: destId,
       destinationName: destName
     });
 
@@ -597,6 +617,7 @@ export const BilleteraView: React.FC = () => {
             ) : (
               movements.map(mov => {
                 const isIncome = mov.type === 'income';
+                const isTransfer = mov.type === 'transfer';
                 const formattedDate = new Date(mov.date).toLocaleDateString('es-CO', {
                   day: '2-digit',
                   month: 'short',
@@ -607,58 +628,64 @@ export const BilleteraView: React.FC = () => {
                 return (
                   <div
                     key={mov.id}
-                    className="p-4 transition-colors flex items-center justify-between"
+                    className="p-4 transition-colors flex items-center justify-between gap-3"
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-start gap-3 min-w-0 flex-1">
                       <div
-                        className={`w-9 h-9 rounded-2xl flex items-center justify-center shadow-sm ${
+                        className={`w-9 h-9 rounded-2xl flex items-center justify-center shadow-sm flex-shrink-0 mt-0.5 ${
                           isIncome
                             ? 'bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40'
+                            : isTransfer
+                            ? 'bg-blue-100 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800/40'
                             : 'bg-rose-100 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/40'
                         }`}
                       >
-                        {isIncome ? <ArrowDownLeft className="w-4 h-4" /> : <ArrowUpRight className="w-4 h-4" />}
+                        {isIncome ? (
+                          <ArrowDownLeft className="w-4 h-4" />
+                        ) : isTransfer ? (
+                          <ArrowLeftRight className="w-4 h-4" />
+                        ) : (
+                          <ArrowUpRight className="w-4 h-4" />
+                        )}
                       </div>
 
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h4 className="font-bold text-slate-800 dark:text-white text-sm">{mov.name}</h4>
-                        </div>
+                      <div className="min-w-0 flex-1">
+                        <h4 className="font-bold text-slate-800 dark:text-white text-sm truncate">{mov.name}</h4>
 
-                        {/* Sin emojis: solo De y Hacia */}
-                        <div className="flex flex-wrap items-center gap-1.5 mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
-                          <span className="inline-flex items-center gap-1 text-slate-400 dark:text-slate-500">
-                            <Calendar className="w-3 h-3" /> {formattedDate}
+                        {/* Metadatos en Columna Vertical: Fecha, De:, Hacia: */}
+                        <div className="flex flex-col gap-0.5 mt-1 text-[11px] text-slate-500 dark:text-slate-400 leading-tight">
+                          <span className="inline-flex items-center gap-1 text-slate-400 dark:text-slate-500 font-medium">
+                            <Calendar className="w-3 h-3 flex-shrink-0" /> {formattedDate}
                           </span>
-                          <span>•</span>
                           <span className="font-medium text-slate-600 dark:text-slate-300">
                             De: <strong className="text-blue-600 dark:text-blue-400">{mov.sourceAccountName}</strong>
                           </span>
-                          {!isIncome && mov.destinationType && (
-                            <>
-                              <span>•</span>
-                              <span className="font-medium text-slate-600 dark:text-slate-300">
-                                Hacia:{' '}
-                                <strong className="text-slate-800 dark:text-slate-200">
-                                  {mov.destinationType === 'card'
-                                    ? `Tarjeta ${mov.destinationName || ''}`
-                                    : 'Pagos'}
-                                </strong>
-                              </span>
-                            </>
+                          {mov.destinationName && (
+                            <span className="font-medium text-slate-600 dark:text-slate-300">
+                              Hacia:{' '}
+                              <strong className="text-slate-800 dark:text-slate-200">
+                                {isTransfer
+                                  ? mov.destinationName
+                                  : (mov.destinationType === 'card' ? `Tarjeta ${mov.destinationName}` : mov.destinationName)}
+                              </strong>
+                            </span>
                           )}
                         </div>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-shrink-0">
                       <div className="text-right">
                         <span
                           className={`font-mono font-bold text-sm block ${
-                            isIncome ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
+                            isIncome
+                              ? 'text-emerald-600 dark:text-emerald-400'
+                              : isTransfer
+                              ? 'text-blue-600 dark:text-blue-400'
+                              : 'text-rose-600 dark:text-rose-400'
                           }`}
                         >
-                          {isIncome ? '+' : '-'}{formatCurrency(mov.amount)}
+                          {isIncome ? '+' : isTransfer ? '' : '-'}{formatCurrency(mov.amount)}
                         </span>
                       </div>
 
@@ -688,11 +715,11 @@ export const BilleteraView: React.FC = () => {
         </div>
       )}
 
-      {/* Modal: Registro (Ingreso o Gasto) */}
+      {/* Modal: Registro (Ingreso, Gasto o Transferencia) */}
       {showAddMovementModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
           <div className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl animate-scaleUp max-h-[90vh] overflow-y-auto my-auto">
-            {/* Header del Modal con solo el título Registro */}
+            {/* Header del Modal */}
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-lg font-bold text-slate-800 dark:text-white">
                 Registro
@@ -705,32 +732,45 @@ export const BilleteraView: React.FC = () => {
               </button>
             </div>
 
-            {/* Selector de Opción: Ingreso o Gasto */}
-            <div className="grid grid-cols-2 gap-2 mb-4">
+            {/* Selector de 3 Opciones: Gasto | Ingreso | Transferencia */}
+            <div className="grid grid-cols-3 gap-1.5 mb-4">
               <button
                 type="button"
                 onClick={() => setMovementType('expense')}
-                className={`py-2.5 px-3 rounded-2xl text-xs font-bold border transition-all flex items-center justify-center gap-1.5 ${
+                className={`py-2.5 px-1.5 rounded-2xl text-xs font-bold border transition-all flex items-center justify-center gap-1 ${
                   movementType === 'expense'
                     ? 'bg-rose-100 dark:bg-rose-950/60 border-rose-500 text-rose-800 dark:text-rose-300 shadow-sm ring-1 ring-rose-400'
                     : 'bg-slate-50 dark:bg-slate-950/40 border-slate-300 dark:border-slate-800 text-slate-600 dark:text-slate-400'
                 }`}
               >
-                <ArrowUpRight className="w-4 h-4 text-rose-600 dark:text-rose-400" />
+                <ArrowUpRight className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
                 Gasto
               </button>
 
               <button
                 type="button"
                 onClick={() => setMovementType('income')}
-                className={`py-2.5 px-3 rounded-2xl text-xs font-bold border transition-all flex items-center justify-center gap-1.5 ${
+                className={`py-2.5 px-1.5 rounded-2xl text-xs font-bold border transition-all flex items-center justify-center gap-1 ${
                   movementType === 'income'
                     ? 'bg-emerald-100 dark:bg-emerald-950/60 border-emerald-500 text-emerald-800 dark:text-emerald-300 shadow-sm ring-1 ring-emerald-400'
                     : 'bg-slate-50 dark:bg-slate-950/40 border-slate-300 dark:border-slate-800 text-slate-600 dark:text-slate-400'
                 }`}
               >
-                <ArrowDownLeft className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                <ArrowDownLeft className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                 Ingreso
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setMovementType('transfer')}
+                className={`py-2.5 px-1.5 rounded-2xl text-xs font-bold border transition-all flex items-center justify-center gap-1 ${
+                  movementType === 'transfer'
+                    ? 'bg-blue-100 dark:bg-blue-950/60 border-blue-500 text-blue-800 dark:text-blue-300 shadow-sm ring-1 ring-blue-400'
+                    : 'bg-slate-50 dark:bg-slate-950/40 border-slate-300 dark:border-slate-800 text-slate-600 dark:text-slate-400'
+                }`}
+              >
+                <ArrowLeftRight className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                Transferir
               </button>
             </div>
 
@@ -744,9 +784,14 @@ export const BilleteraView: React.FC = () => {
                   type="text"
                   value={movementName}
                   onChange={e => setMovementName(e.target.value)}
-                  placeholder={movementType === 'income' ? 'Ej. Ingreso 1, Pago, Abono' : 'Ej. Gasto 1, Compra, Servicio'}
+                  placeholder={
+                    movementType === 'transfer'
+                      ? 'Ej. Retiro de cajero, Transferencia, Depósito'
+                      : movementType === 'income'
+                      ? 'Ej. Ingreso 1, Pago, Abono'
+                      : 'Ej. Gasto 1, Compra, Servicio'
+                  }
                   className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
-                  required
                   autoFocus
                 />
               </div>
@@ -764,7 +809,7 @@ export const BilleteraView: React.FC = () => {
               {/* Origen / Cuenta */}
               <div>
                 <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                  {movementType === 'income' ? 'Cuenta' : 'Origen'}
+                  {movementType === 'income' ? 'Cuenta' : 'Cuenta Origen'}
                 </label>
                 <select
                   value={movementSourceId}
@@ -779,6 +824,27 @@ export const BilleteraView: React.FC = () => {
                   ))}
                 </select>
               </div>
+
+              {/* Para Transferencias: Selector de Cuenta Destino */}
+              {movementType === 'transfer' && (
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                    Cuenta Destino
+                  </label>
+                  <select
+                    value={movementDestTransferId}
+                    onChange={e => setMovementDestTransferId(e.target.value)}
+                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
+                    required
+                  >
+                    {data.billeteraItems.map(acc => (
+                      <option key={acc.id} value={acc.id}>
+                        {acc.nombre}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               {/* Destino: Solo para Gastos (Pagos y Tarjetas) */}
               {movementType === 'expense' && (
