@@ -366,7 +366,11 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
 
                     <h4 className="font-bold text-slate-800 dark:text-white text-sm truncate">{item.name}</h4>
 
-                    <span className="px-1.5 py-0.5 rounded-lg text-[10px] font-bold bg-blue-100 dark:bg-blue-950/70 border border-blue-300/60 dark:border-blue-800/40 text-blue-700 dark:text-blue-300 whitespace-nowrap flex-shrink-0">
+                    <span className={`px-1.5 py-0.5 rounded-lg text-[10px] font-bold whitespace-nowrap flex-shrink-0 border ${
+                      item.period === '1st_fortnight'
+                        ? 'bg-blue-100 dark:bg-blue-950/70 border-blue-300/60 dark:border-blue-800/40 text-blue-700 dark:text-blue-300'
+                        : 'bg-amber-100 dark:bg-amber-950/70 border-amber-300/60 dark:border-amber-800/40 text-amber-700 dark:text-amber-300'
+                    }`}>
                       {item.period === '1st_fortnight' ? '1Q' : '2Q'}
                     </span>
                   </div>
@@ -494,7 +498,11 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
 
                     <h4 className="font-bold text-slate-800 dark:text-white text-sm truncate">{ob.name}</h4>
 
-                    <span className="px-1.5 py-0.5 rounded-lg text-[10px] font-bold bg-blue-100 dark:bg-blue-950/70 border border-blue-300/60 dark:border-blue-800/40 text-blue-700 dark:text-blue-300 whitespace-nowrap flex-shrink-0">
+                    <span className={`px-1.5 py-0.5 rounded-lg text-[10px] font-bold whitespace-nowrap flex-shrink-0 border ${
+                      ob.period === '1st_fortnight'
+                        ? 'bg-blue-100 dark:bg-blue-950/70 border-blue-300/60 dark:border-blue-800/40 text-blue-700 dark:text-blue-300'
+                        : 'bg-amber-100 dark:bg-amber-950/70 border-amber-300/60 dark:border-amber-800/40 text-amber-700 dark:text-amber-300'
+                    }`}>
                       {ob.period === '1st_fortnight' ? '1Q' : '2Q'}
                     </span>
                   </div>

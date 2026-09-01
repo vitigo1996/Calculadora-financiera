@@ -2,24 +2,25 @@ import React, { useState } from 'react';
 import { useFinance } from '../../context/FinanceContext';
 import { formatCurrency } from '../../services/financeCalculations';
 import { GastosFijosView } from '../gastos_fijos/GastosFijosView';
-import { Receipt, ShieldCheck, Home, CreditCard, Layers, ArrowDownRight } from 'lucide-react';
+import { DeudasView } from '../deudas/DeudasView';
+import { Receipt, ShieldCheck, Home, CreditCard, Layers, ArrowDownRight, ArrowLeftRight } from 'lucide-react';
 
 export const PresupuestoView: React.FC = () => {
   const { summary } = useFinance();
   const pres = summary.presupuesto;
 
-  // Submenu: Presupuesto vs Gastos
-  const [subView, setSubView] = useState<'presupuesto' | 'gastos'>('presupuesto');
+  // Submenu: Presupuesto | Gastos | Deudas
+  const [subView, setSubView] = useState<'presupuesto' | 'gastos' | 'deudas'>('presupuesto');
 
   return (
     <div className="space-y-6 pb-24 animate-fadeIn">
-      {/* Menú Superior de 2 opciones: Presupuesto | Gastos */}
+      {/* Menú Superior de 3 opciones: Presupuesto | Gastos | Deudas */}
       <div className="flex items-center justify-center">
         <div className="bg-slate-200/80 dark:bg-slate-800 p-1 rounded-2xl flex items-center gap-1 shadow-inner border border-slate-300/80 dark:border-slate-700/60 w-full sm:w-auto">
           <button
             type="button"
             onClick={() => setSubView('presupuesto')}
-            className={`flex-1 sm:px-8 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+            className={`flex-1 sm:px-6 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
               subView === 'presupuesto'
                 ? 'bg-blue-600 text-white shadow-sm'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -30,7 +31,7 @@ export const PresupuestoView: React.FC = () => {
           <button
             type="button"
             onClick={() => setSubView('gastos')}
-            className={`flex-1 sm:px-8 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+            className={`flex-1 sm:px-6 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
               subView === 'gastos'
                 ? 'bg-blue-600 text-white shadow-sm'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -38,11 +39,24 @@ export const PresupuestoView: React.FC = () => {
           >
             <Home className="w-4 h-4" /> Gastos
           </button>
+          <button
+            type="button"
+            onClick={() => setSubView('deudas')}
+            className={`flex-1 sm:px-6 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+              subView === 'deudas'
+                ? 'bg-blue-600 text-white shadow-sm'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+            }`}
+          >
+            <ArrowLeftRight className="w-4 h-4" /> Deudas
+          </button>
         </div>
       </div>
 
       {subView === 'gastos' ? (
         <GastosFijosView hideHeader={true} />
+      ) : subView === 'deudas' ? (
+        <DeudasView />
       ) : (
         <div className="space-y-6">
           {/* Lista de Gastos */}
