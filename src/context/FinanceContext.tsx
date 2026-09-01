@@ -5,6 +5,7 @@ import {
   HousingExpense,
   SubscriptionItem,
   CreditCardItem,
+  CreditCardPayment,
   ObligationItem,
   BilleteraAccountItem,
   DeudaItem,
@@ -233,42 +234,22 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         return acc;
       });
 
-      // 2. Si es Gasto y el destino es Tarjeta de Crédito, aplicar el pago sin borrar las compras
+      // 2. Si es Gasto y el destino es Tarjeta de Crédito, registrar el abono/pago a la tarjeta
       let updatedCreditCards = prev.creditCards;
       if (!isIncome && !isTransfer && movement.destinationType === 'card' && movement.destinationId) {
         updatedCreditCards = (prev.creditCards || []).map(c => {
           if (c.id === movement.destinationId) {
-            if (c.billingCutoffAmount !== undefined) {
-              const newCutoff = c.billingCutoffAmount - movement.amount;
-              if (newCutoff <= 0) {
-                return {
-                  ...c,
-                  billingCutoffAmount: undefined,
-                  billingCutoffDate: undefined,
-                  purchases: (c.purchases || []).map(p => ({ ...p, isAfterCutoff: false }))
-                };
-              } else {
-                return {
-                  ...c,
-                  billingCutoffAmount: newCutoff
-                };
-              }
-            } else {
-              let amountToDeduct = movement.amount;
-              const updatedPurchases = (c.purchases || []).map(p => {
-                if (!p.isPaid && amountToDeduct > 0) {
-                  if (p.amount <= amountToDeduct) {
-                    amountToDeduct -= p.amount;
-                    return { ...p, isPaid: true };
-                  }
-                }
-                return p;
-              });
-              return {
-                ...c,
-                purchases: updatedPurchases
-              };
-            }
+            const newPayment: CreditCardPayment = {
+              id: `pay-${Date.now()}`,
+              amount: movement.amount,
+              date: new Date().toLocaleDateString('es-CO', { day: '2-digit', month: 'short' }),
+              concept: movement.name.trim() || 'Abono / Pago',
+              sourceAccountName
+            };
+            return {
+              ...c,
+              payments: [newPayment, ...(c.payments || [])]
+            };
           }
           return c;
         });
@@ -455,7 +436,8 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
             ...c,
             billingCutoffAmount: currentTotal,
             billingCutoffDate: new Date().toLocaleDateString('es-CO', { day: '2-digit', month: 'short' }),
-            purchases: (c.purchases || []).map(p => ({ ...p, isAfterCutoff: false }))
+            purchases: (c.purchases || []).map(p => ({ ...p, isAfterCutoff: false })),
+            payments: []
           };
         }
         return c;
@@ -476,7 +458,8 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
             ...c,
             billingCutoffAmount: undefined,
             billingCutoffDate: undefined,
-            purchases: remainingPurchases
+            purchases: remainingPurchases,
+            payments: []
           };
         }
         return c;
@@ -502,7 +485,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }));
   };
 
-  // Limpiar Registro de Tarjeta (Marca como pagadas todas las compras manteniendo su historial)
+  // Limpiar Registro de Tarjeta (Borra los registros de compras y pagos)
   const clearCardPurchases = (cardId: string) => {
     setData(prev => ({
       ...prev,
@@ -512,7 +495,8 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
             ...c,
             billingCutoffAmount: undefined,
             billingCutoffDate: undefined,
-            purchases: (c.purchases || []).map(p => ({ ...p, isPaid: true, isAfterCutoff: false }))
+            purchases: [],
+            payments: []
           };
         }
         return c;

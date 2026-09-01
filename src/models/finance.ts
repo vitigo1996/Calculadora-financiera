@@ -71,6 +71,14 @@ export interface CreditCardPurchase {
   isPaid?: boolean;
 }
 
+export interface CreditCardPayment {
+  id: string;
+  amount: number;
+  date: string;
+  concept?: string;
+  sourceAccountName?: string;
+}
+
 export interface CreditCardItem {
   id: string;
   name: string;
@@ -81,6 +89,7 @@ export interface CreditCardItem {
   billingCutoffAmount?: number; // Saldo congelado al hacer corte
   billingCutoffDate?: string;
   purchases: CreditCardPurchase[];
+  payments?: CreditCardPayment[];
 }
 
 export interface SubscriptionItem {

@@ -316,13 +316,31 @@ export const BilleteraView: React.FC = () => {
     }
 
     const defaultName = movementType === 'transfer' ? 'Transferencia' : (movementType === 'income' ? 'Ingreso' : 'Gasto');
+    const sourceId = movementSourceId || (data.billeteraItems[0]?.id || '');
+
+    // Validar si el saldo origen queda menor a cero para advertir corrección
+    if (movementType !== 'income') {
+      const sourceAcc = (data.billeteraItems || []).find(b => b.id === sourceId);
+      if (sourceAcc && (sourceAcc.saldo - amount < 0)) {
+        setConfirmConfig({
+          isOpen: true,
+          title: 'Saldo Insuficiente',
+          message: `El monto a registrar (${formatCurrency(amount)}) supera el saldo disponible en ${sourceAcc.nombre} (${formatCurrency(sourceAcc.saldo)}). Por favor corrige el valor o revisa los saldos de tus cuentas antes de continuar.`,
+          confirmText: 'Entendido',
+          cancelText: null,
+          variant: 'danger',
+          onConfirm: () => {}
+        });
+        return;
+      }
+    }
 
     addExpenseMovement({
       type: movementType,
       name: movementName.trim() || defaultName,
       amount,
       moneda: 'COP',
-      sourceAccountId: movementSourceId || (data.billeteraItems[0]?.id || ''),
+      sourceAccountId: sourceId,
       destinationType: destType,
       destinationId: destId,
       destinationName: destName

@@ -72,10 +72,13 @@ export function calculateSubscriptionMonthlyCost(sub: SubscriptionItem): number 
 }
 
 export function calculateCardPurchasesTotal(cc: CreditCardItem): number {
+  const totalPurchases = (cc.purchases || []).reduce((sum, p) => sum + (p.amount || 0), 0);
+  const totalPayments = (cc.payments || []).reduce((sum, pay) => sum + (pay.amount || 0), 0);
+
   if (cc.billingCutoffAmount !== undefined) {
-    return cc.billingCutoffAmount;
+    return Math.max(0, cc.billingCutoffAmount - totalPayments);
   }
-  return (cc.purchases || []).filter(p => !p.isPaid).reduce((sum, p) => sum + (p.amount || 0), 0);
+  return Math.max(0, totalPurchases - totalPayments);
 }
 
 export function calculateCardPaymentDue(cc: CreditCardItem): number {

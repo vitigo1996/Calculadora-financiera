@@ -324,9 +324,9 @@ export const PortafolioView: React.FC = () => {
                 {port.items.map((item, i) => (
                   <div
                     key={item.id || i}
-                    className="flex items-center justify-between p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 transition-colors"
+                    className="p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 transition-colors flex items-center justify-between gap-2"
                   >
-                    <div className="flex items-center gap-2.5 min-w-0 flex-1 pr-2">
+                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
                       {/* Círculo de color interactivo */}
                       <button
                         type="button"
@@ -336,17 +336,22 @@ export const PortafolioView: React.FC = () => {
                         style={{ backgroundColor: item.color }}
                       />
 
-                      <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
-                        {item.label}
-                      </span>
+                      <div className="min-w-0 flex-1">
+                        <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block truncate">
+                          {item.label}
+                        </span>
+                        <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400 block sm:hidden">
+                          {formatCurrency(item.valorCOP, 'COP')}
+                        </span>
+                      </div>
                     </div>
 
                     <div className="text-right flex items-center gap-2 flex-shrink-0">
-                      <span className="text-xs font-mono text-slate-500 dark:text-slate-400 hidden sm:inline">
+                      <span className="text-xs font-mono font-semibold text-slate-700 dark:text-slate-300 hidden sm:inline">
                         {formatCurrency(item.valorCOP, 'COP')}
                       </span>
                       <span
-                        className="font-bold text-xs font-mono px-2 py-0.5 rounded-lg text-white"
+                        className="font-bold text-[11px] font-mono px-2 py-0.5 rounded-lg text-white whitespace-nowrap shadow-xs"
                         style={{ backgroundColor: item.color }}
                       >
                         {item.percentage.toFixed(1)}%
