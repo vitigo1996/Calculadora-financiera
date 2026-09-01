@@ -154,11 +154,10 @@ export const CreditosSuscripcionesView: React.FC = () => {
 
   // Do Cutoff
   const handleDoCutoff = (card: CreditCardItem) => {
-    const totalCurrent = calculateCardPurchasesTotal(card);
     setConfirmConfig({
       isOpen: true,
-      title: 'Realizar Corte de Tarjeta',
-      message: `¿Deseas fijar el corte en "${card.name}" por ${formatCurrency(totalCurrent)}? Este será el pago fijado del mes. Las compras posteriores no alterarán este pago.`,
+      title: 'Confirmar Corte de Facturación',
+      message: '¿Deseas confirmar el corte?',
       confirmText: 'Confirmar Corte',
       cancelText: 'Cancelar',
       variant: 'warning',
@@ -385,8 +384,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <Scissors className="w-4 h-4 text-amber-600 flex-shrink-0" />
                   <span>
-                    <strong>Corte de facturación fijado:</strong> El pago fijado para el presupuesto es{' '}
-                    <strong>{formatCurrency(selectedCard.billingCutoffAmount)}</strong>.
+                    Corte de facturación con valor de: <strong>{formatCurrency(selectedCard.billingCutoffAmount)}</strong>
                   </span>
                 </div>
               </div>

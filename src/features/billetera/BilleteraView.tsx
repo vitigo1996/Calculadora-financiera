@@ -583,7 +583,7 @@ export const BilleteraView: React.FC = () => {
             <form onSubmit={handleSaveMovement} className="space-y-4">
               <div>
                 <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                  Nombre / Concepto
+                  Concepto
                 </label>
                 <input
                   type="text"
@@ -615,7 +615,7 @@ export const BilleteraView: React.FC = () => {
                 <div className="space-y-3">
                   <div>
                     <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                      Desde Cuenta (Origen)
+                      Cuenta Origen
                     </label>
                     <select
                       value={movementSourceId}
@@ -633,7 +633,7 @@ export const BilleteraView: React.FC = () => {
 
                   <div>
                     <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                      Hacia Cuenta (Destino)
+                      Destino
                     </label>
                     <select
                       value={movementDestTransferId}
@@ -654,7 +654,7 @@ export const BilleteraView: React.FC = () => {
               ) : (
                 <div>
                   <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                    {movementType === 'income' ? 'Depositar en Cuenta' : 'Desde Cuenta (Origen)'}
+                    Cuenta Origen
                   </label>
                   <select
                     value={movementSourceId}
@@ -712,7 +712,7 @@ export const BilleteraView: React.FC = () => {
                   {movementDestType === 'card' && (
                     <div className="animate-fadeIn mt-2">
                       <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 block mb-1">
-                        Selecciona la Tarjeta
+                        Destino
                       </label>
                       <select
                         value={movementDestId}
@@ -722,7 +722,7 @@ export const BilleteraView: React.FC = () => {
                       >
                         {data.creditCards.map(c => (
                           <option key={c.id} value={c.id}>
-                            {c.name} (Cupo: {formatCurrency(c.creditLimit)})
+                            {c.name}
                           </option>
                         ))}
                       </select>
