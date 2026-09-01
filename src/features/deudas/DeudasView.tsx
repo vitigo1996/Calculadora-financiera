@@ -12,8 +12,7 @@ import {
   X,
   GripVertical,
   ArrowDownLeft,
-  ArrowUpRight,
-  Coins
+  ArrowUpRight
 } from 'lucide-react';
 
 export const DeudasView: React.FC = () => {
@@ -138,56 +137,12 @@ export const DeudasView: React.FC = () => {
     });
   };
 
-  const totalPorCobrar = (data.deudaItems || [])
-    .filter(d => d.tipo === 'por_cobrar')
-    .reduce((sum, d) => sum + (d.monto || 0), 0);
-  const totalPorPagar = (data.deudaItems || [])
-    .filter(d => d.tipo === 'por_pagar')
-    .reduce((sum, d) => sum + (d.monto || 0), 0);
-  const balanceNeto = totalPorCobrar - totalPorPagar;
-
   return (
     <div className="space-y-6 animate-fadeIn">
-      {/* 3 Tarjetas de Resumen: Me Deben, Debo, Balance Neto */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        {/* Por Cobrar */}
-        <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm transition-colors overflow-hidden">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">Me Deben</span>
-            <ArrowDownLeft className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-          </div>
-          <div className="text-base sm:text-lg font-bold text-emerald-700 dark:text-emerald-400 font-mono tracking-tight whitespace-nowrap">
-            {formatCurrency(totalPorCobrar)}
-          </div>
-        </div>
-
-        {/* Por Pagar */}
-        <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm transition-colors overflow-hidden">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-xs font-semibold text-rose-700 dark:text-rose-400">Debo</span>
-            <ArrowUpRight className="w-4 h-4 text-rose-600 dark:text-rose-400" />
-          </div>
-          <div className="text-base sm:text-lg font-bold text-rose-700 dark:text-rose-400 font-mono tracking-tight whitespace-nowrap">
-            {formatCurrency(totalPorPagar)}
-          </div>
-        </div>
-
-        {/* Balance Neto */}
-        <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm transition-colors overflow-hidden">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-xs font-semibold text-blue-700 dark:text-blue-400">Balance Neto</span>
-            <Coins className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-          </div>
-          <div className="text-base sm:text-lg font-bold text-slate-900 dark:text-white font-mono tracking-tight whitespace-nowrap">
-            {formatCurrency(balanceNeto)}
-          </div>
-        </div>
-      </div>
-
       {/* Lista de Deudas */}
       <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
         <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-          <h3 className="font-bold text-slate-800 dark:text-white text-sm">Registro de Deudas</h3>
+          <h3 className="font-bold text-slate-800 dark:text-white text-sm">Deudas</h3>
 
           <button
             onClick={openCreateDeuda}
@@ -314,13 +269,13 @@ export const DeudasView: React.FC = () => {
             <form onSubmit={handleSaveDeuda} className="space-y-4">
               <div>
                 <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                  Nombre o Persona
+                  Nombre
                 </label>
                 <input
                   type="text"
                   value={deudaName}
                   onChange={e => setDeudaName(e.target.value)}
-                  placeholder="Ej. Deuda 1, Préstamo, Amigo"
+                  placeholder="Ej. Deuda 1, Préstamo 1, Compromiso"
                   className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
                   required
                 />
