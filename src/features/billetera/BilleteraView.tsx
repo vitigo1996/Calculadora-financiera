@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useFinance } from '../../context/FinanceContext';
 import { formatCurrency } from '../../services/financeCalculations';
 import { BilleteraAccountItem, DeudaItem } from '../../models/finance';
-import { getIconComponent, IconPicker } from '../../components/ui/IconPicker';
+import { getIconComponent, IconPickerModal, IconPickerTrigger } from '../../components/ui/IconPicker';
 import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import { AmountCalculatorInput } from '../../components/ui/AmountCalculatorInput';
 import {
@@ -49,6 +49,14 @@ export const BilleteraView: React.FC = () => {
     cancelText?: string | null;
     variant?: 'danger' | 'warning' | 'info';
     onConfirm: () => void;
+  } | null>(null);
+
+  // Icon Picker Modal State
+  const [iconPickerTarget, setIconPickerTarget] = useState<{
+    type: 'billetera_item' | 'deuda_item' | 'billetera_form' | 'deuda_form';
+    targetId?: string;
+    currentIcon: string;
+    title: string;
   } | null>(null);
 
   // Drag and drop states
@@ -383,21 +391,34 @@ export const BilleteraView: React.FC = () => {
                         isDragging ? 'opacity-40 scale-[0.99] bg-blue-50/50 dark:bg-blue-950/30' : ''
                       }`}
                     >
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
                         {/* Grip Handle */}
-                        <div className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-1 cursor-grab active:cursor-grabbing">
+                        <div className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-1 cursor-grab active:cursor-grabbing flex-shrink-0">
                           <GripVertical className="w-4 h-4" />
                         </div>
 
-                        <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${getItemIconStyle()}`}>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setIconPickerTarget({
+                              type: 'billetera_item',
+                              targetId: item.id,
+                              currentIcon: item.icon || 'wallet',
+                              title: `Ícono para ${item.nombre}`
+                            });
+                          }}
+                          className={`w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 cursor-pointer hover:scale-105 transition-transform ${getItemIconStyle()}`}
+                          title="Toca para cambiar ícono"
+                        >
                           <Icon className="w-5 h-5" />
-                        </div>
-                        <div>
-                          <h4 className="font-bold text-slate-800 dark:text-white text-sm">{item.nombre}</h4>
+                        </button>
+                        <div className="min-w-0 flex-1">
+                          <h4 className="font-bold text-slate-800 dark:text-white text-sm truncate">{item.nombre}</h4>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-shrink-0">
                         <div className="text-right">
                           <span className="font-mono font-bold text-sm text-slate-800 dark:text-white block">
                             {formatCurrency(item.saldo)}
@@ -466,27 +487,40 @@ export const BilleteraView: React.FC = () => {
                       isDragging ? 'opacity-40 scale-[0.99] bg-blue-50/50 dark:bg-blue-950/30' : ''
                     }`}
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
                       {/* Grip Handle */}
-                      <div className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-1 cursor-grab active:cursor-grabbing">
+                      <div className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-1 cursor-grab active:cursor-grabbing flex-shrink-0">
                         <GripVertical className="w-4 h-4" />
                       </div>
 
-                      <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${getItemIconStyle()}`}>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIconPickerTarget({
+                            type: 'deuda_item',
+                            targetId: item.id,
+                            currentIcon: item.icon || (isPorCobrar ? 'coins' : 'shield_alert'),
+                            title: `Ícono para ${item.nombre}`
+                          });
+                        }}
+                        className={`w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 cursor-pointer hover:scale-105 transition-transform ${getItemIconStyle()}`}
+                        title="Toca para cambiar ícono"
+                      >
                         <Icon className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h4 className="font-bold text-slate-800 dark:text-white text-sm">{item.nombre}</h4>
+                      </button>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <h4 className="font-bold text-slate-800 dark:text-white text-sm truncate">{item.nombre}</h4>
 
                           {isPorCobrar ? (
-                            <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50">
-                              <ArrowDownLeft className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50 flex-shrink-0">
+                              <ArrowDownLeft className="w-2.5 h-2.5 text-emerald-600 dark:text-emerald-400" />
                               Me Deben
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800/50">
-                              <ArrowUpRight className="w-3 h-3 text-rose-600 dark:text-rose-400" />
+                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800/50 flex-shrink-0">
+                              <ArrowUpRight className="w-2.5 h-2.5 text-rose-600 dark:text-rose-400" />
                               Debo
                             </span>
                           )}
@@ -494,7 +528,7 @@ export const BilleteraView: React.FC = () => {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-shrink-0">
                       {hasAmount ? (
                         <div className="text-right">
                           <span className="font-mono font-bold text-sm text-slate-800 dark:text-white block">
@@ -870,8 +904,15 @@ export const BilleteraView: React.FC = () => {
                 title="Ajustar Saldo"
               />
 
-              {/* Icon Picker con Mosaico Compacto y Pequeño */}
-              <IconPicker selectedIconId={billeteraIcon} onSelectIcon={setBilleteraIcon} />
+              {/* Icon Picker Trigger */}
+              <IconPickerTrigger
+                selectedIconId={billeteraIcon}
+                onClick={() => setIconPickerTarget({
+                  type: 'billetera_form',
+                  currentIcon: billeteraIcon,
+                  title: 'Seleccionar Ícono de la Cuenta'
+                })}
+              />
 
               <div className="flex items-center gap-2 pt-3">
                 {editingBilleteraObj && (
@@ -977,8 +1018,15 @@ export const BilleteraView: React.FC = () => {
                 title="Ajustar Monto"
               />
 
-              {/* Icon Picker con Mosaico Compacto y Pequeño */}
-              <IconPicker selectedIconId={deudaIcon} onSelectIcon={setDeudaIcon} />
+              {/* Icon Picker Trigger */}
+              <IconPickerTrigger
+                selectedIconId={deudaIcon}
+                onClick={() => setIconPickerTarget({
+                  type: 'deuda_form',
+                  currentIcon: deudaIcon,
+                  title: 'Seleccionar Ícono de la Deuda'
+                })}
+              />
 
               <div className="flex items-center gap-2 pt-3">
                 {editingDeudaObj && (
@@ -1010,6 +1058,28 @@ export const BilleteraView: React.FC = () => {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Pop-up Modal de Selección de Ícono */}
+      {iconPickerTarget && (
+        <IconPickerModal
+          isOpen={true}
+          onClose={() => setIconPickerTarget(null)}
+          selectedIconId={iconPickerTarget.currentIcon}
+          title={iconPickerTarget.title}
+          onSelectIcon={(newIcon) => {
+            if (!iconPickerTarget) return;
+            if (iconPickerTarget.type === 'billetera_form') {
+              setBilleteraIcon(newIcon);
+            } else if (iconPickerTarget.type === 'deuda_form') {
+              setDeudaIcon(newIcon);
+            } else if (iconPickerTarget.type === 'billetera_item' && iconPickerTarget.targetId) {
+              updateBilleteraItem(iconPickerTarget.targetId, { icon: newIcon });
+            } else if (iconPickerTarget.type === 'deuda_item' && iconPickerTarget.targetId) {
+              updateDeudaItem(iconPickerTarget.targetId, { icon: newIcon });
+            }
+          }}
+        />
       )}
 
       {/* Confirmation Modal */}

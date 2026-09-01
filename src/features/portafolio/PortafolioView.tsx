@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useFinance } from '../../context/FinanceContext';
 import { formatCurrency, convertToBase } from '../../services/financeCalculations';
 import { PortfolioAccountItem } from '../../models/finance';
-import { getIconComponent, IconPicker } from '../../components/ui/IconPicker';
+import { getIconComponent, IconPickerModal, IconPickerTrigger } from '../../components/ui/IconPicker';
 import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import { AmountCalculatorInput } from '../../components/ui/AmountCalculatorInput';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
@@ -48,6 +48,14 @@ export const PortafolioView: React.FC = () => {
     cancelText?: string | null;
     variant?: 'danger' | 'warning' | 'info';
     onConfirm: () => void;
+  } | null>(null);
+
+  // Icon Picker Modal State
+  const [iconPickerTarget, setIconPickerTarget] = useState<{
+    type: 'portfolio_item' | 'portfolio_form';
+    targetId?: string;
+    currentIcon: string;
+    title: string;
   } | null>(null);
 
   const dolarRate = data.dolarRate || 3600;
@@ -242,20 +250,33 @@ export const PortafolioView: React.FC = () => {
                     isDragging ? 'opacity-40 scale-[0.99] bg-blue-50/50 dark:bg-blue-950/30' : ''
                   }`}
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
                     {/* Ícono de agarre arrastrable */}
-                    <div className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-1 cursor-grab active:cursor-grabbing">
+                    <div className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-1 cursor-grab active:cursor-grabbing flex-shrink-0">
                       <GripVertical className="w-4 h-4" />
                     </div>
 
-                    <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${getItemIconStyle()}`}>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIconPickerTarget({
+                          type: 'portfolio_item',
+                          targetId: item.id,
+                          currentIcon: item.icon || 'trending_up',
+                          title: `Ícono para ${item.nombre}`
+                        });
+                      }}
+                      className={`w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 cursor-pointer hover:scale-105 transition-transform ${getItemIconStyle()}`}
+                      title="Toca para cambiar ícono"
+                    >
                       <Icon className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h4 className="font-bold text-slate-800 dark:text-white text-sm">{item.nombre}</h4>
+                    </button>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <h4 className="font-bold text-slate-800 dark:text-white text-sm truncate">{item.nombre}</h4>
                         {isDiff && (
-                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300">
+                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300 flex-shrink-0">
                             {itemMoneda}
                           </span>
                         )}
@@ -263,7 +284,7 @@ export const PortafolioView: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-shrink-0">
                     <div className="text-right">
                       <span className="font-mono font-bold text-sm text-slate-800 dark:text-white block">
                         {formatCurrency(item.saldo, itemMoneda)}
@@ -482,8 +503,15 @@ export const PortafolioView: React.FC = () => {
                 title="Ajustar Saldo"
               />
 
-              {/* Icon Picker con Mosaico Compacto y Pequeño */}
-              <IconPicker selectedIconId={itemIcon} onSelectIcon={setItemIcon} />
+              {/* Icon Picker Trigger */}
+              <IconPickerTrigger
+                selectedIconId={itemIcon}
+                onClick={() => setIconPickerTarget({
+                  type: 'portfolio_form',
+                  currentIcon: itemIcon,
+                  title: 'Seleccionar Ícono del Activo'
+                })}
+              />
 
               <div className="flex items-center gap-2 pt-3">
                 {editingItemObj && (
@@ -515,6 +543,24 @@ export const PortafolioView: React.FC = () => {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Pop-up Modal de Selección de Ícono */}
+      {iconPickerTarget && (
+        <IconPickerModal
+          isOpen={true}
+          onClose={() => setIconPickerTarget(null)}
+          selectedIconId={iconPickerTarget.currentIcon}
+          title={iconPickerTarget.title}
+          onSelectIcon={(newIcon) => {
+            if (!iconPickerTarget) return;
+            if (iconPickerTarget.type === 'portfolio_form') {
+              setItemIcon(newIcon);
+            } else if (iconPickerTarget.type === 'portfolio_item' && iconPickerTarget.targetId) {
+              updatePortfolioItem(iconPickerTarget.targetId, { icon: newIcon });
+            }
+          }}
+        />
       )}
 
       {/* Confirmation Modal */}
