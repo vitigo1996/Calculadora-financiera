@@ -354,79 +354,81 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
                   setDraggedHousingIdx(null);
                 }}
                 onDragEnd={() => setDraggedHousingIdx(null)}
-                className={`p-4 bg-white dark:bg-slate-900 transition-all flex items-center justify-between cursor-grab active:cursor-grabbing ${
+                className={`p-4 bg-white dark:bg-slate-900 transition-all flex flex-col gap-2 cursor-grab active:cursor-grabbing ${
                   isDragging ? 'opacity-40 scale-[0.99]' : ''
                 }`}
               >
-                <div className="flex items-start gap-3 min-w-0 flex-1">
-                  <div className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-0.5 cursor-grab active:cursor-grabbing flex-shrink-0 mt-0.5">
-                    <GripVertical className="w-3.5 h-3.5" />
-                  </div>
-
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-bold text-slate-800 dark:text-white text-sm">{item.name}</h4>
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <div className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-0.5 cursor-grab active:cursor-grabbing flex-shrink-0">
+                      <GripVertical className="w-3.5 h-3.5" />
                     </div>
 
-                    {/* Reparto proporcional en Malla 2x2 */}
-                    {activePeople.length > 1 && isSharedItem && (
-                      <div className="grid grid-cols-2 gap-1.5 mt-2 text-[11px] w-full">
-                        {activePeople.map((p, pIdx) => {
-                          const ratio = getPersonRatio(p.monthlyIncome);
-                          const share = item.totalAmount * ratio;
-                          return (
-                            <div
-                              key={p.name}
-                              className="flex items-center gap-1.5 bg-slate-100/90 dark:bg-slate-800/80 px-2.5 py-1.5 rounded-xl border border-slate-200/80 dark:border-slate-800"
-                            >
-                              <div className="flex-shrink-0 text-blue-600 dark:text-blue-400">
-                                {pIdx === 0 ? <User className="w-3.5 h-3.5" /> : <Users className="w-3.5 h-3.5" />}
-                              </div>
-                              <div className="flex flex-col leading-tight min-w-0 flex-1">
-                                <span className="font-semibold text-slate-700 dark:text-slate-300 text-[10px] truncate">
-                                  {p.name}
-                                </span>
-                                <span className="font-mono font-bold text-slate-900 dark:text-white text-[11px]">
-                                  {formatCurrency(share)}
-                                </span>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
+                    <h4 className="font-bold text-slate-800 dark:text-white text-sm truncate">{item.name}</h4>
+
+                    <span className="px-1.5 py-0.5 rounded-lg text-[10px] font-bold bg-blue-100 dark:bg-blue-950/70 border border-blue-300/60 dark:border-blue-800/40 text-blue-700 dark:text-blue-300 whitespace-nowrap flex-shrink-0">
+                      {item.period === '1st_fortnight' ? '1Q' : '2Q'}
+                    </span>
                   </div>
-                </div>
 
-                <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-                  <span className="font-mono font-bold text-sm text-slate-900 dark:text-white block">
-                    {formatCurrency(item.totalAmount)}{item.period === '1st_fortnight' ? '/1Q' : '/2Q'}
-                  </span>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <span className="font-mono font-bold text-sm text-slate-900 dark:text-white block">
+                      {formatCurrency(item.totalAmount)}
+                    </span>
 
-                  <div className="flex items-center gap-1.5">
-                    {activePeople.length > 1 && (
+                    <div className="flex items-center gap-1.5">
+                      {activePeople.length > 1 && (
+                        <button
+                          onClick={() => toggleHousingShared(item.id)}
+                          className={`p-1.5 rounded-xl transition-all border ${
+                            isSharedItem
+                              ? 'bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800/40 shadow-sm'
+                              : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-300/80 dark:border-transparent'
+                          }`}
+                          title={isSharedItem ? 'Gasto compartido entre personas' : 'Gasto individual (100% Yo)'}
+                        >
+                          <Users className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+
                       <button
-                        onClick={() => toggleHousingShared(item.id)}
-                        className={`p-1.5 rounded-xl transition-all border ${
-                          isSharedItem
-                            ? 'bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800/40 shadow-sm'
-                            : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-300/80 dark:border-transparent'
-                        }`}
-                        title={isSharedItem ? 'Gasto compartido entre personas' : 'Gasto individual (100% Yo)'}
+                        onClick={() => openEditHousing(item)}
+                        className="p-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-300/80 dark:border-transparent transition-colors"
+                        title="Editar gasto"
                       >
-                        <Users className="w-3.5 h-3.5" />
+                        <Edit2 className="w-3.5 h-3.5" />
                       </button>
-                    )}
-
-                    <button
-                      onClick={() => openEditHousing(item)}
-                      className="p-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-300/80 dark:border-transparent transition-colors"
-                      title="Editar gasto"
-                    >
-                      <Edit2 className="w-3.5 h-3.5" />
-                    </button>
+                    </div>
                   </div>
                 </div>
+
+                {/* Reparto proporcional en Malla 2x2 pegado al costado izquierdo */}
+                {activePeople.length > 1 && isSharedItem && (
+                  <div className="grid grid-cols-2 gap-1.5 w-full pt-1">
+                    {activePeople.map((p, pIdx) => {
+                      const ratio = getPersonRatio(p.monthlyIncome);
+                      const share = item.totalAmount * ratio;
+                      return (
+                        <div
+                          key={p.name}
+                          className="flex items-center gap-1.5 bg-slate-100/90 dark:bg-slate-800/80 px-2.5 py-1.5 rounded-xl border border-slate-200/80 dark:border-slate-800"
+                        >
+                          <div className="flex-shrink-0 text-blue-600 dark:text-blue-400">
+                            {pIdx === 0 ? <User className="w-3.5 h-3.5" /> : <Users className="w-3.5 h-3.5" />}
+                          </div>
+                          <div className="flex flex-col leading-tight min-w-0 flex-1">
+                            <span className="font-semibold text-slate-700 dark:text-slate-300 text-[10px] truncate">
+                              {p.name}
+                            </span>
+                            <span className="font-mono font-bold text-slate-900 dark:text-white text-[11px]">
+                              {formatCurrency(share)}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             );
           })
@@ -480,83 +482,85 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
                   setDraggedObligationIdx(null);
                 }}
                 onDragEnd={() => setDraggedObligationIdx(null)}
-                className={`p-4 bg-white dark:bg-slate-900 transition-all flex items-center justify-between cursor-grab active:cursor-grabbing ${
+                className={`p-4 bg-white dark:bg-slate-900 transition-all flex flex-col gap-2 cursor-grab active:cursor-grabbing ${
                   isDragging ? 'opacity-40 scale-[0.99]' : ''
                 }`}
               >
-                <div className="flex items-start gap-3 min-w-0 flex-1">
-                  <div className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-0.5 cursor-grab active:cursor-grabbing flex-shrink-0 mt-0.5">
-                    <GripVertical className="w-3.5 h-3.5" />
-                  </div>
-
-                  <div className="min-w-0 flex-1">
-                    {/* Nombre y al frente el valor de la cuota mensual sin paréntesis */}
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h4 className="font-bold text-slate-800 dark:text-white text-sm">{ob.name}</h4>
-                      <span className="text-xs font-bold text-slate-500 dark:text-slate-400 font-mono">
-                        {formatCurrency(monthlyPayment)}/mes
-                      </span>
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <div className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-0.5 cursor-grab active:cursor-grabbing flex-shrink-0">
+                      <GripVertical className="w-3.5 h-3.5" />
                     </div>
 
-                    {/* Reparto proporcional en Malla 2x2 */}
-                    {activePeople.length > 1 && isSharedOb && (
-                      <div className="grid grid-cols-2 gap-1.5 mt-2 text-[11px] w-full">
-                        {activePeople.map((p, pIdx) => {
-                          const ratio = getPersonRatio(p.monthlyIncome);
-                          const share = monthlyPayment * ratio;
-                          return (
-                            <div
-                              key={p.name}
-                              className="flex items-center gap-1.5 bg-slate-100/90 dark:bg-slate-800/80 px-2.5 py-1.5 rounded-xl border border-slate-200/80 dark:border-slate-800"
-                            >
-                              <div className="flex-shrink-0 text-blue-600 dark:text-blue-400">
-                                {pIdx === 0 ? <User className="w-3.5 h-3.5" /> : <Users className="w-3.5 h-3.5" />}
-                              </div>
-                              <div className="flex flex-col leading-tight min-w-0 flex-1">
-                                <span className="font-semibold text-slate-700 dark:text-slate-300 text-[10px] truncate">
-                                  {p.name}
-                                </span>
-                                <span className="font-mono font-bold text-slate-900 dark:text-white text-[11px]">
-                                  {formatCurrency(share)}
-                                </span>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
+                    <h4 className="font-bold text-slate-800 dark:text-white text-sm truncate">{ob.name}</h4>
+
+                    <span className="px-1.5 py-0.5 rounded-lg text-[10px] font-bold bg-blue-100 dark:bg-blue-950/70 border border-blue-300/60 dark:border-blue-800/40 text-blue-700 dark:text-blue-300 whitespace-nowrap flex-shrink-0">
+                      {ob.period === '1st_fortnight' ? '1Q' : '2Q'}
+                    </span>
+
+                    <span className="text-xs font-bold text-slate-500 dark:text-slate-400 font-mono flex-shrink-0">
+                      {formatCurrency(monthlyPayment)}/mes
+                    </span>
                   </div>
-                </div>
 
-                <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-                  <span className="font-mono font-bold text-sm text-slate-900 dark:text-white block">
-                    {formatCurrency(totalDebt)}{ob.period === '1st_fortnight' ? '/1Q' : '/2Q'}
-                  </span>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <span className="font-mono font-bold text-sm text-slate-900 dark:text-white block">
+                      {formatCurrency(totalDebt)}
+                    </span>
 
-                  <div className="flex items-center gap-1.5">
-                    {activePeople.length > 1 && (
+                    <div className="flex items-center gap-1.5">
+                      {activePeople.length > 1 && (
+                        <button
+                          onClick={() => toggleObligationShared(ob.id)}
+                          className={`p-1.5 rounded-xl transition-all border ${
+                            isSharedOb
+                              ? 'bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800/40 shadow-sm'
+                              : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-300/80 dark:border-transparent'
+                          }`}
+                          title={isSharedOb ? 'Obligación compartida entre personas' : 'Obligación individual (100% Yo)'}
+                        >
+                          <Users className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+
                       <button
-                        onClick={() => toggleObligationShared(ob.id)}
-                        className={`p-1.5 rounded-xl transition-all border ${
-                          isSharedOb
-                            ? 'bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800/40 shadow-sm'
-                            : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-300/80 dark:border-transparent'
-                        }`}
-                        title={isSharedOb ? 'Obligación compartida entre personas' : 'Obligación individual (100% Yo)'}
+                        onClick={() => openEditObligation(ob)}
+                        className="p-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-300/80 dark:border-transparent transition-colors"
+                        title="Editar obligación"
                       >
-                        <Users className="w-3.5 h-3.5" />
+                        <Edit2 className="w-3.5 h-3.5" />
                       </button>
-                    )}
-
-                    <button
-                      onClick={() => openEditObligation(ob)}
-                      className="p-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-300/80 dark:border-transparent transition-colors"
-                      title="Editar obligación"
-                    >
-                      <Edit2 className="w-3.5 h-3.5" />
-                    </button>
+                    </div>
                   </div>
                 </div>
+
+                {/* Reparto proporcional en Malla 2x2 pegado al costado izquierdo */}
+                {activePeople.length > 1 && isSharedOb && (
+                  <div className="grid grid-cols-2 gap-1.5 w-full pt-1">
+                    {activePeople.map((p, pIdx) => {
+                      const ratio = getPersonRatio(p.monthlyIncome);
+                      const share = monthlyPayment * ratio;
+                      return (
+                        <div
+                          key={p.name}
+                          className="flex items-center gap-1.5 bg-slate-100/90 dark:bg-slate-800/80 px-2.5 py-1.5 rounded-xl border border-slate-200/80 dark:border-slate-800"
+                        >
+                          <div className="flex-shrink-0 text-blue-600 dark:text-blue-400">
+                            {pIdx === 0 ? <User className="w-3.5 h-3.5" /> : <Users className="w-3.5 h-3.5" />}
+                          </div>
+                          <div className="flex flex-col leading-tight min-w-0 flex-1">
+                            <span className="font-semibold text-slate-700 dark:text-slate-300 text-[10px] truncate">
+                              {p.name}
+                            </span>
+                            <span className="font-mono font-bold text-slate-900 dark:text-white text-[11px]">
+                              {formatCurrency(share)}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             );
           })
