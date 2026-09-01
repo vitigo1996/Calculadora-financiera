@@ -358,38 +358,35 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
                   isDragging ? 'opacity-40 scale-[0.99]' : ''
                 }`}
               >
-                <div className="flex items-center gap-3">
-                  <div className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-0.5 cursor-grab active:cursor-grabbing">
+                <div className="flex items-start gap-3 min-w-0 flex-1">
+                  <div className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-0.5 cursor-grab active:cursor-grabbing flex-shrink-0 mt-0.5">
                     <GripVertical className="w-3.5 h-3.5" />
                   </div>
 
-                  <span className="px-1.5 py-0.5 rounded-lg text-[10px] font-bold bg-blue-100 dark:bg-blue-950/70 border border-blue-300/60 dark:border-blue-800/40 text-blue-700 dark:text-blue-300 whitespace-nowrap flex-shrink-0">
-                    {item.period === '1st_fortnight' ? '1Q' : '2Q'}
-                  </span>
-
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <h4 className="font-bold text-slate-800 dark:text-white text-sm">{item.name}</h4>
                     </div>
-                    {/* Reparto proporcional */}
+
+                    {/* Reparto proporcional en Malla 2x2 */}
                     {activePeople.length > 1 && isSharedItem && (
-                      <div className="flex flex-wrap items-center gap-2 mt-1.5 text-[11px]">
+                      <div className="grid grid-cols-2 gap-1.5 mt-2 text-[11px] w-full">
                         {activePeople.map((p, pIdx) => {
                           const ratio = getPersonRatio(p.monthlyIncome);
                           const share = item.totalAmount * ratio;
                           return (
                             <div
                               key={p.name}
-                              className="flex items-center gap-1.5 bg-slate-100/90 dark:bg-slate-800/80 px-2 py-1 rounded-xl border border-slate-200/80 dark:border-slate-800"
+                              className="flex items-center gap-1.5 bg-slate-100/90 dark:bg-slate-800/80 px-2.5 py-1.5 rounded-xl border border-slate-200/80 dark:border-slate-800"
                             >
                               <div className="flex-shrink-0 text-blue-600 dark:text-blue-400">
                                 {pIdx === 0 ? <User className="w-3.5 h-3.5" /> : <Users className="w-3.5 h-3.5" />}
                               </div>
-                              <div className="flex flex-col leading-tight">
-                                <span className="font-semibold text-slate-700 dark:text-slate-300 text-[10px]">
+                              <div className="flex flex-col leading-tight min-w-0 flex-1">
+                                <span className="font-semibold text-slate-700 dark:text-slate-300 text-[10px] truncate">
                                   {p.name}
                                 </span>
-                                <span className="font-mono font-bold text-slate-900 dark:text-slate-100 text-[11px]">
+                                <span className="font-mono font-bold text-slate-900 dark:text-white text-[11px]">
                                   {formatCurrency(share)}
                                 </span>
                               </div>
@@ -403,7 +400,7 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
 
                 <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
                   <span className="font-mono font-bold text-sm text-slate-900 dark:text-white block">
-                    {formatCurrency(item.totalAmount)}
+                    {formatCurrency(item.totalAmount)}{item.period === '1st_fortnight' ? '/1Q' : '/2Q'}
                   </span>
 
                   <div className="flex items-center gap-1.5">
@@ -487,16 +484,12 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
                   isDragging ? 'opacity-40 scale-[0.99]' : ''
                 }`}
               >
-                <div className="flex items-center gap-3">
-                  <div className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-0.5 cursor-grab active:cursor-grabbing">
+                <div className="flex items-start gap-3 min-w-0 flex-1">
+                  <div className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-0.5 cursor-grab active:cursor-grabbing flex-shrink-0 mt-0.5">
                     <GripVertical className="w-3.5 h-3.5" />
                   </div>
 
-                  <span className="px-1.5 py-0.5 rounded-lg text-[10px] font-bold bg-blue-100 dark:bg-blue-950/70 border border-blue-300/60 dark:border-blue-800/40 text-blue-700 dark:text-blue-300 whitespace-nowrap flex-shrink-0">
-                    {ob.period === '1st_fortnight' ? '1Q' : '2Q'}
-                  </span>
-
-                  <div>
+                  <div className="min-w-0 flex-1">
                     {/* Nombre y al frente el valor de la cuota mensual sin paréntesis */}
                     <div className="flex flex-wrap items-center gap-2">
                       <h4 className="font-bold text-slate-800 dark:text-white text-sm">{ob.name}</h4>
@@ -505,25 +498,25 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
                       </span>
                     </div>
 
-                    {/* Reparto proporcional */}
+                    {/* Reparto proporcional en Malla 2x2 */}
                     {activePeople.length > 1 && isSharedOb && (
-                      <div className="flex flex-wrap items-center gap-2 mt-1.5 text-[11px]">
+                      <div className="grid grid-cols-2 gap-1.5 mt-2 text-[11px] w-full">
                         {activePeople.map((p, pIdx) => {
                           const ratio = getPersonRatio(p.monthlyIncome);
                           const share = monthlyPayment * ratio;
                           return (
                             <div
                               key={p.name}
-                              className="flex items-center gap-1.5 bg-slate-100/90 dark:bg-slate-800/80 px-2 py-1 rounded-xl border border-slate-200/80 dark:border-slate-800"
+                              className="flex items-center gap-1.5 bg-slate-100/90 dark:bg-slate-800/80 px-2.5 py-1.5 rounded-xl border border-slate-200/80 dark:border-slate-800"
                             >
                               <div className="flex-shrink-0 text-blue-600 dark:text-blue-400">
                                 {pIdx === 0 ? <User className="w-3.5 h-3.5" /> : <Users className="w-3.5 h-3.5" />}
                               </div>
-                              <div className="flex flex-col leading-tight">
-                                <span className="font-semibold text-slate-700 dark:text-slate-300 text-[10px]">
+                              <div className="flex flex-col leading-tight min-w-0 flex-1">
+                                <span className="font-semibold text-slate-700 dark:text-slate-300 text-[10px] truncate">
                                   {p.name}
                                 </span>
-                                <span className="font-mono font-bold text-slate-900 dark:text-slate-100 text-[11px]">
+                                <span className="font-mono font-bold text-slate-900 dark:text-white text-[11px]">
                                   {formatCurrency(share)}
                                 </span>
                               </div>
@@ -537,7 +530,7 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
 
                 <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
                   <span className="font-mono font-bold text-sm text-slate-900 dark:text-white block">
-                    {formatCurrency(totalDebt)}
+                    {formatCurrency(totalDebt)}{ob.period === '1st_fortnight' ? '/1Q' : '/2Q'}
                   </span>
 
                   <div className="flex items-center gap-1.5">
@@ -953,60 +946,6 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
                   </button>
                 </div>
               </div>
-
-              {/* Quincena (si es mensual) */}
-              {subBilling === 'monthly' && (
-                <div>
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
-                    Periodo de Pago
-                  </label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setSubPeriod('1st_fortnight')}
-                      className={`py-2 px-3 rounded-2xl text-xs font-bold border transition-all ${
-                        subPeriod === '1st_fortnight'
-                          ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
-                          : 'bg-slate-50 dark:bg-slate-950/40 border-slate-300 dark:border-slate-800 text-slate-600 dark:text-slate-400'
-                      }`}
-                    >
-                      1ª Quincena
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setSubPeriod('2nd_fortnight')}
-                      className={`py-2 px-3 rounded-2xl text-xs font-bold border transition-all ${
-                        subPeriod === '2nd_fortnight'
-                          ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
-                          : 'bg-slate-50 dark:bg-slate-950/40 border-slate-300 dark:border-slate-800 text-slate-600 dark:text-slate-400'
-                      }`}
-                    >
-                      2ª Quincena
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Mes de Pago (si es anual) */}
-              {subBilling === 'yearly' && (
-                <div>
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                    Mes en que se cobra
-                  </label>
-                  <select
-                    value={subMonth}
-                    onChange={e => setSubMonth(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
-                  >
-                    {MONTHS.map(m => (
-                      <option key={m} value={m}>
-                        {m}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
 
               <div className="flex items-center gap-2 pt-3">
                 {editingSubObj && (
