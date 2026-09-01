@@ -620,31 +620,20 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
                   isDragging ? 'opacity-40 scale-[0.99]' : ''
                 }`}
               >
-                <div className="flex items-center gap-3">
-                  <div className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-0.5 cursor-grab active:cursor-grabbing">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <div className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-0.5 cursor-grab active:cursor-grabbing flex-shrink-0">
                     <GripVertical className="w-3.5 h-3.5" />
                   </div>
 
-                  {/* Quincena si es mensual, o Mes si es anual */}
-                  {isYearly ? (
-                    <span className="px-1.5 py-0.5 rounded-lg text-[10px] font-bold bg-amber-100 dark:bg-amber-950/70 border border-amber-300/60 dark:border-amber-800/40 text-amber-700 dark:text-amber-300 whitespace-nowrap flex-shrink-0 flex items-center gap-0.5">
-                      <Calendar className="w-2.5 h-2.5" /> {sub.billingMonth ? sub.billingMonth.slice(0, 3) : 'Anual'}
-                    </span>
-                  ) : (
-                    <span className="px-1.5 py-0.5 rounded-lg text-[10px] font-bold bg-blue-100 dark:bg-blue-950/70 border border-blue-300/60 dark:border-blue-800/40 text-blue-700 dark:text-blue-300 whitespace-nowrap flex-shrink-0">
-                      {sub.period === '2nd_fortnight' ? '2Q' : '1Q'}
-                    </span>
-                  )}
-
-                  <div>
-                    <h4 className="font-bold text-slate-800 dark:text-white text-sm">{sub.name}</h4>
+                  <div className="min-w-0 flex-1">
+                    <h4 className="font-bold text-slate-800 dark:text-white text-sm truncate">{sub.name}</h4>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-shrink-0">
                   <div className="text-right">
                     <span className="font-mono font-bold text-sm text-slate-800 dark:text-white block">
-                      {formatCurrency(monthlyCost)}
+                      {formatCurrency(monthlyCost)}{isYearly ? '/año' : '/mes'}
                     </span>
                   </div>
 
