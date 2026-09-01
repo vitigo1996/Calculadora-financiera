@@ -3,14 +3,13 @@ import { useFinance } from '../../context/FinanceContext';
 import { formatCurrency, calculateSubscriptionMonthlyCost } from '../../services/financeCalculations';
 import { HousingExpense, ObligationItem, SubscriptionItem, PaymentPeriod } from '../../models/finance';
 import { ConfirmModal } from '../../components/ui/ConfirmModal';
+import { AmountCalculatorInput } from '../../components/ui/AmountCalculatorInput';
 import {
   Home,
   Edit2,
   Plus,
-  Minus,
   Trash2,
   X,
-  Calculator,
   GripVertical,
   Users,
   User,
@@ -68,8 +67,6 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
   const [housingName, setHousingName] = useState('');
   const [housingTotal, setHousingTotal] = useState('');
   const [housingPeriod, setHousingPeriod] = useState<PaymentPeriod>('1st_fortnight');
-  const [showHousingCalc, setShowHousingCalc] = useState(false);
-  const [housingCalcDelta, setHousingCalcDelta] = useState('');
 
   // Modal: Obligation (Cuota Mensual + Total Deuda)
   const [showObligationModal, setShowObligationModal] = useState(false);
@@ -78,10 +75,6 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
   const [obligationMonthlyPayment, setObligationMonthlyPayment] = useState('');
   const [obligationTotalDebt, setObligationTotalDebt] = useState('');
   const [obligationPeriod, setObligationPeriod] = useState<PaymentPeriod>('1st_fortnight');
-  const [showObligationMonthlyCalc, setShowObligationMonthlyCalc] = useState(false);
-  const [obligationMonthlyCalcDelta, setObligationMonthlyCalcDelta] = useState('');
-  const [showObligationDebtCalc, setShowObligationDebtCalc] = useState(false);
-  const [obligationDebtCalcDelta, setObligationDebtCalcDelta] = useState('');
 
   // Modal: Subscription
   const [showSubModal, setShowSubModal] = useState(false);
@@ -92,8 +85,6 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
   const [subMembers, setSubMembers] = useState('1');
   const [subPeriod, setSubPeriod] = useState<PaymentPeriod>('1st_fortnight');
   const [subMonth, setSubMonth] = useState('Enero');
-  const [showSubCalc, setShowSubCalc] = useState(false);
-  const [subCalcDelta, setSubCalcDelta] = useState('');
 
   // Calculate ratio for a person
   const getPersonRatio = (personMonthlyIncome: number) => {
@@ -116,8 +107,6 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
     setHousingName('');
     setHousingTotal('');
     setHousingPeriod('1st_fortnight');
-    setHousingCalcDelta('');
-    setShowHousingCalc(false);
     setShowHousingModal(true);
   };
 
@@ -127,8 +116,6 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
     setHousingName(h.name);
     setHousingTotal(h.totalAmount.toString());
     setHousingPeriod(h.period);
-    setHousingCalcDelta('');
-    setShowHousingCalc(false);
     setShowHousingModal(true);
   };
 
@@ -182,10 +169,6 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
     setObligationMonthlyPayment('');
     setObligationTotalDebt('');
     setObligationPeriod('1st_fortnight');
-    setObligationMonthlyCalcDelta('');
-    setObligationDebtCalcDelta('');
-    setShowObligationMonthlyCalc(false);
-    setShowObligationDebtCalc(false);
     setShowObligationModal(true);
   };
 
@@ -196,10 +179,6 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
     setObligationMonthlyPayment(ob.totalAmount.toString());
     setObligationTotalDebt(ob.totalDebtBalance !== undefined ? ob.totalDebtBalance.toString() : '');
     setObligationPeriod(ob.period);
-    setObligationMonthlyCalcDelta('');
-    setObligationDebtCalcDelta('');
-    setShowObligationMonthlyCalc(false);
-    setShowObligationDebtCalc(false);
     setShowObligationModal(true);
   };
 
@@ -258,8 +237,6 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
     setSubMembers('1');
     setSubPeriod('1st_fortnight');
     setSubMonth('Enero');
-    setSubCalcDelta('');
-    setShowSubCalc(false);
     setShowSubModal(true);
   };
 
@@ -272,8 +249,6 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
     setSubMembers((sub.members || 1).toString());
     setSubPeriod(sub.period || '1st_fortnight');
     setSubMonth(sub.billingMonth || 'Enero');
-    setSubCalcDelta('');
-    setShowSubCalc(false);
     setShowSubModal(true);
   };
 
@@ -713,96 +688,14 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
               </div>
 
               {/* Valor Total con Calculadora */}
-              <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                  Valor Total
-                </label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    step="any"
-                    value={housingTotal}
-                    onChange={e => setHousingTotal(e.target.value)}
-                    placeholder="0"
-                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl pl-3.5 pr-11 py-2.5 text-sm text-slate-800 dark:text-white font-mono focus:outline-none focus:border-blue-500"
-                    required
-                  />
-
-                  <button
-                    type="button"
-                    onClick={() => setShowHousingCalc(!showHousingCalc)}
-                    title="Calculadora (+ / -)"
-                    className={`absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-xl transition-all ${
-                      showHousingCalc
-                        ? 'bg-blue-600 text-white shadow-sm'
-                        : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700'
-                    }`}
-                  >
-                    <Calculator className="w-4 h-4" />
-                  </button>
-
-                  {/* Pop-up de Calculadora */}
-                  {showHousingCalc && (
-                    <div className="absolute right-0 top-full mt-2 z-30 p-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-2xl shadow-xl space-y-2.5 w-64 animate-scaleUp">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
-                          Ajustar Monto
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => setShowHousingCalc(false)}
-                          className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-
-                      <input
-                        type="number"
-                        step="any"
-                        value={housingCalcDelta}
-                        onChange={e => setHousingCalcDelta(e.target.value)}
-                        placeholder="Valor a sumar o restar..."
-                        className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-xs px-2.5 py-1.5 rounded-xl text-slate-800 dark:text-white font-mono focus:outline-none focus:border-blue-500"
-                        autoFocus
-                      />
-
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const delta = parseFloat(housingCalcDelta);
-                            if (!isNaN(delta) && delta > 0) {
-                              const curr = parseFloat(housingTotal) || 0;
-                              setHousingTotal((curr + delta).toString());
-                            }
-                            setHousingCalcDelta('');
-                            setShowHousingCalc(false);
-                          }}
-                          className="flex-1 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center justify-center gap-1 shadow-sm transition-all"
-                        >
-                          <Plus className="w-3.5 h-3.5" /> Sumar
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const delta = parseFloat(housingCalcDelta);
-                            if (!isNaN(delta) && delta > 0) {
-                              const curr = parseFloat(housingTotal) || 0;
-                              setHousingTotal(Math.max(0, curr - delta).toString());
-                            }
-                            setHousingCalcDelta('');
-                            setShowHousingCalc(false);
-                          }}
-                          className="flex-1 py-1.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-white font-bold text-xs flex items-center justify-center gap-1 shadow-sm transition-all"
-                        >
-                          <Minus className="w-3.5 h-3.5" /> Restar
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
+              <AmountCalculatorInput
+                label="Valor Total"
+                value={housingTotal}
+                onChange={setHousingTotal}
+                placeholder="0"
+                required
+                title="Ajustar Monto"
+              />
 
               {/* Quincena de Pago */}
               <div>
@@ -898,187 +791,23 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
               </div>
 
               {/* Cuota Mensual con Calculadora */}
-              <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                  Cuota Mensual
-                </label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    step="any"
-                    value={obligationMonthlyPayment}
-                    onChange={e => setObligationMonthlyPayment(e.target.value)}
-                    placeholder="0"
-                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl pl-3.5 pr-11 py-2.5 text-sm text-slate-800 dark:text-white font-mono focus:outline-none focus:border-blue-500"
-                    required
-                  />
+              <AmountCalculatorInput
+                label="Cuota Mensual"
+                value={obligationMonthlyPayment}
+                onChange={setObligationMonthlyPayment}
+                placeholder="0"
+                required
+                title="Ajustar Cuota Mensual"
+              />
 
-                  <button
-                    type="button"
-                    onClick={() => setShowObligationMonthlyCalc(!showObligationMonthlyCalc)}
-                    title="Calculadora (+ / -)"
-                    className={`absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-xl transition-all ${
-                      showObligationMonthlyCalc
-                        ? 'bg-blue-600 text-white shadow-sm'
-                        : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700'
-                    }`}
-                  >
-                    <Calculator className="w-4 h-4" />
-                  </button>
-
-                  {/* Pop-up de Calculadora para Cuota */}
-                  {showObligationMonthlyCalc && (
-                    <div className="absolute right-0 top-full mt-2 z-30 p-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-2xl shadow-xl space-y-2.5 w-64 animate-scaleUp">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
-                          Ajustar Cuota Mensual
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => setShowObligationMonthlyCalc(false)}
-                          className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-
-                      <input
-                        type="number"
-                        step="any"
-                        value={obligationMonthlyCalcDelta}
-                        onChange={e => setObligationMonthlyCalcDelta(e.target.value)}
-                        placeholder="Valor a sumar o restar..."
-                        className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-xs px-2.5 py-1.5 rounded-xl text-slate-800 dark:text-white font-mono focus:outline-none focus:border-blue-500"
-                        autoFocus
-                      />
-
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const delta = parseFloat(obligationMonthlyCalcDelta);
-                            if (!isNaN(delta) && delta > 0) {
-                              const curr = parseFloat(obligationMonthlyPayment) || 0;
-                              setObligationMonthlyPayment((curr + delta).toString());
-                            }
-                            setObligationMonthlyCalcDelta('');
-                            setShowObligationMonthlyCalc(false);
-                          }}
-                          className="flex-1 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center justify-center gap-1 shadow-sm transition-all"
-                        >
-                          <Plus className="w-3.5 h-3.5" /> Sumar
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const delta = parseFloat(obligationMonthlyCalcDelta);
-                            if (!isNaN(delta) && delta > 0) {
-                              const curr = parseFloat(obligationMonthlyPayment) || 0;
-                              setObligationMonthlyPayment(Math.max(0, curr - delta).toString());
-                            }
-                            setObligationMonthlyCalcDelta('');
-                            setShowObligationMonthlyCalc(false);
-                          }}
-                          className="flex-1 py-1.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-white font-bold text-xs flex items-center justify-center gap-1 shadow-sm transition-all"
-                        >
-                          <Minus className="w-3.5 h-3.5" /> Restar
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Total Deuda (Saldo pendiente) con Calculadora */}
-              <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                  Total Deuda (Saldo Pendiente)
-                </label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    step="any"
-                    value={obligationTotalDebt}
-                    onChange={e => setObligationTotalDebt(e.target.value)}
-                    placeholder="0 (Saldo total que resta por pagar)"
-                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl pl-3.5 pr-11 py-2.5 text-sm text-slate-800 dark:text-white font-mono focus:outline-none focus:border-blue-500"
-                  />
-
-                  <button
-                    type="button"
-                    onClick={() => setShowObligationDebtCalc(!showObligationDebtCalc)}
-                    title="Calculadora (+ / -)"
-                    className={`absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-xl transition-all ${
-                      showObligationDebtCalc
-                        ? 'bg-blue-600 text-white shadow-sm'
-                        : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700'
-                    }`}
-                  >
-                    <Calculator className="w-4 h-4" />
-                  </button>
-
-                  {/* Pop-up de Calculadora para Total Deuda */}
-                  {showObligationDebtCalc && (
-                    <div className="absolute right-0 top-full mt-2 z-30 p-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-2xl shadow-xl space-y-2.5 w-64 animate-scaleUp">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
-                          Ajustar Total Deuda
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => setShowObligationDebtCalc(false)}
-                          className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-
-                      <input
-                        type="number"
-                        step="any"
-                        value={obligationDebtCalcDelta}
-                        onChange={e => setObligationDebtCalcDelta(e.target.value)}
-                        placeholder="Valor a sumar o restar..."
-                        className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-xs px-2.5 py-1.5 rounded-xl text-slate-800 dark:text-white font-mono focus:outline-none focus:border-blue-500"
-                        autoFocus
-                      />
-
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const delta = parseFloat(obligationDebtCalcDelta);
-                            if (!isNaN(delta) && delta > 0) {
-                              const curr = parseFloat(obligationTotalDebt) || 0;
-                              setObligationTotalDebt((curr + delta).toString());
-                            }
-                            setObligationDebtCalcDelta('');
-                            setShowObligationDebtCalc(false);
-                          }}
-                          className="flex-1 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center justify-center gap-1 shadow-sm transition-all"
-                        >
-                          <Plus className="w-3.5 h-3.5" /> Sumar
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const delta = parseFloat(obligationDebtCalcDelta);
-                            if (!isNaN(delta) && delta > 0) {
-                              const curr = parseFloat(obligationTotalDebt) || 0;
-                              setObligationTotalDebt(Math.max(0, curr - delta).toString());
-                            }
-                            setObligationDebtCalcDelta('');
-                            setShowObligationDebtCalc(false);
-                          }}
-                          className="flex-1 py-1.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-white font-bold text-xs flex items-center justify-center gap-1 shadow-sm transition-all"
-                        >
-                          <Minus className="w-3.5 h-3.5" /> Restar
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
+              {/* Total Deuda con Calculadora */}
+              <AmountCalculatorInput
+                label="Total Deuda (Saldo Pendiente)"
+                value={obligationTotalDebt}
+                onChange={setObligationTotalDebt}
+                placeholder="0 (Saldo total que resta por pagar)"
+                title="Ajustar Total Deuda"
+              />
 
               {/* Quincena de Pago */}
               <div>
@@ -1174,96 +903,14 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
               </div>
 
               {/* Precio con Calculadora */}
-              <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                  Precio Total
-                </label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    step="any"
-                    value={subPrice}
-                    onChange={e => setSubPrice(e.target.value)}
-                    placeholder="0"
-                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl pl-3.5 pr-11 py-2.5 text-sm text-slate-800 dark:text-white font-mono focus:outline-none focus:border-blue-500"
-                    required
-                  />
-
-                  <button
-                    type="button"
-                    onClick={() => setShowSubCalc(!showSubCalc)}
-                    title="Calculadora (+ / -)"
-                    className={`absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-xl transition-all ${
-                      showSubCalc
-                        ? 'bg-blue-600 text-white shadow-sm'
-                        : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700'
-                    }`}
-                  >
-                    <Calculator className="w-4 h-4" />
-                  </button>
-
-                  {/* Pop-up de Calculadora */}
-                  {showSubCalc && (
-                    <div className="absolute right-0 top-full mt-2 z-30 p-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-2xl shadow-xl space-y-2.5 w-64 animate-scaleUp">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
-                          Ajustar Precio
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => setShowSubCalc(false)}
-                          className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-
-                      <input
-                        type="number"
-                        step="any"
-                        value={subCalcDelta}
-                        onChange={e => setSubCalcDelta(e.target.value)}
-                        placeholder="Valor a sumar o restar..."
-                        className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-xs px-2.5 py-1.5 rounded-xl text-slate-800 dark:text-white font-mono focus:outline-none focus:border-blue-500"
-                        autoFocus
-                      />
-
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const delta = parseFloat(subCalcDelta);
-                            if (!isNaN(delta) && delta > 0) {
-                              const curr = parseFloat(subPrice) || 0;
-                              setSubPrice((curr + delta).toString());
-                            }
-                            setSubCalcDelta('');
-                            setShowSubCalc(false);
-                          }}
-                          className="flex-1 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center justify-center gap-1 shadow-sm transition-all"
-                        >
-                          <Plus className="w-3.5 h-3.5" /> Sumar
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const delta = parseFloat(subCalcDelta);
-                            if (!isNaN(delta) && delta > 0) {
-                              const curr = parseFloat(subPrice) || 0;
-                              setSubPrice(Math.max(0, curr - delta).toString());
-                            }
-                            setSubCalcDelta('');
-                            setShowSubCalc(false);
-                          }}
-                          className="flex-1 py-1.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-white font-bold text-xs flex items-center justify-center gap-1 shadow-sm transition-all"
-                        >
-                          <Minus className="w-3.5 h-3.5" /> Restar
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
+              <AmountCalculatorInput
+                label="Precio Total"
+                value={subPrice}
+                onChange={setSubPrice}
+                placeholder="0"
+                required
+                title="Ajustar Precio"
+              />
 
               {/* Miembros / Personas */}
               <div>

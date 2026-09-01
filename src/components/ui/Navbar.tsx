@@ -51,21 +51,13 @@ export const Navbar: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           {/* Logo & App Name */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/30">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white shadow-md shadow-blue-500/20">
               <TrendingUp className="w-5 h-5" />
             </div>
             <div>
-              <h1 className="font-black text-lg tracking-tight bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-900 dark:from-white dark:via-blue-200 dark:to-indigo-200 bg-clip-text text-transparent">
-                Finanzas Personales
+              <h1 className="font-bold text-lg tracking-tight text-slate-900 dark:text-white">
+                Mis finanzas
               </h1>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-blue-700 dark:text-blue-400 bg-blue-100 dark:bg-blue-950/60 px-1.5 py-0.2 rounded-md">
-                  PRO
-                </span>
-                <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
-                  Control Integral
-                </span>
-              </div>
             </div>
           </div>
 

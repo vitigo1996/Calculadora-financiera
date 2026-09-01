@@ -7,6 +7,7 @@ import {
 } from '../../services/financeCalculations';
 import { CreditCardItem, PaymentPeriod } from '../../models/finance';
 import { ConfirmModal } from '../../components/ui/ConfirmModal';
+import { AmountCalculatorInput } from '../../components/ui/AmountCalculatorInput';
 import {
   CreditCard,
   Plus,
@@ -477,21 +478,15 @@ export const CreditosSuscripcionesView: React.FC = () => {
                 />
               </div>
 
-              {/* Cupo Total */}
-              <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                  Cupo Total
-                </label>
-                <input
-                  type="number"
-                  step="any"
-                  value={cardLimit}
-                  onChange={e => setCardLimit(e.target.value)}
-                  placeholder="0"
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white font-mono focus:outline-none focus:border-blue-500"
-                  required
-                />
-              </div>
+              {/* Cupo Total con Calculadora */}
+              <AmountCalculatorInput
+                label="Cupo Total"
+                value={cardLimit}
+                onChange={setCardLimit}
+                placeholder="0"
+                required
+                title="Ajustar Cupo"
+              />
 
               {/* Quincena de Pago */}
               <div>
@@ -589,20 +584,15 @@ export const CreditosSuscripcionesView: React.FC = () => {
                 />
               </div>
 
-              <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                  Monto
-                </label>
-                <input
-                  type="number"
-                  step="any"
-                  value={purchaseAmount}
-                  onChange={e => setPurchaseAmount(e.target.value)}
-                  placeholder="0"
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white font-mono focus:outline-none focus:border-blue-500"
-                  required
-                />
-              </div>
+              {/* Monto con Calculadora */}
+              <AmountCalculatorInput
+                label="Monto"
+                value={purchaseAmount}
+                onChange={setPurchaseAmount}
+                placeholder="0"
+                required
+                title="Ajustar Monto"
+              />
 
               <div className="flex items-center gap-2 pt-3">
                 <button

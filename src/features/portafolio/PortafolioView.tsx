@@ -4,15 +4,14 @@ import { formatCurrency, convertToBase } from '../../services/financeCalculation
 import { PortfolioAccountItem } from '../../models/finance';
 import { getIconComponent, IconPicker } from '../../components/ui/IconPicker';
 import { ConfirmModal } from '../../components/ui/ConfirmModal';
+import { AmountCalculatorInput } from '../../components/ui/AmountCalculatorInput';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import {
   TrendingUp as PieChartIcon,
   Edit2,
   Plus,
-  Minus,
   Trash2,
   X,
-  Calculator,
   GripVertical,
   Check
 } from 'lucide-react';
@@ -70,8 +69,6 @@ export const PortafolioView: React.FC = () => {
   const [itemBalance, setItemBalance] = useState('');
   const [itemIcon, setItemIcon] = useState('trending_up');
   const [itemColor, setItemColor] = useState('#2563eb');
-  const [showCalcPopup, setShowCalcPopup] = useState(false);
-  const [calcDelta, setCalcDelta] = useState('');
 
   // Uniform neutral blue icon container style
   const getItemIconStyle = () => {
@@ -85,8 +82,6 @@ export const PortafolioView: React.FC = () => {
     setItemBalance('');
     setItemIcon('trending_up');
     setItemColor('#2563eb');
-    setCalcDelta('');
-    setShowCalcPopup(false);
     setEditingItemObj(null);
     setShowAddModal(true);
   };
@@ -99,21 +94,7 @@ export const PortafolioView: React.FC = () => {
     setItemBalance(p.saldo.toString());
     setItemIcon(p.icon || (p.moneda === 'USD' ? 'coins' : 'trending_up'));
     setItemColor(p.color || '#2563eb');
-    setCalcDelta('');
-    setShowCalcPopup(false);
     setShowAddModal(true);
-  };
-
-  // Apply Add/Subtract operation and immediately close popup
-  const applyCalc = (op: '+' | '-') => {
-    const delta = parseFloat(calcDelta);
-    if (!isNaN(delta) && delta > 0) {
-      const current = parseFloat(itemBalance) || 0;
-      const result = op === '+' ? current + delta : Math.max(0, current - delta);
-      setItemBalance(result.toString());
-    }
-    setCalcDelta('');
-    setShowCalcPopup(false);
   };
 
   // Save (Create or Edit)
@@ -492,81 +473,14 @@ export const PortafolioView: React.FC = () => {
                 </select>
               </div>
 
-              {/* Saldo con botón de calculadora integrado dentro del input */}
-              <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                  Saldo
-                </label>
-
-                <div className="relative">
-                  <input
-                    type="number"
-                    step="any"
-                    value={itemBalance}
-                    onChange={e => setItemBalance(e.target.value)}
-                    placeholder="0"
-                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl pl-3.5 pr-11 py-2.5 text-sm text-slate-800 dark:text-white font-mono focus:outline-none focus:border-blue-500"
-                  />
-
-                  <button
-                    type="button"
-                    onClick={() => setShowCalcPopup(!showCalcPopup)}
-                    title="Calculadora (+ / -)"
-                    className={`absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-xl transition-all ${
-                      showCalcPopup
-                        ? 'bg-blue-600 text-white shadow-sm'
-                        : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700'
-                    }`}
-                  >
-                    <Calculator className="w-4 h-4" />
-                  </button>
-
-                  {/* Pop-up de Calculadora */}
-                  {showCalcPopup && (
-                    <div className="absolute right-0 top-full mt-2 z-30 p-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-2xl shadow-xl space-y-2.5 w-64 animate-scaleUp">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
-                          Ajustar Saldo
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => setShowCalcPopup(false)}
-                          className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-
-                      <input
-                        type="number"
-                        step="any"
-                        value={calcDelta}
-                        onChange={e => setCalcDelta(e.target.value)}
-                        placeholder="Valor a sumar o restar..."
-                        className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-xs px-2.5 py-1.5 rounded-xl text-slate-800 dark:text-white font-mono focus:outline-none focus:border-blue-500"
-                        autoFocus
-                      />
-
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => applyCalc('+')}
-                          className="flex-1 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center justify-center gap-1 shadow-sm transition-all"
-                        >
-                          <Plus className="w-3.5 h-3.5" /> Sumar
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => applyCalc('-')}
-                          className="flex-1 py-1.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-white font-bold text-xs flex items-center justify-center gap-1 shadow-sm transition-all"
-                        >
-                          <Minus className="w-3.5 h-3.5" /> Restar
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
+              {/* Saldo con Calculadora */}
+              <AmountCalculatorInput
+                label="Saldo"
+                value={itemBalance}
+                onChange={setItemBalance}
+                placeholder="0"
+                title="Ajustar Saldo"
+              />
 
               {/* Icon Picker con Mosaico Compacto y Pequeño */}
               <IconPicker selectedIconId={itemIcon} onSelectIcon={setItemIcon} />

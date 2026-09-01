@@ -4,14 +4,13 @@ import { formatCurrency } from '../../services/financeCalculations';
 import { BilleteraAccountItem, DeudaItem } from '../../models/finance';
 import { getIconComponent, IconPicker } from '../../components/ui/IconPicker';
 import { ConfirmModal } from '../../components/ui/ConfirmModal';
+import { AmountCalculatorInput } from '../../components/ui/AmountCalculatorInput';
 import {
   Wallet,
   Edit2,
   Plus,
-  Minus,
   Trash2,
   X,
-  Calculator,
   ArrowDownLeft,
   ArrowUpRight,
   GripVertical,
@@ -24,17 +23,18 @@ import {
 export const BilleteraView: React.FC = () => {
   const {
     data,
+    summary,
     addBilleteraItem,
     updateBilleteraItem,
     deleteBilleteraItem,
     moveBilleteraItem,
-    addExpenseMovement,
-    deleteExpenseMovement,
-    clearExpenseMovements,
     addDeudaItem,
     updateDeudaItem,
     deleteDeudaItem,
-    moveDeudaItem
+    moveDeudaItem,
+    addExpenseMovement,
+    deleteExpenseMovement,
+    clearExpenseMovements
   } = useFinance();
 
   // Submenu: Billetera vs Registro
@@ -63,8 +63,6 @@ export const BilleteraView: React.FC = () => {
   const [billeteraName, setBilleteraName] = useState('');
   const [billeteraBalance, setBilleteraBalance] = useState('');
   const [billeteraIcon, setBilleteraIcon] = useState('wallet');
-  const [showBilleteraCalcPopup, setShowBilleteraCalcPopup] = useState(false);
-  const [billeteraCalcDelta, setBilleteraCalcDelta] = useState('');
 
   // Deudas State & Modals
   const [showAddDeudaModal, setShowAddDeudaModal] = useState(false);
@@ -75,8 +73,6 @@ export const BilleteraView: React.FC = () => {
   const [deudaTipo, setDeudaTipo] = useState<'por_cobrar' | 'por_pagar'>('por_pagar');
   const [deudaAmount, setDeudaAmount] = useState('');
   const [deudaIcon, setDeudaIcon] = useState('shield_alert');
-  const [showDeudaCalcPopup, setShowDeudaCalcPopup] = useState(false);
-  const [deudaCalcDelta, setDeudaCalcDelta] = useState('');
 
   // Movimientos / Registro State & Modal
   const [showAddMovementModal, setShowAddMovementModal] = useState(false);
@@ -86,8 +82,6 @@ export const BilleteraView: React.FC = () => {
   const [movementSourceId, setMovementSourceId] = useState('');
   const [movementDestType, setMovementDestType] = useState<'none' | 'card'>('none');
   const [movementDestId, setMovementDestId] = useState('');
-  const [showMovementCalcPopup, setShowMovementCalcPopup] = useState(false);
-  const [movementCalcDelta, setMovementCalcDelta] = useState('');
 
   // Uniform neutral blue icon container
   const getItemIconStyle = () => {
@@ -133,12 +127,11 @@ export const BilleteraView: React.FC = () => {
   };
 
   // Open Create Billetera Modal
+  // Open Create Billetera Modal
   const openCreateBilletera = () => {
     setBilleteraName('');
     setBilleteraBalance('');
     setBilleteraIcon('wallet');
-    setBilleteraCalcDelta('');
-    setShowBilleteraCalcPopup(false);
     setEditingBilleteraObj(null);
     setShowAddBilleteraModal(true);
   };
@@ -149,21 +142,7 @@ export const BilleteraView: React.FC = () => {
     setBilleteraName(b.nombre);
     setBilleteraBalance(b.saldo.toString());
     setBilleteraIcon(b.icon || 'wallet');
-    setBilleteraCalcDelta('');
-    setShowBilleteraCalcPopup(false);
     setShowAddBilleteraModal(true);
-  };
-
-  // Apply Billetera Add/Subtract operation and immediately close popup
-  const applyBilleteraCalc = (op: '+' | '-') => {
-    const delta = parseFloat(billeteraCalcDelta);
-    if (!isNaN(delta) && delta > 0) {
-      const current = parseFloat(billeteraBalance) || 0;
-      const result = op === '+' ? current + delta : Math.max(0, current - delta);
-      setBilleteraBalance(result.toString());
-    }
-    setBilleteraCalcDelta('');
-    setShowBilleteraCalcPopup(false);
   };
 
   // Save Billetera (Create or Edit)
@@ -215,8 +194,6 @@ export const BilleteraView: React.FC = () => {
     setDeudaTipo('por_pagar');
     setDeudaAmount('');
     setDeudaIcon('shield_alert');
-    setDeudaCalcDelta('');
-    setShowDeudaCalcPopup(false);
     setEditingDeudaObj(null);
     setShowAddDeudaModal(true);
   };
@@ -228,21 +205,7 @@ export const BilleteraView: React.FC = () => {
     setDeudaTipo(d.tipo);
     setDeudaAmount(d.monto !== undefined && d.monto > 0 ? d.monto.toString() : '');
     setDeudaIcon(d.icon || (d.tipo === 'por_cobrar' ? 'arrow_down_left' : 'shield_alert'));
-    setDeudaCalcDelta('');
-    setShowDeudaCalcPopup(false);
     setShowAddDeudaModal(true);
-  };
-
-  // Apply Deuda Add/Subtract operation and immediately close popup
-  const applyDeudaCalc = (op: '+' | '-') => {
-    const delta = parseFloat(deudaCalcDelta);
-    if (!isNaN(delta) && delta > 0) {
-      const current = parseFloat(deudaAmount) || 0;
-      const result = op === '+' ? current + delta : Math.max(0, current - delta);
-      setDeudaAmount(result.toString());
-    }
-    setDeudaCalcDelta('');
-    setShowDeudaCalcPopup(false);
   };
 
   // Save Deuda (Create or Edit)
@@ -310,8 +273,6 @@ export const BilleteraView: React.FC = () => {
     setMovementSourceId(data.billeteraItems[0]?.id || '');
     setMovementDestType('none');
     setMovementDestId(data.creditCards[0]?.id || '');
-    setMovementCalcDelta('');
-    setShowMovementCalcPopup(false);
     setShowAddMovementModal(true);
   };
 
@@ -757,96 +718,14 @@ export const BilleteraView: React.FC = () => {
               </div>
 
               {/* Monto con Calculadora */}
-              <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                  Monto
-                </label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    step="any"
-                    value={movementAmount}
-                    onChange={e => setMovementAmount(e.target.value)}
-                    placeholder="0"
-                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl pl-3.5 pr-11 py-2.5 text-sm text-slate-800 dark:text-white font-mono focus:outline-none focus:border-blue-500"
-                    required
-                  />
-
-                  <button
-                    type="button"
-                    onClick={() => setShowMovementCalcPopup(!showMovementCalcPopup)}
-                    title="Calculadora (+ / -)"
-                    className={`absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-xl transition-all ${
-                      showMovementCalcPopup
-                        ? 'bg-blue-600 text-white shadow-sm'
-                        : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700'
-                    }`}
-                  >
-                    <Calculator className="w-4 h-4" />
-                  </button>
-
-                  {/* Pop-up de Calculadora */}
-                  {showMovementCalcPopup && (
-                    <div className="absolute right-0 top-full mt-2 z-30 p-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-2xl shadow-xl space-y-2.5 w-64 animate-scaleUp">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
-                          Ajustar Monto
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => setShowMovementCalcPopup(false)}
-                          className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-
-                      <input
-                        type="number"
-                        step="any"
-                        value={movementCalcDelta}
-                        onChange={e => setMovementCalcDelta(e.target.value)}
-                        placeholder="Valor a sumar o restar..."
-                        className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-xs px-2.5 py-1.5 rounded-xl text-slate-800 dark:text-white font-mono focus:outline-none focus:border-blue-500"
-                        autoFocus
-                      />
-
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const delta = parseFloat(movementCalcDelta);
-                            if (!isNaN(delta) && delta > 0) {
-                              const curr = parseFloat(movementAmount) || 0;
-                              setMovementAmount((curr + delta).toString());
-                            }
-                            setMovementCalcDelta('');
-                            setShowMovementCalcPopup(false);
-                          }}
-                          className="flex-1 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center justify-center gap-1 shadow-sm transition-all"
-                        >
-                          <Plus className="w-3.5 h-3.5" /> Sumar
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const delta = parseFloat(movementCalcDelta);
-                            if (!isNaN(delta) && delta > 0) {
-                              const curr = parseFloat(movementAmount) || 0;
-                              setMovementAmount(Math.max(0, curr - delta).toString());
-                            }
-                            setMovementCalcDelta('');
-                            setShowMovementCalcPopup(false);
-                          }}
-                          className="flex-1 py-1.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-white font-bold text-xs flex items-center justify-center gap-1 shadow-sm transition-all"
-                        >
-                          <Minus className="w-3.5 h-3.5" /> Restar
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
+              <AmountCalculatorInput
+                label="Monto"
+                value={movementAmount}
+                onChange={setMovementAmount}
+                placeholder="0"
+                required
+                title="Ajustar Monto"
+              />
 
               {/* Origen / Cuenta */}
               <div>
@@ -982,81 +861,14 @@ export const BilleteraView: React.FC = () => {
                 />
               </div>
 
-              {/* Saldo con botón de calculadora integrado dentro del input */}
-              <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                  Saldo
-                </label>
-
-                <div className="relative">
-                  <input
-                    type="number"
-                    step="any"
-                    value={billeteraBalance}
-                    onChange={e => setBilleteraBalance(e.target.value)}
-                    placeholder="0"
-                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl pl-3.5 pr-11 py-2.5 text-sm text-slate-800 dark:text-white font-mono focus:outline-none focus:border-blue-500"
-                  />
-
-                  <button
-                    type="button"
-                    onClick={() => setShowBilleteraCalcPopup(!showBilleteraCalcPopup)}
-                    title="Calculadora (+ / -)"
-                    className={`absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-xl transition-all ${
-                      showBilleteraCalcPopup
-                        ? 'bg-blue-600 text-white shadow-sm'
-                        : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700'
-                    }`}
-                  >
-                    <Calculator className="w-4 h-4" />
-                  </button>
-
-                  {/* Pop-up de Calculadora */}
-                  {showBilleteraCalcPopup && (
-                    <div className="absolute right-0 top-full mt-2 z-30 p-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-2xl shadow-xl space-y-2.5 w-64 animate-scaleUp">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
-                          Ajustar Saldo
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => setShowBilleteraCalcPopup(false)}
-                          className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-
-                      <input
-                        type="number"
-                        step="any"
-                        value={billeteraCalcDelta}
-                        onChange={e => setBilleteraCalcDelta(e.target.value)}
-                        placeholder="Valor a sumar o restar..."
-                        className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-xs px-2.5 py-1.5 rounded-xl text-slate-800 dark:text-white font-mono focus:outline-none focus:border-blue-500"
-                        autoFocus
-                      />
-
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => applyBilleteraCalc('+')}
-                          className="flex-1 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center justify-center gap-1 shadow-sm transition-all"
-                        >
-                          <Plus className="w-3.5 h-3.5" /> Sumar
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => applyBilleteraCalc('-')}
-                          className="flex-1 py-1.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-white font-bold text-xs flex items-center justify-center gap-1 shadow-sm transition-all"
-                        >
-                          <Minus className="w-3.5 h-3.5" /> Restar
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
+              {/* Saldo con Calculadora */}
+              <AmountCalculatorInput
+                label="Saldo"
+                value={billeteraBalance}
+                onChange={setBilleteraBalance}
+                placeholder="0"
+                title="Ajustar Saldo"
+              />
 
               {/* Icon Picker con Mosaico Compacto y Pequeño */}
               <IconPicker selectedIconId={billeteraIcon} onSelectIcon={setBilleteraIcon} />
@@ -1067,7 +879,7 @@ export const BilleteraView: React.FC = () => {
                     type="button"
                     onClick={handleDeleteBilleteraFromModal}
                     className="p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/50 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/50 transition-colors flex items-center justify-center"
-                    title="Eliminar esta billetera"
+                    title="Eliminar esta cuenta"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -1156,81 +968,14 @@ export const BilleteraView: React.FC = () => {
                 </div>
               </div>
 
-              {/* Monto con botón de calculadora integrado dentro del input */}
-              <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                  Monto
-                </label>
-
-                <div className="relative">
-                  <input
-                    type="number"
-                    step="any"
-                    value={deudaAmount}
-                    onChange={e => setDeudaAmount(e.target.value)}
-                    placeholder="0"
-                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl pl-3.5 pr-11 py-2.5 text-sm text-slate-800 dark:text-white font-mono focus:outline-none focus:border-blue-500"
-                  />
-
-                  <button
-                    type="button"
-                    onClick={() => setShowDeudaCalcPopup(!showDeudaCalcPopup)}
-                    title="Calculadora (+ / -)"
-                    className={`absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-xl transition-all ${
-                      showDeudaCalcPopup
-                        ? 'bg-blue-600 text-white shadow-sm'
-                        : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700'
-                    }`}
-                  >
-                    <Calculator className="w-4 h-4" />
-                  </button>
-
-                  {/* Pop-up de Calculadora */}
-                  {showDeudaCalcPopup && (
-                    <div className="absolute right-0 top-full mt-2 z-30 p-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-2xl shadow-xl space-y-2.5 w-64 animate-scaleUp">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
-                          Ajustar Monto
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => setShowDeudaCalcPopup(false)}
-                          className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-
-                      <input
-                        type="number"
-                        step="any"
-                        value={deudaCalcDelta}
-                        onChange={e => setDeudaCalcDelta(e.target.value)}
-                        placeholder="Valor a sumar o restar..."
-                        className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-xs px-2.5 py-1.5 rounded-xl text-slate-800 dark:text-white font-mono focus:outline-none focus:border-blue-500"
-                        autoFocus
-                      />
-
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => applyDeudaCalc('+')}
-                          className="flex-1 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center justify-center gap-1 shadow-sm transition-all"
-                        >
-                          <Plus className="w-3.5 h-3.5" /> Sumar
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => applyDeudaCalc('-')}
-                          className="flex-1 py-1.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-white font-bold text-xs flex items-center justify-center gap-1 shadow-sm transition-all"
-                        >
-                          <Minus className="w-3.5 h-3.5" /> Restar
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
+              {/* Monto con Calculadora */}
+              <AmountCalculatorInput
+                label="Monto"
+                value={deudaAmount}
+                onChange={setDeudaAmount}
+                placeholder="0"
+                title="Ajustar Monto"
+              />
 
               {/* Icon Picker con Mosaico Compacto y Pequeño */}
               <IconPicker selectedIconId={deudaIcon} onSelectIcon={setDeudaIcon} />
