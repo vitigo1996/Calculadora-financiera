@@ -68,18 +68,26 @@ export function calculateSubscriptionMonthlyCost(sub: SubscriptionItem): number 
 }
 
 export function calculateCardPurchasesTotal(cc: CreditCardItem): number {
-  const totalPurchases = (cc.purchases || []).reduce((sum, p) => sum + (p.amount || 0), 0);
   const totalPayments = (cc.payments || []).reduce((sum, pay) => sum + (pay.amount || 0), 0);
 
   if (cc.billingCutoffAmount !== undefined) {
-    return Math.max(0, cc.billingCutoffAmount - totalPayments);
+    const afterCutoffPurchases = (cc.purchases || [])
+      .filter(p => p.isAfterCutoff)
+      .reduce((sum, p) => sum + (p.amount || 0), 0);
+    return Math.max(0, (cc.billingCutoffAmount - totalPayments) + afterCutoffPurchases);
   }
+
+  const totalPurchases = (cc.purchases || []).reduce((sum, p) => sum + (p.amount || 0), 0);
   return Math.max(0, totalPurchases - totalPayments);
 }
 
 export function calculateCardPaymentDue(cc: CreditCardItem): number {
   if (cc.minPaymentOverride !== undefined && cc.minPaymentOverride > 0) {
     return cc.minPaymentOverride;
+  }
+  const totalPayments = (cc.payments || []).reduce((sum, pay) => sum + (pay.amount || 0), 0);
+  if (cc.billingCutoffAmount !== undefined) {
+    return Math.max(0, cc.billingCutoffAmount - totalPayments);
   }
   return calculateCardPurchasesTotal(cc);
 }

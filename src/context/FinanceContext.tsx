@@ -528,9 +528,21 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const deleteCardPurchase = (cardId: string, purchaseId: string) => {
     setData(prev => ({
       ...prev,
-      creditCards: prev.creditCards.map(c =>
-        c.id === cardId ? { ...c, purchases: c.purchases.filter(p => p.id !== purchaseId) } : c
-      )
+      creditCards: prev.creditCards.map(c => {
+        if (c.id === cardId) {
+          const targetPurchase = (c.purchases || []).find(p => p.id === purchaseId);
+          let newCutoff = c.billingCutoffAmount;
+          if (targetPurchase && newCutoff !== undefined && !targetPurchase.isAfterCutoff) {
+            newCutoff = Math.max(0, newCutoff - targetPurchase.amount);
+          }
+          return {
+            ...c,
+            billingCutoffAmount: newCutoff,
+            purchases: (c.purchases || []).filter(p => p.id !== purchaseId)
+          };
+        }
+        return c;
+      })
     }));
   };
 
