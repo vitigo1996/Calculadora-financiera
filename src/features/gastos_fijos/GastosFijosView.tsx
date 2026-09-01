@@ -497,15 +497,11 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
                     <span className="px-1.5 py-0.5 rounded-lg text-[10px] font-bold bg-blue-100 dark:bg-blue-950/70 border border-blue-300/60 dark:border-blue-800/40 text-blue-700 dark:text-blue-300 whitespace-nowrap flex-shrink-0">
                       {ob.period === '1st_fortnight' ? '1Q' : '2Q'}
                     </span>
-
-                    <span className="text-xs font-bold text-slate-500 dark:text-slate-400 font-mono flex-shrink-0">
-                      {formatCurrency(monthlyPayment)}/mes
-                    </span>
                   </div>
 
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <span className="font-mono font-bold text-sm text-slate-900 dark:text-white block">
-                      {formatCurrency(totalDebt)}
+                      {formatCurrency(monthlyPayment)}
                     </span>
 
                     <div className="flex items-center gap-1.5">
@@ -678,9 +674,9 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
                 />
               </div>
 
-              {/* Valor Total con Calculadora */}
+              {/* Valor Mensual con Calculadora */}
               <AmountCalculatorInput
-                label="Valor Total"
+                label="Valor Mensual"
                 value={housingTotal}
                 onChange={setHousingTotal}
                 placeholder="0"
@@ -781,23 +777,14 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
                 />
               </div>
 
-              {/* Cuota Mensual con Calculadora */}
+              {/* Cuota con Calculadora */}
               <AmountCalculatorInput
                 label="Cuota Mensual"
                 value={obligationMonthlyPayment}
                 onChange={setObligationMonthlyPayment}
                 placeholder="0"
                 required
-                title="Ajustar Cuota Mensual"
-              />
-
-              {/* Total Deuda con Calculadora */}
-              <AmountCalculatorInput
-                label="Total Deuda (Saldo Pendiente)"
-                value={obligationTotalDebt}
-                onChange={setObligationTotalDebt}
-                placeholder="0 (Saldo total que resta por pagar)"
-                title="Ajustar Total Deuda"
+                title="Ajustar Cuota"
               />
 
               {/* Quincena de Pago */}
