@@ -401,34 +401,34 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <div className="text-right">
-                    <span className="font-mono font-bold text-sm text-slate-800 dark:text-white block">
-                      {formatCurrency(item.totalAmount)}
-                    </span>
-                  </div>
+                <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+                  <span className="font-mono font-bold text-sm text-slate-900 dark:text-white block">
+                    {formatCurrency(item.totalAmount)}
+                  </span>
 
-                  {activePeople.length > 1 && (
+                  <div className="flex items-center gap-1.5">
+                    {activePeople.length > 1 && (
+                      <button
+                        onClick={() => toggleHousingShared(item.id)}
+                        className={`p-1.5 rounded-xl transition-all border ${
+                          isSharedItem
+                            ? 'bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800/40 shadow-sm'
+                            : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-300/80 dark:border-transparent'
+                        }`}
+                        title={isSharedItem ? 'Gasto compartido entre personas' : 'Gasto individual (100% Yo)'}
+                      >
+                        <Users className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+
                     <button
-                      onClick={() => toggleHousingShared(item.id)}
-                      className={`p-2 rounded-xl transition-all border ${
-                        isSharedItem
-                          ? 'bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800/40 shadow-sm'
-                          : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-300/80 dark:border-transparent'
-                      }`}
-                      title={isSharedItem ? 'Gasto compartido entre personas' : 'Gasto individual (100% Yo)'}
+                      onClick={() => openEditHousing(item)}
+                      className="p-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-300/80 dark:border-transparent transition-colors"
+                      title="Editar gasto"
                     >
-                      <Users className="w-3.5 h-3.5" />
+                      <Edit2 className="w-3.5 h-3.5" />
                     </button>
-                  )}
-
-                  <button
-                    onClick={() => openEditHousing(item)}
-                    className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-300/80 dark:border-transparent transition-colors"
-                    title="Editar gasto"
-                  >
-                    <Edit2 className="w-3.5 h-3.5" />
-                  </button>
+                  </div>
                 </div>
               </div>
             );
@@ -535,34 +535,34 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <div className="text-right">
-                    <span className="font-mono font-bold text-sm text-slate-800 dark:text-white block">
-                      {formatCurrency(totalDebt)}
-                    </span>
-                  </div>
+                <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+                  <span className="font-mono font-bold text-sm text-slate-900 dark:text-white block">
+                    {formatCurrency(totalDebt)}
+                  </span>
 
-                  {activePeople.length > 1 && (
+                  <div className="flex items-center gap-1.5">
+                    {activePeople.length > 1 && (
+                      <button
+                        onClick={() => toggleObligationShared(ob.id)}
+                        className={`p-1.5 rounded-xl transition-all border ${
+                          isSharedOb
+                            ? 'bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800/40 shadow-sm'
+                            : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-300/80 dark:border-transparent'
+                        }`}
+                        title={isSharedOb ? 'Obligación compartida entre personas' : 'Obligación individual (100% Yo)'}
+                      >
+                        <Users className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+
                     <button
-                      onClick={() => toggleObligationShared(ob.id)}
-                      className={`p-2 rounded-xl transition-all border ${
-                        isSharedOb
-                          ? 'bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800/40 shadow-sm'
-                          : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-300/80 dark:border-transparent'
-                      }`}
-                      title={isSharedOb ? 'Obligación compartida entre personas' : 'Obligación individual (100% Yo)'}
+                      onClick={() => openEditObligation(ob)}
+                      className="p-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-300/80 dark:border-transparent transition-colors"
+                      title="Editar obligación"
                     >
-                      <Users className="w-3.5 h-3.5" />
+                      <Edit2 className="w-3.5 h-3.5" />
                     </button>
-                  )}
-
-                  <button
-                    onClick={() => openEditObligation(ob)}
-                    className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-300/80 dark:border-transparent transition-colors"
-                    title="Editar obligación"
-                  >
-                    <Edit2 className="w-3.5 h-3.5" />
-                  </button>
+                  </div>
                 </div>
               </div>
             );

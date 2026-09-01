@@ -988,16 +988,6 @@ export const BilleteraView: React.FC = () => {
                 title="Ajustar Saldo"
               />
 
-              {/* Icon Picker Trigger */}
-              <IconPickerTrigger
-                selectedIconId={billeteraIcon}
-                onClick={() => setIconPickerTarget({
-                  type: 'billetera_form',
-                  currentIcon: billeteraIcon,
-                  title: 'Seleccionar Ícono de la Cuenta'
-                })}
-              />
-
               <div className="flex items-center gap-2 pt-3">
                 {editingBilleteraObj && (
                   <button
@@ -1100,16 +1090,6 @@ export const BilleteraView: React.FC = () => {
                 onChange={setDeudaAmount}
                 placeholder="0"
                 title="Ajustar Monto"
-              />
-
-              {/* Icon Picker Trigger */}
-              <IconPickerTrigger
-                selectedIconId={deudaIcon}
-                onClick={() => setIconPickerTarget({
-                  type: 'deuda_form',
-                  currentIcon: deudaIcon,
-                  title: 'Seleccionar Ícono de la Deuda'
-                })}
               />
 
               <div className="flex items-center gap-2 pt-3">

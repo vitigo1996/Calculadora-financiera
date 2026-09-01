@@ -311,92 +311,86 @@ export const PortafolioView: React.FC = () => {
         </div>
       </div>
 
-      {/* Gráfico Donut: Etiquetas en columna a la izquierda y Gráfica a la derecha */}
+      {/* Gráfico Donut y Distribución de Activos a ancho completo */}
       {port.items.length > 0 && (
-        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-300 dark:border-slate-800 shadow-sm transition-colors">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-            {/* Columna Izquierda: Etiquetas con Círculo de Color Clickable */}
-            <div className="space-y-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-2">
-                Distribución de Activos
-              </span>
-              <div className="space-y-2">
-                {port.items.map((item, i) => (
-                  <div
-                    key={item.id || i}
-                    className="p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 transition-colors flex items-center justify-between gap-2"
-                  >
-                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                      {/* Círculo de color interactivo */}
-                      <button
-                        type="button"
-                        onClick={() => setColorPickerTarget({ id: item.id, label: item.label, currentColor: item.color })}
-                        title="Click para cambiar color"
-                        className="w-4 h-4 rounded-full shadow-sm ring-2 ring-white dark:ring-slate-800 hover:scale-110 active:scale-95 transition-transform flex-shrink-0 cursor-pointer"
-                        style={{ backgroundColor: item.color }}
-                      />
+        <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-300 dark:border-slate-800 shadow-sm transition-colors space-y-4">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">
+              Distribución de Activos
+            </span>
+          </div>
 
-                      <div className="min-w-0 flex-1">
-                        <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block truncate">
-                          {item.label}
-                        </span>
-                        <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400 block sm:hidden">
-                          {formatCurrency(item.valorCOP, 'COP')}
-                        </span>
-                      </div>
-                    </div>
+          {/* Gráfica Donut */}
+          <div className="h-52 flex items-center justify-center">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={port.items}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={55}
+                  outerRadius={85}
+                  paddingAngle={3}
+                  dataKey="valorCOP"
+                  nameKey="label"
+                >
+                  {port.items.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} stroke="#ffffff" strokeWidth={1.5} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  formatter={(value: any, name: any) => [`${formatCurrency(Number(value), 'COP')}`, `${name}`]}
+                  contentStyle={{
+                    backgroundColor: '#0f172a',
+                    borderColor: '#334155',
+                    borderRadius: '16px',
+                    padding: '10px 14px',
+                    color: '#ffffff',
+                    fontWeight: 'bold',
+                    boxShadow: '0 12px 30px -4px rgba(0, 0, 0, 0.4)'
+                  }}
+                  itemStyle={{ color: '#60a5fa', fontSize: '13px', fontWeight: 'bold' }}
+                  labelStyle={{ color: '#f8fafc', fontSize: '13px', fontWeight: 'bold' }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
 
-                    <div className="text-right flex items-center gap-2 flex-shrink-0">
-                      <span className="text-xs font-mono font-semibold text-slate-700 dark:text-slate-300 hidden sm:inline">
-                        {formatCurrency(item.valorCOP, 'COP')}
-                      </span>
-                      <span
-                        className="font-bold text-[11px] font-mono px-2 py-0.5 rounded-lg text-white whitespace-nowrap shadow-xs"
-                        style={{ backgroundColor: item.color }}
-                      >
-                        {item.percentage.toFixed(1)}%
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Columna Derecha: Gráfica Donut */}
-            <div className="h-56 flex items-center justify-center">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={port.items}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={50}
-                    outerRadius={80}
-                    paddingAngle={3}
-                    dataKey="valorCOP"
-                    nameKey="label"
-                  >
-                    {port.items.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} stroke="#ffffff" strokeWidth={1.5} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    formatter={(value: any, name: any) => [`${formatCurrency(Number(value), 'COP')}`, `${name}`]}
-                    contentStyle={{
-                      backgroundColor: '#0f172a',
-                      borderColor: '#334155',
-                      borderRadius: '16px',
-                      padding: '10px 14px',
-                      color: '#ffffff',
-                      fontWeight: 'bold',
-                      boxShadow: '0 12px 30px -4px rgba(0, 0, 0, 0.4)'
-                    }}
-                    itemStyle={{ color: '#60a5fa', fontSize: '13px', fontWeight: 'bold' }}
-                    labelStyle={{ color: '#f8fafc', fontSize: '13px', fontWeight: 'bold' }}
+          {/* Lista de Leyenda de Activos a ancho completo */}
+          <div className="space-y-2 pt-1">
+            {port.items.map((item, i) => (
+              <div
+                key={item.id || i}
+                className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 transition-colors flex items-center justify-between gap-3"
+              >
+                {/* Lado Izquierdo: Botón de Color + Nombre */}
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <button
+                    type="button"
+                    onClick={() => setColorPickerTarget({ id: item.id, label: item.label, currentColor: item.color })}
+                    title="Click para cambiar color"
+                    className="w-5 h-5 rounded-full shadow-sm ring-2 ring-white dark:ring-slate-800 hover:scale-110 active:scale-95 transition-transform flex-shrink-0 cursor-pointer"
+                    style={{ backgroundColor: item.color }}
                   />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
+                  <span className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                    {item.label}
+                  </span>
+                </div>
+
+                {/* Lado Derecho: Valor en COP + Porcentaje */}
+                <div className="flex items-center gap-2.5 flex-shrink-0">
+                  <span className="text-xs font-mono font-bold text-slate-900 dark:text-white">
+                    {formatCurrency(item.valorCOP, 'COP')}
+                  </span>
+                  <span
+                    className="font-bold text-[11px] font-mono px-2 py-0.5 rounded-lg text-white whitespace-nowrap shadow-xs min-w-[46px] text-center"
+                    style={{ backgroundColor: item.color }}
+                  >
+                    {item.percentage.toFixed(1)}%
+                  </span>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}
@@ -506,16 +500,6 @@ export const PortafolioView: React.FC = () => {
                 onChange={setItemBalance}
                 placeholder="0"
                 title="Ajustar Saldo"
-              />
-
-              {/* Icon Picker Trigger */}
-              <IconPickerTrigger
-                selectedIconId={itemIcon}
-                onClick={() => setIconPickerTarget({
-                  type: 'portfolio_form',
-                  currentIcon: itemIcon,
-                  title: 'Seleccionar Ícono del Activo'
-                })}
               />
 
               <div className="flex items-center gap-2 pt-3">

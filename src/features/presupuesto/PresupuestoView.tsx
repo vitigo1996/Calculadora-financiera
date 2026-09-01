@@ -54,7 +54,7 @@ export const PresupuestoView: React.FC = () => {
                   <div className="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/40 flex items-center justify-center font-bold text-xs">
                     <ShieldCheck className="w-4 h-4" />
                   </div>
-                  <span className="font-semibold text-slate-800 dark:text-white">Deducciones de ley</span>
+                  <span className="font-bold text-slate-900 dark:text-white">Deducciones de ley</span>
                 </div>
                 <span className="font-bold text-blue-700 dark:text-blue-400 font-mono">
                   {formatCurrency(pres.m3_saludPension)}
@@ -67,7 +67,7 @@ export const PresupuestoView: React.FC = () => {
                   <div className="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/40 flex items-center justify-center font-bold text-xs">
                     <Home className="w-4 h-4" />
                   </div>
-                  <span className="font-semibold text-slate-800 dark:text-white">Vivienda</span>
+                  <span className="font-bold text-slate-900 dark:text-white">Vivienda</span>
                 </div>
                 <span className="font-bold text-blue-700 dark:text-blue-400 font-mono">
                   {formatCurrency(pres.m4_vivienda)}
@@ -80,7 +80,7 @@ export const PresupuestoView: React.FC = () => {
                   <div className="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/40 flex items-center justify-center font-bold text-xs">
                     <Layers className="w-4 h-4" />
                   </div>
-                  <span className="font-semibold text-slate-800 dark:text-white">Obligaciones</span>
+                  <span className="font-bold text-slate-900 dark:text-white">Obligaciones</span>
                 </div>
                 <span className="font-bold text-blue-700 dark:text-blue-400 font-mono">
                   {formatCurrency(pres.m6_obligaciones)}
@@ -93,7 +93,7 @@ export const PresupuestoView: React.FC = () => {
                   <div className="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/40 flex items-center justify-center font-bold text-xs">
                     <CreditCard className="w-4 h-4" />
                   </div>
-                  <span className="font-semibold text-slate-800 dark:text-white">Tarjetas</span>
+                  <span className="font-bold text-slate-900 dark:text-white">Tarjetas</span>
                 </div>
                 <span className="font-bold text-blue-700 dark:text-blue-400 font-mono">
                   {formatCurrency(pres.m5_tarjetas)}
@@ -106,9 +106,9 @@ export const PresupuestoView: React.FC = () => {
                   <div className="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-950/70 text-blue-700 dark:text-blue-300 flex items-center justify-center font-bold text-xs">
                     <ArrowDownRight className="w-4 h-4" />
                   </div>
-                  <span className="font-bold text-slate-800 dark:text-white">Gastos del mes</span>
+                  <span className="font-black text-slate-900 dark:text-white">Gastos del mes</span>
                 </div>
-                <span className="font-black text-base text-slate-800 dark:text-slate-100 font-mono">
+                <span className="font-black text-base text-slate-900 dark:text-white font-mono">
                   {formatCurrency(pres.m7_totalGastos)}
                 </span>
               </div>
@@ -134,9 +134,9 @@ export const PresupuestoView: React.FC = () => {
             </div>
 
             {/* Libre */}
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl border border-slate-300 dark:border-blue-500/30 shadow-sm transition-colors overflow-hidden">
-              <span className="text-xs font-semibold text-blue-700 dark:text-blue-400 block mb-1">Libre</span>
-              <div className="text-sm sm:text-base font-bold text-slate-800 dark:text-white font-mono tracking-tight whitespace-nowrap">
+            <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm transition-colors overflow-hidden">
+              <span className="text-xs font-bold text-slate-900 dark:text-white block mb-1">Libre</span>
+              <div className="text-sm sm:text-base font-black text-slate-900 dark:text-white font-mono tracking-tight whitespace-nowrap">
                 {formatCurrency(pres.m11_disponible)}
               </div>
             </div>
