@@ -113,7 +113,7 @@ export interface ExpenseMovement {
   moneda: 'COP' | 'USD';
   sourceAccountId: string;
   sourceAccountName: string;
-  destinationType?: 'none' | 'card' | 'obligation' | 'account';
+  destinationType?: 'none' | 'card' | 'obligation' | 'account' | 'deuda';
   destinationId?: string;
   destinationName?: string;
   date: string;

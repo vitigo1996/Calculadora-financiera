@@ -33,7 +33,7 @@ interface FinanceContextType {
   updateBilleteraItem: (id: string, updated: Partial<BilleteraAccountItem>) => void;
   deleteBilleteraItem: (id: string) => void;
   moveBilleteraItem: (index: number, direction: 'up' | 'down') => void;
-  addExpenseMovement: (movement: { type?: 'expense' | 'income' | 'transfer'; name: string; amount: number; moneda: 'COP' | 'USD'; sourceAccountId: string; destinationType?: 'none' | 'card' | 'obligation' | 'account'; destinationId?: string; destinationName?: string }) => void;
+  addExpenseMovement: (movement: { type?: 'expense' | 'income' | 'transfer'; name: string; amount: number; moneda: 'COP' | 'USD'; sourceAccountId: string; destinationType?: 'none' | 'card' | 'obligation' | 'account' | 'deuda'; destinationId?: string; destinationName?: string }) => void;
   deleteExpenseMovement: (id: string) => void;
   clearExpenseMovements: () => void;
   addDeudaItem: (item: { nombre: string; monto?: number; moneda: 'COP' | 'USD'; tipo: 'por_cobrar' | 'por_pagar'; icon?: string }) => void;
@@ -188,7 +188,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     amount: number;
     moneda: 'COP' | 'USD';
     sourceAccountId: string;
-    destinationType?: 'none' | 'card' | 'obligation' | 'account';
+    destinationType?: 'none' | 'card' | 'obligation' | 'account' | 'deuda';
     destinationId?: string;
     destinationName?: string;
   }) => {
@@ -258,30 +258,29 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       // 3. Si el destino es Deuda / Obligación, restar al saldo adeudado
       let updatedDeudas = prev.deudaItems;
       let updatedObligations = prev.obligations;
-      if (!isIncome && !isTransfer && movement.destinationType === 'obligation' && movement.destinationId) {
-        if (movement.destinationId.startsWith('d-')) {
-          const rawId = movement.destinationId.replace('d-', '');
-          updatedDeudas = (prev.deudaItems || []).map(d => {
-            if (d.id === rawId) {
-              return {
-                ...d,
-                monto: Math.max(0, (d.monto || 0) - movement.amount)
-              };
-            }
-            return d;
-          });
-        } else if (movement.destinationId.startsWith('o-')) {
-          const rawId = movement.destinationId.replace('o-', '');
-          updatedObligations = (prev.obligations || []).map(ob => {
-            if (ob.id === rawId && ob.totalDebtBalance !== undefined) {
-              return {
-                ...ob,
-                totalDebtBalance: Math.max(0, ob.totalDebtBalance - movement.amount)
-              };
-            }
-            return ob;
-          });
-        }
+      if (!isIncome && !isTransfer && (movement.destinationType === 'deuda' || movement.destinationType === 'obligation') && movement.destinationId) {
+        const destId = movement.destinationId;
+        const rawId = destId.startsWith('d-') ? destId.replace('d-', '') : (destId.startsWith('o-') ? destId.replace('o-', '') : destId);
+        
+        updatedDeudas = (prev.deudaItems || []).map(d => {
+          if (d.id === destId || d.id === rawId) {
+            return {
+              ...d,
+              monto: Math.max(0, (d.monto || 0) - movement.amount)
+            };
+          }
+          return d;
+        });
+
+        updatedObligations = (prev.obligations || []).map(ob => {
+          if ((ob.id === destId || ob.id === rawId) && ob.totalDebtBalance !== undefined) {
+            return {
+              ...ob,
+              totalDebtBalance: Math.max(0, ob.totalDebtBalance - movement.amount)
+            };
+          }
+          return ob;
+        });
       }
 
       return {
