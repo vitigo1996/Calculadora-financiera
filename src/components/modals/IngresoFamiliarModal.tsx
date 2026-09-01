@@ -180,7 +180,7 @@ export const IngresoFamiliarModal: React.FC<IngresoFamiliarModalProps> = ({ isOp
                       </label>
                       <input
                         type="number"
-                        value={person.monthlyIncome}
+                        value={person.monthlyIncome || ''}
                         onChange={e => updatePersonField(idx, 'monthlyIncome', parseFloat(e.target.value) || 0)}
                         placeholder="0"
                         className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 font-mono"

@@ -64,11 +64,7 @@ export interface CalculatedSummary {
 
 export function calculateSubscriptionMonthlyCost(sub: SubscriptionItem): number {
   const members = Math.max(1, sub.members || 1);
-  const dividedPrice = sub.totalPrice / members;
-  if (sub.billing === 'yearly') {
-    return dividedPrice / 12;
-  }
-  return dividedPrice;
+  return (sub.totalPrice || 0) / members;
 }
 
 export function calculateCardPurchasesTotal(cc: CreditCardItem): number {

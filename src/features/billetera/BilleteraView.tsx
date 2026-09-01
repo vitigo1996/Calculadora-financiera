@@ -599,25 +599,6 @@ export const BilleteraView: React.FC = () => {
             </h3>
 
             <div className="flex items-center gap-2">
-              {movements.length > 0 && (
-                <button
-                  onClick={() => {
-                    setConfirmConfig({
-                      isOpen: true,
-                      title: 'Limpiar Historial',
-                      message: '¿Estás seguro de eliminar todo el historial de movimientos registrados?',
-                      confirmText: 'Sí, limpiar',
-                      cancelText: 'Cancelar',
-                      variant: 'danger',
-                      onConfirm: () => clearExpenseMovements()
-                    });
-                  }}
-                  className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/40 hover:bg-rose-100 transition-all flex items-center gap-1 shadow-sm"
-                >
-                  <Trash2 className="w-3.5 h-3.5" /> Limpiar Historial
-                </button>
-              )}
-
               <button
                 onClick={openCreateMovement}
                 className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800/40 hover:bg-blue-200 transition-all flex items-center gap-1 shadow-sm"

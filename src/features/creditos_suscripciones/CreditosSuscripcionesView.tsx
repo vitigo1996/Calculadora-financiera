@@ -348,7 +348,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
                 </p>
               </div>
 
-              {/* Botones de acción: Hacer Corte, Limpiar Registro y Agregar Compra */}
+              {/* Botones de acción: Hacer Corte y Agregar Compra */}
               <div className="flex items-center gap-2 flex-wrap">
                 {/* Hacer Corte / Deshacer Corte */}
                 {selectedCard.billingCutoffAmount !== undefined ? (
@@ -366,27 +366,6 @@ export const CreditosSuscripcionesView: React.FC = () => {
                     title="Fijar corte de facturación actual"
                   >
                     <Scissors className="w-3.5 h-3.5" /> Hacer Corte
-                  </button>
-                )}
-
-                {/* Limpiar Registro (Borra los registros de compras y abonos de la tarjeta) */}
-                {((selectedCard.purchases && selectedCard.purchases.length > 0) || (selectedCard.payments && selectedCard.payments.length > 0)) && (
-                  <button
-                    onClick={() => {
-                      setConfirmConfig({
-                        isOpen: true,
-                        title: 'Limpiar Registro',
-                        message: `¿Estás seguro de borrar todos los registros de compras y abonos de ${selectedCard.name}?`,
-                        confirmText: 'Sí, limpiar',
-                        cancelText: 'Cancelar',
-                        variant: 'danger',
-                        onConfirm: () => clearCardPurchases(selectedCard.id)
-                      });
-                    }}
-                    className="px-3 py-2 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-rose-100 dark:hover:bg-rose-950/50 text-slate-700 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-400 border border-slate-300/80 dark:border-transparent transition-all flex items-center gap-1.5 shadow-sm"
-                    title="Borrar registros de compras y abonos"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" /> Limpiar Registro
                   </button>
                 )}
 
@@ -413,15 +392,14 @@ export const CreditosSuscripcionesView: React.FC = () => {
               </div>
             )}
 
-            {/* Lista de Registros: Compras y Abonos / Pagos */}
+            {/* Lista de Compras */}
             <div className="space-y-2">
-              {(!selectedCard.purchases || selectedCard.purchases.length === 0) && (!selectedCard.payments || selectedCard.payments.length === 0) ? (
+              {(!selectedCard.purchases || selectedCard.purchases.length === 0) ? (
                 <div className="p-8 text-center text-slate-400 dark:text-slate-500 text-xs">
-                  No hay registros en esta tarjeta. Haz clic en <strong>Agregar Compra</strong> para añadir una.
+                  No hay compras registradas en esta tarjeta. Haz clic en <strong>Agregar Compra</strong> para añadir una.
                 </div>
               ) : (
                 <div className="divide-y divide-slate-200 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden">
-                  {/* 1. Compras */}
                   {(selectedCard.purchases || []).map(p => {
                     return (
                       <div
@@ -463,36 +441,6 @@ export const CreditosSuscripcionesView: React.FC = () => {
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-
-                  {/* 2. Abonos / Pagos registrados a la tarjeta */}
-                  {(selectedCard.payments || []).map(pay => {
-                    return (
-                      <div
-                        key={pay.id}
-                        className="p-3 flex items-center justify-between text-xs transition-colors bg-emerald-50/40 dark:bg-emerald-950/20"
-                      >
-                        <div className="flex items-center gap-2 flex-wrap min-w-0 flex-1">
-                          <span className="font-semibold text-emerald-700 dark:text-emerald-400 truncate">
-                            {pay.concept || 'Abono / Pago'}
-                          </span>
-                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800/50 flex-shrink-0">
-                            Abono
-                          </span>
-                          {pay.sourceAccountName && (
-                            <span className="text-[10px] text-slate-400 dark:text-slate-500">
-                              (De: {pay.sourceAccountName})
-                            </span>
-                          )}
-                        </div>
-
-                        <div className="text-right flex-shrink-0">
-                          <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                            -{formatCurrency(pay.amount)}
-                          </span>
                         </div>
                       </div>
                     );
