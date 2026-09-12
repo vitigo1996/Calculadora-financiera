@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useFinance } from '../../context/FinanceContext';
 import { useTheme } from '../../context/ThemeContext';
 import { StorageService } from '../../services/storageService';
-import { formatCurrency } from '../../services/financeCalculations';
 import { IngresoFamiliarModal } from '../modals/IngresoFamiliarModal';
 import { ConfirmModal } from './ConfirmModal';
 import {
@@ -10,7 +9,6 @@ import {
   Sun,
   Moon,
   RefreshCw,
-  Globe,
   Settings,
   Users,
   X,
@@ -25,7 +23,7 @@ interface NavbarProps {
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ activeTab = 'billetera' }) => {
-  const { data, baseCurrency, setBaseCurrency, isFetchingRate, refreshLiveDolarRate, resetToDefault } = useFinance();
+  const { baseCurrency, setBaseCurrency, resetToDefault } = useFinance();
   const { theme, toggleTheme } = useTheme();
 
   // Settings menu popover state
@@ -40,15 +38,15 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab = 'billetera' }) => {
   const getTitle = () => {
     switch (activeTab) {
       case 'billetera':
-        return 'Billetera';
+        return 'BILLETERA';
       case 'creditos_suscripciones':
-        return 'Tarjetas';
+        return 'TARJETAS';
       case 'presupuesto':
-        return 'Presupuesto';
+        return 'PRESUPUESTO';
       case 'portafolio':
-        return 'Portafolio';
+        return 'PORTAFOLIO';
       default:
-        return 'Billetera';
+        return 'BILLETERA';
     }
   };
 
@@ -155,30 +153,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab = 'billetera' }) => {
                   </select>
                 </div>
 
-                {/* 3. Valor de la TRM y botón para actualizar */}
-                <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-950/70 p-2.5 rounded-2xl border border-slate-200 dark:border-slate-800">
-                  <div>
-                    <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 block">
-                      Dólar TRM
-                    </span>
-                    <div className="flex items-center gap-1 font-mono font-bold text-xs text-blue-700 dark:text-blue-400">
-                      <Globe className="w-3 h-3" />
-                      {formatCurrency(data.dolarRate || 3600, 'COP')}
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={refreshLiveDolarRate}
-                    disabled={isFetchingRate}
-                    title="Actualizar TRM"
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-700 shadow-sm transition-all"
-                  >
-                    <RefreshCw className={`w-3.5 h-3.5 text-blue-600 dark:text-blue-400 ${isFetchingRate ? 'animate-spin' : ''}`} />
-                    <span>Actualizar</span>
-                  </button>
-                </div>
-
-                {/* 4. Botón de Ajustes: Ingreso Familiar */}
+                {/* 3. Botón de Ajustes: Ingreso Familiar */}
                 <button
                   onClick={() => {
                     setShowSettingsMenu(false);

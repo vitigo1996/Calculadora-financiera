@@ -13,7 +13,9 @@ import {
   Trash2,
   X,
   GripVertical,
-  Check
+  Check,
+  Globe,
+  RefreshCw
 } from 'lucide-react';
 
 // Malla de 4x4 colores predefinidos (16 colores elegantes y distinguibles)
@@ -33,6 +35,8 @@ export const PortafolioView: React.FC = () => {
     data,
     summary,
     baseCurrency,
+    isFetchingRate,
+    refreshLiveDolarRate,
     addPortfolioItem,
     updatePortfolioItem,
     deletePortfolioItem,
@@ -272,7 +276,7 @@ export const PortafolioView: React.FC = () => {
                       </span>
                       {isDiff && (
                         <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 block">
-                          {formatCurrency(equivalentInBase, baseCurrency)} COP
+                          {formatCurrency(equivalentInBase, baseCurrency)}
                         </span>
                       )}
                     </div>
@@ -473,6 +477,37 @@ export const PortafolioView: React.FC = () => {
                   <option value="USD">Dólares (USD)</option>
                 </select>
               </div>
+
+              {/* Tasa TRM cuando la moneda del activo difiere de la Moneda Base */}
+              {itemCurrency !== baseCurrency && (
+                <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-950/70 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 animate-fadeIn">
+                  <div>
+                    <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 block">
+                      Tasa de Cambio (TRM)
+                    </span>
+                    <div className="flex items-center gap-1.5 font-mono font-bold text-xs text-blue-700 dark:text-blue-400 mt-0.5">
+                      <Globe className="w-3.5 h-3.5" />
+                      <span>1 USD = {formatCurrency(dolarRate, 'COP')}</span>
+                    </div>
+                    {data.dolarRateLiveUpdated && (
+                      <span className="text-[9px] text-slate-400 dark:text-slate-500 block mt-0.5">
+                        Actualizado: {data.dolarRateLiveUpdated}
+                      </span>
+                    )}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={refreshLiveDolarRate}
+                    disabled={isFetchingRate}
+                    title="Actualizar TRM en vivo"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-700 shadow-sm transition-all"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 text-blue-600 dark:text-blue-400 ${isFetchingRate ? 'animate-spin' : ''}`} />
+                    <span>Actualizar</span>
+                  </button>
+                </div>
+              )}
 
               {/* Saldo con Calculadora */}
               <AmountCalculatorInput

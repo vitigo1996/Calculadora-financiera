@@ -400,11 +400,12 @@ export const CreditosSuscripcionesView: React.FC = () => {
                   className="p-2 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-300/80 dark:border-transparent transition-all flex items-center justify-center shadow-sm"
                   title="Limpiar historial visual"
                 >
-                  <svg className="w-4 h-4 text-slate-600 dark:text-slate-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="m19 5-8 8" />
-                    <path d="m15 2 7 7-3 3-7-7z" />
-                    <path d="M11 13l-4 4a2 2 0 0 0 0 2.8l1.4 1.4a2 2 0 0 0 2.8 0l4-4" />
-                    <path d="M3 21l3-3" />
+                  <svg className="w-4 h-4 text-slate-600 dark:text-slate-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 4L11.5 12.5" />
+                    <path d="M13 11L15 13L11.5 16.5L9.5 14.5Z" fill="currentColor" fillOpacity="0.2" />
+                    <path d="M11 15L6 20C5 21 3.5 21 3 20.5C2.5 20 2.5 18.5 3.5 17.5L8.5 12.5" />
+                    <line x1="5" y1="18.5" x2="8" y2="15.5" />
+                    <line x1="7" y1="20" x2="10" y2="17" />
                   </svg>
                 </button>
               </div>
