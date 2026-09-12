@@ -14,7 +14,7 @@ import {
   Settings,
   Users,
   X,
-  FileSpreadsheet
+  Coins
 } from 'lucide-react';
 
 import { TabType } from './BottomNav';
@@ -25,7 +25,7 @@ interface NavbarProps {
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ activeTab = 'billetera' }) => {
-  const { data, isFetchingRate, refreshLiveDolarRate, resetToDefault } = useFinance();
+  const { data, baseCurrency, setBaseCurrency, isFetchingRate, refreshLiveDolarRate, resetToDefault } = useFinance();
   const { theme, toggleTheme } = useTheme();
 
   // Settings menu popover state
@@ -137,7 +137,25 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab = 'billetera' }) => {
                   </button>
                 </div>
 
-                {/* 2. Valor de la TRM y botón para actualizar */}
+                {/* 2. Selector de Moneda Base */}
+                <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-950/70 p-2.5 rounded-2xl border border-slate-200 dark:border-slate-800">
+                  <div className="flex items-center gap-1.5">
+                    <Coins className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      Moneda Base
+                    </span>
+                  </div>
+                  <select
+                    value={baseCurrency}
+                    onChange={(e) => setBaseCurrency(e.target.value as 'COP' | 'USD')}
+                    className="px-2.5 py-1.5 rounded-xl text-xs font-bold bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-white border border-slate-300 dark:border-slate-700 shadow-sm focus:outline-none cursor-pointer"
+                  >
+                    <option value="COP">COP ($)</option>
+                    <option value="USD">USD ($)</option>
+                  </select>
+                </div>
+
+                {/* 3. Valor de la TRM y botón para actualizar */}
                 <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-950/70 p-2.5 rounded-2xl border border-slate-200 dark:border-slate-800">
                   <div>
                     <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 block">
@@ -160,7 +178,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab = 'billetera' }) => {
                   </button>
                 </div>
 
-                {/* 3. Botón de Ajustes: Ingreso Familiar */}
+                {/* 4. Botón de Ajustes: Ingreso Familiar */}
                 <button
                   onClick={() => {
                     setShowSettingsMenu(false);
@@ -171,19 +189,8 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab = 'billetera' }) => {
                   <Users className="w-3.5 h-3.5" /> Ingreso Familiar
                 </button>
 
-                {/* 4. Opciones de Exportación y Restablecimiento de Fábrica */}
+                {/* 5. Restablecimiento de Fábrica */}
                 <div className="pt-1 space-y-2 border-t border-slate-200 dark:border-slate-800">
-                  <button
-                    onClick={() => {
-                      StorageService.exportExcel(data);
-                      setShowSettingsMenu(false);
-                    }}
-                    className="w-full py-2.5 px-3 rounded-2xl border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-750 text-slate-800 dark:text-slate-200 text-xs font-bold transition-all flex items-center justify-center gap-2"
-                  >
-                    <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                    Descargar Excel (.xlsx)
-                  </button>
-
                   <button
                     onClick={() => {
                       setShowSettingsMenu(false);

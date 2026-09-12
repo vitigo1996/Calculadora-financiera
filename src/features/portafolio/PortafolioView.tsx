@@ -191,26 +191,6 @@ export const PortafolioView: React.FC = () => {
 
   return (
     <div className="space-y-6 pb-24 animate-fadeIn">
-      {/* Título Principal: Total Activos */}
-      <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-6 border border-slate-300 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-colors">
-        <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-2xl bg-blue-100 dark:bg-blue-950/70 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-200 dark:border-blue-800/60 shadow-sm">
-            <PieChartIcon className="w-6 h-6" />
-          </div>
-          <div>
-            <h2 className="text-xl sm:text-2xl font-black text-slate-800 dark:text-white leading-tight">
-              Total Activos
-            </h2>
-          </div>
-        </div>
-
-        <div className="text-left sm:text-right bg-blue-50/80 dark:bg-blue-950/40 p-3 sm:p-0 rounded-2xl sm:bg-transparent border sm:border-0 border-blue-200 dark:border-blue-800/40">
-          <span className="text-2xl sm:text-3xl font-black text-blue-600 dark:text-blue-400 font-mono tracking-tight">
-            {formatCurrency(port.totalPortafolio, 'COP')}
-          </span>
-        </div>
-      </div>
-
       {/* Recuadro Portafolio con Filas Arrastrables */}
       <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
         <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">

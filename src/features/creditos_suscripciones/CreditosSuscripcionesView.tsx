@@ -365,32 +365,32 @@ export const CreditosSuscripcionesView: React.FC = () => {
                   <Plus className="w-4 h-4" />
                 </button>
 
-                {/* 2. Corte */}
+                {/* 2. Corte (Solo icono) */}
                 {selectedCard.billingCutoffAmount !== undefined ? (
                   <button
                     onClick={() => cancelCardCutoff(selectedCard.id)}
-                    className="px-3 py-2 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-400 text-white transition-all flex items-center gap-1.5 shadow-sm"
-                    title="Deshacer corte y volver a cálculo en tiempo real"
+                    className="p-2 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-400 text-white transition-all flex items-center justify-center shadow-sm"
+                    title="Deshacer corte"
                   >
-                    <RotateCcw className="w-3.5 h-3.5" /> Corte
+                    <RotateCcw className="w-4 h-4" />
                   </button>
                 ) : (
                   <button
                     onClick={() => handleDoCutoff(selectedCard)}
-                    className="px-3 py-2 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300/80 dark:border-transparent transition-all flex items-center gap-1.5 shadow-sm"
-                    title="Hacer corte de facturación actual"
+                    className="p-2 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300/80 dark:border-transparent transition-all flex items-center justify-center shadow-sm"
+                    title="Hacer corte de facturación"
                   >
-                    <Scissors className="w-3.5 h-3.5" /> Corte
+                    <Scissors className="w-4 h-4" />
                   </button>
                 )}
 
-                {/* 3. Limpiar Historial (Icono de barrer) */}
+                {/* 3. Limpiar Historial (Icono de escoba / barrer) */}
                 <button
                   onClick={() => {
                     setConfirmConfig({
                       isOpen: true,
-                      title: 'Limpiar Historial de Compras',
-                      message: `¿Deseas limpiar visualmente el historial de compras de "${selectedCard.name}"? Los cálculos de deuda acumulada y cupo disponible se mantendrán intactos.`,
+                      title: 'Limpiar Historial',
+                      message: '¿Estás seguro?',
                       confirmText: 'Sí, limpiar',
                       cancelText: 'Cancelar',
                       variant: 'warning',
@@ -401,9 +401,10 @@ export const CreditosSuscripcionesView: React.FC = () => {
                   title="Limpiar historial visual"
                 >
                   <svg className="w-4 h-4 text-slate-600 dark:text-slate-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="m16 2 4 4-8.5 8.5" />
-                    <path d="M14.5 9.5 8 16" />
-                    <path d="M2 22s2.5-3 5-3 4.5 3 7 3c1 0 1.5-.5 2-1.5L18 16l-6-6-4.5 2C6.5 12.5 6 13 6 14c0 2.5 3 4.5 3 7" />
+                    <path d="m19 5-8 8" />
+                    <path d="m15 2 7 7-3 3-7-7z" />
+                    <path d="M11 13l-4 4a2 2 0 0 0 0 2.8l1.4 1.4a2 2 0 0 0 2.8 0l4-4" />
+                    <path d="M3 21l3-3" />
                   </svg>
                 </button>
               </div>
