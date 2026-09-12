@@ -384,7 +384,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
                   </button>
                 )}
 
-                {/* 3. Limpiar Historial (Icono de escoba / barrer) */}
+                {/* 3. Limpiar Historial (Icono de escoba / barrer como en la imagen) */}
                 <button
                   onClick={() => {
                     setConfirmConfig({
@@ -397,15 +397,22 @@ export const CreditosSuscripcionesView: React.FC = () => {
                       onConfirm: () => clearCardPurchasesVisual(selectedCard.id)
                     });
                   }}
-                  className="p-2 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-300/80 dark:border-transparent transition-all flex items-center justify-center shadow-sm"
+                  className="p-2 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300/80 dark:border-transparent transition-all flex items-center justify-center shadow-sm"
                   title="Limpiar historial visual"
                 >
-                  <svg className="w-4 h-4 text-slate-600 dark:text-slate-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M20 4L11.5 12.5" />
-                    <path d="M13 11L15 13L11.5 16.5L9.5 14.5Z" fill="currentColor" fillOpacity="0.2" />
-                    <path d="M11 15L6 20C5 21 3.5 21 3 20.5C2.5 20 2.5 18.5 3.5 17.5L8.5 12.5" />
-                    <line x1="5" y1="18.5" x2="8" y2="15.5" />
-                    <line x1="7" y1="20" x2="10" y2="17" />
+                  <svg className="w-4 h-4 text-slate-700 dark:text-slate-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    {/* Palo vertical */}
+                    <path d="M12 2v9" />
+                    {/* Cúpula superior */}
+                    <path d="M8.5 13.5C8.5 12 9.8 11 12 11s3.5 1 3.5 2.5" />
+                    {/* División horizontal */}
+                    <path d="M7 13.5h10" />
+                    {/* Faldón acampanado */}
+                    <path d="M7 13.5c-.5 3-1.8 5.5-2.5 7.5a1 1 0 0 0 1 1h13a1 1 0 0 0 1-1c-.7-2-2-4.5-2.5-7.5" />
+                    {/* Cerdas interiores */}
+                    <path d="M9.5 17.5 9 22" />
+                    <path d="M12 16.5v5.5" />
+                    <path d="M14.5 17.5 15 22" />
                   </svg>
                 </button>
               </div>
