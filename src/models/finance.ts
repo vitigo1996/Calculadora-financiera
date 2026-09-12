@@ -69,6 +69,7 @@ export interface CreditCardPurchase {
   date?: string;
   isAfterCutoff?: boolean;
   isPaid?: boolean;
+  hidden?: boolean;
 }
 
 export interface CreditCardPayment {
@@ -113,7 +114,7 @@ export interface ExpenseMovement {
   moneda: 'COP' | 'USD';
   sourceAccountId: string;
   sourceAccountName: string;
-  destinationType?: 'none' | 'card' | 'obligation' | 'account' | 'deuda';
+  destinationType?: 'none' | 'card' | 'obligation' | 'account' | 'deuda' | 'portfolio';
   destinationId?: string;
   destinationName?: string;
   date: string;

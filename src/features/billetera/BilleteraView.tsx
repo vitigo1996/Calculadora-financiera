@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useFinance } from '../../context/FinanceContext';
-import { formatCurrency } from '../../services/financeCalculations';
+import { formatCurrency, calculateCardPurchasesTotal } from '../../services/financeCalculations';
 import { BilleteraAccountItem } from '../../models/finance';
 import { getIconComponent, IconPickerModal } from '../../components/ui/IconPicker';
 import { ConfirmModal } from '../../components/ui/ConfirmModal';
@@ -164,13 +164,17 @@ export const BilleteraView: React.FC = () => {
     setMovementName('');
     setMovementAmount('');
     setMovementType('expense');
-    setMovementSourceId(data.billeteraItems[0]?.id || '');
+    const firstBilletera = data.billeteraItems[0] ? `billetera:${data.billeteraItems[0].id}` : '';
+    setMovementSourceId(firstBilletera);
     setMovementDestType('none');
     const firstTarget = data.creditCards[0]
       ? `card:${data.creditCards[0].id}`
       : (deudasPorPagar[0] ? `deuda:${deudasPorPagar[0].id}` : '');
     setMovementDestId(firstTarget);
-    setMovementDestTransferId(data.billeteraItems[1]?.id || '');
+    const secondTarget = data.billeteraItems[1]
+      ? `billetera:${data.billeteraItems[1].id}`
+      : (data.portfolioItems[0] ? `portfolio:${data.portfolioItems[0].id}` : '');
+    setMovementDestTransferId(secondTarget);
     setShowAddMovementModal(true);
   };
 
@@ -180,8 +184,12 @@ export const BilleteraView: React.FC = () => {
     const amount = parseFloat(movementAmount) || 0;
     if (amount <= 0) return;
 
-    const sourceId = movementSourceId || data.billeteraItems[0]?.id || '';
-    const sourceAccount = data.billeteraItems.find(b => b.id === sourceId);
+    const sourceId = movementSourceId || (data.billeteraItems[0] ? `billetera:${data.billeteraItems[0].id}` : '');
+    const isSourcePortfolio = sourceId.startsWith('portfolio:');
+    const rawSourceId = sourceId.replace('portfolio:', '').replace('billetera:', '');
+    const sourceAccount = isSourcePortfolio
+      ? data.portfolioItems.find(p => p.id === rawSourceId)
+      : data.billeteraItems.find(b => b.id === rawSourceId);
 
     // Negative balance warning
     if (movementType === 'expense' || movementType === 'transfer') {
@@ -199,19 +207,42 @@ export const BilleteraView: React.FC = () => {
       }
     }
 
-    let destType: 'none' | 'card' | 'deuda' = 'none';
+    let destType: 'none' | 'card' | 'deuda' | 'portfolio' | 'account' = 'none';
     let destId: string | undefined = undefined;
     let destName: string | undefined = undefined;
 
     if (movementType === 'transfer') {
-      const destAccount = data.billeteraItems.find(b => b.id === movementDestTransferId);
-      destType = 'none';
+      const isDestPortfolio = movementDestTransferId.startsWith('portfolio:');
+      const rawDestId = movementDestTransferId.replace('portfolio:', '').replace('billetera:', '');
+      const destAccount = isDestPortfolio
+        ? data.portfolioItems.find(p => p.id === rawDestId)
+        : data.billeteraItems.find(b => b.id === rawDestId);
+
+      destType = isDestPortfolio ? 'portfolio' : 'account';
       destId = movementDestTransferId;
       destName = destAccount?.nombre;
     } else if (movementType === 'expense' && movementDestType === 'payment' && movementDestId) {
       if (movementDestId.startsWith('card:')) {
         const cardId = movementDestId.replace('card:', '');
         const card = data.creditCards.find(c => c.id === cardId);
+        
+        // Validar si el pago supera la deuda total adeudada
+        if (card) {
+          const totalDeuda = calculateCardPurchasesTotal(card);
+          if (amount > totalDeuda) {
+            setConfirmConfig({
+              isOpen: true,
+              title: 'Monto Superior a la Deuda',
+              message: `Estás ingresando un pago de ${formatCurrency(amount)}, pero la totalidad adeudada en "${card.name}" es de ${formatCurrency(totalDeuda)}.\n\nPor favor corrige el valor antes de continuar.`,
+              confirmText: 'Entendido',
+              cancelText: null,
+              variant: 'warning',
+              onConfirm: () => {}
+            });
+            return;
+          }
+        }
+
         destType = 'card';
         destId = cardId;
         destName = card ? `Tarjeta ${card.name}` : undefined;
@@ -251,21 +282,24 @@ export const BilleteraView: React.FC = () => {
       {/* SECCIÓN 1: BILLETERA */}
       <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
         <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-          <h3 className="font-bold text-slate-800 dark:text-white text-sm">Billetera</h3>
+          <h3 className="font-bold text-slate-800 dark:text-white text-sm flex items-center gap-2">
+            <Wallet className="w-4 h-4 text-blue-600 dark:text-blue-400" /> Billetera
+          </h3>
 
-          {/* Botón directo de Agregar */}
+          {/* Botón directo de Agregar (+) */}
           <button
             onClick={openCreateBilletera}
-            className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800/40 hover:bg-blue-200 transition-all flex items-center gap-1 shadow-sm"
+            className="p-2 rounded-xl text-xs font-semibold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800/40 hover:bg-blue-200 transition-all flex items-center justify-center shadow-sm"
+            title="Agregar Cuenta"
           >
-            <Plus className="w-3.5 h-3.5" /> Agregar
+            <Plus className="w-4 h-4" />
           </button>
         </div>
 
         <div className="divide-y divide-slate-200 dark:divide-slate-800">
           {(!data.billeteraItems || data.billeteraItems.length === 0) ? (
             <div className="p-8 text-center text-slate-400 dark:text-slate-500 text-xs">
-              No tienes cuentas en tu billetera. Haz clic en <strong>Agregar</strong> para registrar una.
+              No tienes cuentas en tu billetera. Haz clic en <strong>+</strong> para registrar una.
             </div>
           ) : (
             data.billeteraItems.map((item, idx) => {
@@ -351,9 +385,10 @@ export const BilleteraView: React.FC = () => {
           <div className="flex items-center gap-2">
             <button
               onClick={openCreateMovement}
-              className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800/40 hover:bg-blue-200 transition-all flex items-center gap-1 shadow-sm"
+              className="p-2 rounded-xl text-xs font-semibold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800/40 hover:bg-blue-200 transition-all flex items-center justify-center shadow-sm"
+              title="Registrar Movimiento"
             >
-              <Plus className="w-3.5 h-3.5" /> Registrar
+              <Plus className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -637,11 +672,24 @@ export const BilleteraView: React.FC = () => {
                       className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
                       required
                     >
-                      {data.billeteraItems.map(b => (
-                        <option key={b.id} value={b.id}>
-                          {b.nombre}
-                        </option>
-                      ))}
+                      {data.billeteraItems.length > 0 && (
+                        <optgroup label="Billetera">
+                          {data.billeteraItems.map(b => (
+                            <option key={b.id} value={`billetera:${b.id}`}>
+                              {b.nombre}
+                            </option>
+                          ))}
+                        </optgroup>
+                      )}
+                      {(data.portfolioItems || []).length > 0 && (
+                        <optgroup label="Portafolio">
+                          {(data.portfolioItems || []).map(p => (
+                            <option key={p.id} value={`portfolio:${p.id}`}>
+                              {p.nombre}
+                            </option>
+                          ))}
+                        </optgroup>
+                      )}
                     </select>
                   </div>
 
@@ -656,12 +704,31 @@ export const BilleteraView: React.FC = () => {
                       required
                     >
                       {data.billeteraItems
-                        .filter(b => b.id !== movementSourceId)
-                        .map(b => (
-                          <option key={b.id} value={b.id}>
-                            {b.nombre}
-                          </option>
-                        ))}
+                        .filter(b => `billetera:${b.id}` !== movementSourceId && b.id !== movementSourceId)
+                        .length > 0 && (
+                        <optgroup label="Billetera">
+                          {data.billeteraItems
+                            .filter(b => `billetera:${b.id}` !== movementSourceId && b.id !== movementSourceId)
+                            .map(b => (
+                              <option key={b.id} value={`billetera:${b.id}`}>
+                                {b.nombre}
+                              </option>
+                            ))}
+                        </optgroup>
+                      )}
+                      {(data.portfolioItems || [])
+                        .filter(p => `portfolio:${p.id}` !== movementSourceId && p.id !== movementSourceId)
+                        .length > 0 && (
+                        <optgroup label="Portafolio">
+                          {(data.portfolioItems || [])
+                            .filter(p => `portfolio:${p.id}` !== movementSourceId && p.id !== movementSourceId)
+                            .map(p => (
+                              <option key={p.id} value={`portfolio:${p.id}`}>
+                                {p.nombre}
+                              </option>
+                            ))}
+                        </optgroup>
+                      )}
                     </select>
                   </div>
                 </div>
@@ -677,7 +744,7 @@ export const BilleteraView: React.FC = () => {
                     required
                   >
                     {data.billeteraItems.map(b => (
-                      <option key={b.id} value={b.id}>
+                      <option key={b.id} value={`billetera:${b.id}`}>
                         {b.nombre}
                       </option>
                     ))}

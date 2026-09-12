@@ -33,7 +33,7 @@ interface FinanceContextType {
   updateBilleteraItem: (id: string, updated: Partial<BilleteraAccountItem>) => void;
   deleteBilleteraItem: (id: string) => void;
   moveBilleteraItem: (index: number, direction: 'up' | 'down') => void;
-  addExpenseMovement: (movement: { type?: 'expense' | 'income' | 'transfer'; name: string; amount: number; moneda: 'COP' | 'USD'; sourceAccountId: string; destinationType?: 'none' | 'card' | 'obligation' | 'account' | 'deuda'; destinationId?: string; destinationName?: string }) => void;
+  addExpenseMovement: (movement: { type?: 'expense' | 'income' | 'transfer'; name: string; amount: number; moneda: 'COP' | 'USD'; sourceAccountId: string; destinationType?: 'none' | 'card' | 'obligation' | 'account' | 'deuda' | 'portfolio'; destinationId?: string; destinationName?: string }) => void;
   deleteExpenseMovement: (id: string) => void;
   clearExpenseMovements: () => void;
   addDeudaItem: (item: { nombre: string; monto?: number; moneda: 'COP' | 'USD'; tipo: 'por_cobrar' | 'por_pagar'; icon?: string }) => void;
@@ -52,8 +52,10 @@ interface FinanceContextType {
   payCardCutoff: (cardId: string) => void;
   cancelCardCutoff: (cardId: string) => void;
   clearCardPurchases: (cardId: string) => void;
+  clearCardPurchasesVisual: (cardId: string) => void;
   addCardPurchase: (cardId: string, purchase: { concept: string; amount: number; moneda?: 'COP' | 'USD' }) => void;
   deleteCardPurchase: (cardId: string, purchaseId: string) => void;
+  moveCardPurchase: (cardId: string, fromIndex: number, toIndex: number) => void;
   addHousingExpense: (item: { name: string; period: PaymentPeriod; totalAmount: number; moneda?: 'COP' | 'USD'; isShared?: boolean; icon?: string }) => void;
   updateHousingExpense: (id: string, updated: Partial<HousingExpense>) => void;
   deleteHousingExpense: (id: string) => void;
@@ -188,7 +190,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     amount: number;
     moneda: 'COP' | 'USD';
     sourceAccountId: string;
-    destinationType?: 'none' | 'card' | 'obligation' | 'account' | 'deuda';
+    destinationType?: 'none' | 'card' | 'obligation' | 'account' | 'deuda' | 'portfolio';
     destinationId?: string;
     destinationName?: string;
   }) => {
@@ -196,13 +198,34 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const type = movement.type || 'expense';
       const isIncome = type === 'income';
       const isTransfer = type === 'transfer';
-      const sourceAcc = (prev.billeteraItems || []).find(b => b.id === movement.sourceAccountId);
-      const sourceAccountName = sourceAcc ? sourceAcc.nombre : 'Billetera';
 
+      // Determine Source Account (Billetera or Portfolio)
+      const rawSourceId = movement.sourceAccountId.replace('portfolio:', '').replace('billetera:', '');
+      const isSourcePortfolio = movement.sourceAccountId.startsWith('portfolio:') ||
+        (!prev.billeteraItems.some(b => b.id === movement.sourceAccountId) && prev.portfolioItems.some(p => p.id === rawSourceId));
+
+      const sourceBilletera = prev.billeteraItems.find(b => b.id === rawSourceId || b.id === movement.sourceAccountId);
+      const sourcePortfolio = prev.portfolioItems.find(p => p.id === rawSourceId || p.id === movement.sourceAccountId);
+      const sourceAccountName = isSourcePortfolio
+        ? (sourcePortfolio ? sourcePortfolio.nombre : 'Portafolio')
+        : (sourceBilletera ? sourceBilletera.nombre : 'Billetera');
+
+      // Determine Destination Account for Transfer
       let destinationName = movement.destinationName;
+      let isDestPortfolio = false;
+      let rawDestId = movement.destinationId ? movement.destinationId.replace('portfolio:', '').replace('billetera:', '') : '';
+
       if (isTransfer && movement.destinationId) {
-        const destAcc = (prev.billeteraItems || []).find(b => b.id === movement.destinationId);
-        destinationName = destAcc ? destAcc.nombre : 'Cuenta destino';
+        isDestPortfolio = movement.destinationId.startsWith('portfolio:') ||
+          (!prev.billeteraItems.some(b => b.id === movement.destinationId) && prev.portfolioItems.some(p => p.id === rawDestId));
+
+        if (isDestPortfolio) {
+          const destPortfolio = prev.portfolioItems.find(p => p.id === rawDestId || p.id === movement.destinationId);
+          destinationName = destPortfolio ? destPortfolio.nombre : 'Portafolio';
+        } else {
+          const destBilletera = prev.billeteraItems.find(b => b.id === rawDestId || b.id === movement.destinationId);
+          destinationName = destBilletera ? destBilletera.nombre : 'Cuenta destino';
+        }
       }
 
       const newMovement: ExpenseMovement = {
@@ -213,28 +236,43 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         moneda: movement.moneda,
         sourceAccountId: movement.sourceAccountId,
         sourceAccountName,
-        destinationType: isIncome ? undefined : (isTransfer ? 'account' : (movement.destinationType || 'none')),
+        destinationType: isIncome ? undefined : (isTransfer ? (isDestPortfolio ? 'portfolio' : 'account') : (movement.destinationType || 'none')),
         destinationId: isIncome ? undefined : movement.destinationId,
         destinationName: isIncome ? undefined : destinationName,
         date: new Date().toISOString()
       };
 
-      // 1. Actualizar saldo en la cuenta de Billetera origen y destino si es transferencia
-      const updatedBilletera = (prev.billeteraItems || []).map(acc => {
-        if (acc.id === movement.sourceAccountId) {
+      // 1. Actualizar saldo en la cuenta de Billetera
+      let updatedBilletera = (prev.billeteraItems || []).map(acc => {
+        if (!isSourcePortfolio && (acc.id === rawSourceId || acc.id === movement.sourceAccountId)) {
           if (isIncome) {
             return { ...acc, saldo: acc.saldo + movement.amount };
           } else {
             return { ...acc, saldo: Math.max(0, acc.saldo - movement.amount) };
           }
         }
-        if (isTransfer && acc.id === movement.destinationId) {
+        if (isTransfer && !isDestPortfolio && (acc.id === rawDestId || acc.id === movement.destinationId)) {
           return { ...acc, saldo: acc.saldo + movement.amount };
         }
         return acc;
       });
 
-      // 2. Si es Gasto y el destino es Tarjeta de Crédito, registrar el abono/pago a la tarjeta
+      // 2. Actualizar saldo en Portafolio
+      let updatedPortfolio = (prev.portfolioItems || []).map(port => {
+        if (isSourcePortfolio && (port.id === rawSourceId || port.id === movement.sourceAccountId)) {
+          if (isIncome) {
+            return { ...port, saldo: port.saldo + movement.amount };
+          } else {
+            return { ...port, saldo: Math.max(0, port.saldo - movement.amount) };
+          }
+        }
+        if (isTransfer && isDestPortfolio && (port.id === rawDestId || port.id === movement.destinationId)) {
+          return { ...port, saldo: port.saldo + movement.amount };
+        }
+        return port;
+      });
+
+      // 3. Si es Gasto y el destino es Tarjeta de Crédito, registrar el abono/pago a la tarjeta
       let updatedCreditCards = prev.creditCards;
       if (!isIncome && !isTransfer && movement.destinationType === 'card' && movement.destinationId) {
         updatedCreditCards = (prev.creditCards || []).map(c => {
@@ -255,7 +293,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         });
       }
 
-      // 3. Si el destino es Deuda / Obligación, restar al saldo adeudado
+      // 4. Si el destino es Deuda / Obligación, restar al saldo adeudado
       let updatedDeudas = prev.deudaItems;
       let updatedObligations = prev.obligations;
       if (!isIncome && !isTransfer && (movement.destinationType === 'deuda' || movement.destinationType === 'obligation') && movement.destinationId) {
@@ -286,6 +324,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       return {
         ...prev,
         billeteraItems: updatedBilletera,
+        portfolioItems: updatedPortfolio,
         creditCards: updatedCreditCards,
         deudaItems: updatedDeudas,
         obligations: updatedObligations,
@@ -545,6 +584,39 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }));
   };
 
+  const moveCardPurchase = (cardId: string, fromIndex: number, toIndex: number) => {
+    setData(prev => ({
+      ...prev,
+      creditCards: prev.creditCards.map(c => {
+        if (c.id === cardId) {
+          const list = [...(c.purchases || [])];
+          if (fromIndex < 0 || fromIndex >= list.length || toIndex < 0 || toIndex >= list.length) {
+            return c;
+          }
+          const [movedItem] = list.splice(fromIndex, 1);
+          list.splice(toIndex, 0, movedItem);
+          return { ...c, purchases: list };
+        }
+        return c;
+      })
+    }));
+  };
+
+  const clearCardPurchasesVisual = (cardId: string) => {
+    setData(prev => ({
+      ...prev,
+      creditCards: prev.creditCards.map(c => {
+        if (c.id === cardId) {
+          return {
+            ...c,
+            purchases: (c.purchases || []).map(p => ({ ...p, hidden: true }))
+          };
+        }
+        return c;
+      })
+    }));
+  };
+
   // Housing CRUD
   const addHousingExpense = (item: { name: string; period: PaymentPeriod; totalAmount: number; moneda?: 'COP' | 'USD'; isShared?: boolean; icon?: string }) => {
     const newH: HousingExpense = {
@@ -737,8 +809,10 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         payCardCutoff,
         cancelCardCutoff,
         clearCardPurchases,
+        clearCardPurchasesVisual,
         addCardPurchase,
         deleteCardPurchase,
+        moveCardPurchase,
         addHousingExpense,
         updateHousingExpense,
         deleteHousingExpense,

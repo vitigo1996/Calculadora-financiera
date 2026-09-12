@@ -317,12 +317,13 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
         <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
           <h3 className="font-bold text-slate-800 dark:text-white text-sm">Vivienda</h3>
 
-          {/* Botón directo de Agregar */}
+          {/* Botón directo de Agregar (+) */}
           <button
             onClick={openCreateHousing}
-            className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800/40 hover:bg-blue-200 transition-all flex items-center gap-1 shadow-sm"
+            className="p-2 rounded-xl text-xs font-semibold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800/40 hover:bg-blue-200 transition-all flex items-center justify-center shadow-sm"
+            title="Agregar Vivienda"
           >
-            <Plus className="w-3.5 h-3.5" /> Agregar
+            <Plus className="w-4 h-4" />
           </button>
         </div>
 
@@ -445,19 +446,20 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
         <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
           <h3 className="font-bold text-slate-800 dark:text-white text-sm">Obligaciones</h3>
 
-          {/* Botón directo de Agregar */}
+          {/* Botón directo de Agregar (+) */}
           <button
             onClick={openCreateObligation}
-            className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800/40 hover:bg-blue-200 transition-all flex items-center gap-1 shadow-sm"
+            className="p-2 rounded-xl text-xs font-semibold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800/40 hover:bg-blue-200 transition-all flex items-center justify-center shadow-sm"
+            title="Agregar Obligación"
           >
-            <Plus className="w-3.5 h-3.5" /> Agregar
+            <Plus className="w-4 h-4" />
           </button>
         </div>
 
         <div className="divide-y divide-slate-200 dark:divide-slate-800">
           {(!data.obligations || data.obligations.length === 0) ? (
             <div className="p-8 text-center text-slate-400 dark:text-slate-500 text-xs">
-              No tienes obligaciones registradas. Haz clic en <strong>Agregar</strong> para registrar una.
+              No tienes obligaciones registradas. Haz clic en <strong>+</strong> para registrar una.
             </div>
           ) : (
             data.obligations.map((ob, idx) => {
@@ -579,19 +581,20 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
             Suscripciones
           </h3>
 
-          {/* Botón directo de Agregar */}
+          {/* Botón directo de Agregar (+) */}
           <button
             onClick={openCreateSub}
-            className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800/40 hover:bg-blue-200 transition-all flex items-center gap-1 shadow-sm"
+            className="p-2 rounded-xl text-xs font-semibold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800/40 hover:bg-blue-200 transition-all flex items-center justify-center shadow-sm"
+            title="Agregar Suscripción"
           >
-            <Plus className="w-3.5 h-3.5" /> Agregar
+            <Plus className="w-4 h-4" />
           </button>
         </div>
 
         <div className="divide-y divide-slate-200 dark:divide-slate-800">
           {(!data.subscriptions || data.subscriptions.length === 0) ? (
             <div className="p-8 text-center text-slate-400 dark:text-slate-500 text-xs">
-              No tienes suscripciones registradas. Haz clic en <strong>Agregar</strong> para registrar una.
+              No tienes suscripciones registradas. Haz clic en <strong>+</strong> para registrar una.
             </div>
           ) : (
             data.subscriptions.map((sub, idx) => {

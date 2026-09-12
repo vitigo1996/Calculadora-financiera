@@ -29,12 +29,15 @@ export const CreditosSuscripcionesView: React.FC = () => {
     performCardCutoff,
     cancelCardCutoff,
     clearCardPurchases,
+    clearCardPurchasesVisual,
     addCardPurchase,
-    deleteCardPurchase
+    deleteCardPurchase,
+    moveCardPurchase
   } = useFinance();
 
   const [selectedCardId, setSelectedCardId] = useState<string>(data.creditCards[0]?.id || '');
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [draggedPurchaseIdx, setDraggedPurchaseIdx] = useState<number | null>(null);
 
   // Confirmation modal state
   const [confirmConfig, setConfirmConfig] = useState<{
@@ -190,6 +193,27 @@ export const CreditosSuscripcionesView: React.FC = () => {
     setDraggedIndex(null);
   };
 
+  // Drag and drop for Card Purchases
+  const handlePurchaseDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedPurchaseIdx(index);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handlePurchaseDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handlePurchaseDrop = (e: React.DragEvent, targetIndex: number) => {
+    e.preventDefault();
+    if (draggedPurchaseIdx === null || draggedPurchaseIdx === targetIndex || !selectedCard) {
+      setDraggedPurchaseIdx(null);
+      return;
+    }
+    moveCardPurchase(selectedCard.id, draggedPurchaseIdx, targetIndex);
+    setDraggedPurchaseIdx(null);
+  };
+
   return (
     <div className="space-y-6 pb-24 animate-fadeIn">
       {/* Header Principal de Tarjetas Alineado */}
@@ -200,9 +224,10 @@ export const CreditosSuscripcionesView: React.FC = () => {
 
         <button
           onClick={openCreateCard}
-          className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800/40 hover:bg-blue-200 transition-all flex items-center gap-1 shadow-sm"
+          className="p-2 rounded-xl text-xs font-semibold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800/40 hover:bg-blue-200 transition-all flex items-center justify-center shadow-sm"
+          title="Agregar Tarjeta"
         >
-          <Plus className="w-3.5 h-3.5" /> Agregar Tarjeta
+          <Plus className="w-4 h-4" />
         </button>
       </div>
 
@@ -210,7 +235,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
       <div className="space-y-4">
         {data.creditCards.length === 0 ? (
           <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 p-8 text-center text-slate-400 dark:text-slate-500 text-xs">
-            No tienes tarjetas agregadas. Haz clic en <strong>Agregar Tarjeta</strong> para registrar una.
+            No tienes tarjetas agregadas. Haz clic en <strong>+</strong> para registrar una.
           </div>
         ) : (
           <div className="flex items-stretch gap-4 overflow-x-auto pb-3 pt-1 scrollbar-thin snap-x">
@@ -239,101 +264,83 @@ export const CreditosSuscripcionesView: React.FC = () => {
                       : 'bg-white/80 dark:bg-slate-900/80 border-slate-300 dark:border-slate-800 shadow-sm'
                   }`}
                 >
-                <div>
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <div className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 cursor-grab active:cursor-grabbing p-0.5">
-                        <GripVertical className="w-3.5 h-3.5" />
-                      </div>
-                      <div className="w-9 h-9 rounded-2xl bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/50 flex items-center justify-center font-bold text-xs shadow-sm">
-                        <CreditCard className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-1.5">
-                          <h4 className="font-bold text-slate-800 dark:text-white text-sm">{cc.name}</h4>
+                  <div>
+                    {/* Header de la Tarjeta */}
+                    <div className="flex items-center justify-between gap-2 mb-3">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-200 dark:border-blue-800/50 flex-shrink-0">
+                          <CreditCard className="w-4 h-4" />
                         </div>
-                        <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">
-                          {cc.period === '1st_fortnight' ? '1ª Quincena' : '2ª Quincena'}
-                        </span>
+                        <h3 className="font-bold text-slate-800 dark:text-white text-sm truncate">
+                          {cc.name}
+                        </h3>
+                      </div>
+
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={e => {
+                            e.stopPropagation();
+                            openEditCard(cc);
+                          }}
+                          className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors"
+                          title="Editar tarjeta"
+                        >
+                          <Edit2 className="w-3 h-3" />
+                        </button>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-1">
-                      {hasCutoff && (
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800/50">
-                          Corte
-                        </span>
-                      )}
-
-                      {/* Botón de Editar Tarjeta en el Recuadro */}
-                      <button
-                        onClick={e => {
-                          e.stopPropagation();
-                          openEditCard(cc);
-                        }}
-                        className="p-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-300/80 dark:border-transparent transition-colors"
-                        title="Editar tarjeta"
-                      >
-                        <Edit2 className="w-3 h-3" />
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2 text-xs pt-1">
-                    <div className="flex justify-between items-baseline">
-                      <span className="text-slate-500 dark:text-slate-400">Pago del Mes:</span>
-                      <div className="text-right">
-                        <span className="font-bold text-blue-700 dark:text-blue-400 font-mono text-sm block">
+                    {/* Métricas Principales */}
+                    <div className="space-y-2 text-xs">
+                      {/* Pago del Mes */}
+                      <div className="p-3 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80 rounded-2xl flex items-center justify-between">
+                        <span className="text-slate-500 dark:text-slate-400 font-medium">Pago del Mes</span>
+                        <span className="font-mono font-bold text-sm text-blue-600 dark:text-blue-400">
                           {formatCurrency(pagoDelMes)}
                         </span>
                       </div>
-                    </div>
 
-                    <div className="flex justify-between">
-                      <span className="text-slate-500 dark:text-slate-400">Cupo Total:</span>
-                      <span className="font-mono text-slate-700 dark:text-slate-300 font-medium">
-                        {formatCurrency(cc.creditLimit)}
-                      </span>
-                    </div>
+                      {/* Deuda Total y Cupo */}
+                      <div className="grid grid-cols-2 gap-2 text-[11px]">
+                        <div className="p-2.5 bg-slate-50/70 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800/60 rounded-xl">
+                          <span className="text-slate-400 block text-[10px]">Deuda Total</span>
+                          <span className="font-mono font-bold text-slate-700 dark:text-slate-200 block">
+                            {formatCurrency(totalDeuda)}
+                          </span>
+                        </div>
 
-                    <div className="flex justify-between">
-                      <span className="text-slate-500 dark:text-slate-400">Disponible:</span>
-                      <span className="font-mono text-emerald-700 dark:text-emerald-400 font-bold">
-                        {formatCurrency(cupoDisponible)}
-                      </span>
+                        <div className="p-2.5 bg-slate-50/70 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800/60 rounded-xl">
+                          <span className="text-slate-400 block text-[10px]">Cupo Disp.</span>
+                          <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400 block">
+                            {formatCurrency(cupoDisponible)}
+                          </span>
+                        </div>
+                      </div>
                     </div>
+                  </div>
+
+                  {/* Footer de Tarjeta con Badge de Corte */}
+                  <div className="pt-3 mt-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-[10px]">
+                    <span className="text-slate-400 font-medium">
+                      Cupo: {formatCurrency(cc.creditLimit)}
+                    </span>
+                    {hasCutoff && (
+                      <span className="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300 font-semibold border border-amber-300/60 dark:border-amber-800/40 flex items-center gap-1">
+                        <Scissors className="w-2.5 h-2.5" /> Corte Activo
+                      </span>
+                    )}
                   </div>
                 </div>
+              );
+            })}
+          </div>
+        )}
 
-                {/* Progress bar */}
-                <div className="mt-4">
-                  <div className="w-full bg-slate-200 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full transition-all duration-300 ${
-                        (totalDeuda / (cc.creditLimit || 1)) > 0.8
-                          ? 'bg-rose-500'
-                          : (totalDeuda / (cc.creditLimit || 1)) > 0.5
-                          ? 'bg-amber-500'
-                          : 'bg-blue-600'
-                      }`}
-                      style={{ width: `${Math.min(100, Math.max(0, (totalDeuda / (cc.creditLimit || 1)) * 100))}%` }}
-                    />
-                  </div>
-                  <div className="flex justify-between text-[10px] text-slate-500 dark:text-slate-400 mt-1 font-mono">
-                    <span>Usado: {Math.round((totalDeuda / (cc.creditLimit || 1)) * 100)}%</span>
-                    <span>Deuda: {formatCurrency(totalDeuda)}</span>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-        {/* DETALLES DE LA TARJETA SELECCIONADA: Compras y Acciones de Corte */}
+        {/* DETALLE Y COMPRAS DE LA TARJETA SELECCIONADA */}
         {selectedCard && (
-          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden p-6 space-y-6 animate-scaleUp transition-colors">
-            <div className="flex items-center justify-between flex-wrap gap-3 border-b border-slate-200 dark:border-slate-800 pb-4">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 p-5 shadow-sm space-y-4 animate-fadeIn">
+            {/* Encabezado del Detalle */}
+            <div className="flex items-center justify-between flex-wrap gap-2 pb-3 border-b border-slate-200 dark:border-slate-800">
               <div>
                 <div className="flex items-center gap-2">
                   <h3 className="text-base font-bold text-slate-800 dark:text-white flex items-center gap-2">
@@ -347,33 +354,57 @@ export const CreditosSuscripcionesView: React.FC = () => {
                 </p>
               </div>
 
-              {/* Botones de acción: Hacer Corte y Agregar Compra */}
+              {/* Botones de acción: 1. +  2. Corte  3. Limpiar Historial (Barrer) */}
               <div className="flex items-center gap-2 flex-wrap">
-                {/* Hacer Corte / Deshacer Corte */}
+                {/* 1. Agregar Compra (+) */}
+                <button
+                  onClick={openAddPurchase}
+                  className="p-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white transition-all flex items-center justify-center shadow-sm"
+                  title="Agregar Compra"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+
+                {/* 2. Corte */}
                 {selectedCard.billingCutoffAmount !== undefined ? (
                   <button
                     onClick={() => cancelCardCutoff(selectedCard.id)}
                     className="px-3 py-2 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-400 text-white transition-all flex items-center gap-1.5 shadow-sm"
                     title="Deshacer corte y volver a cálculo en tiempo real"
                   >
-                    <RotateCcw className="w-3.5 h-3.5" /> Deshacer Corte
+                    <RotateCcw className="w-3.5 h-3.5" /> Corte
                   </button>
                 ) : (
                   <button
                     onClick={() => handleDoCutoff(selectedCard)}
                     className="px-3 py-2 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300/80 dark:border-transparent transition-all flex items-center gap-1.5 shadow-sm"
-                    title="Fijar corte de facturación actual"
+                    title="Hacer corte de facturación actual"
                   >
-                    <Scissors className="w-3.5 h-3.5" /> Hacer Corte
+                    <Scissors className="w-3.5 h-3.5" /> Corte
                   </button>
                 )}
 
-                {/* Agregar Compra */}
+                {/* 3. Limpiar Historial (Icono de barrer) */}
                 <button
-                  onClick={openAddPurchase}
-                  className="px-3 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white transition-all flex items-center gap-1.5 shadow-sm"
+                  onClick={() => {
+                    setConfirmConfig({
+                      isOpen: true,
+                      title: 'Limpiar Historial de Compras',
+                      message: `¿Deseas limpiar visualmente el historial de compras de "${selectedCard.name}"? Los cálculos de deuda acumulada y cupo disponible se mantendrán intactos.`,
+                      confirmText: 'Sí, limpiar',
+                      cancelText: 'Cancelar',
+                      variant: 'warning',
+                      onConfirm: () => clearCardPurchasesVisual(selectedCard.id)
+                    });
+                  }}
+                  className="p-2 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-300/80 dark:border-transparent transition-all flex items-center justify-center shadow-sm"
+                  title="Limpiar historial visual"
                 >
-                  <Plus className="w-3.5 h-3.5" /> Agregar Compra
+                  <svg className="w-4 h-4 text-slate-600 dark:text-slate-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="m16 2 4 4-8.5 8.5" />
+                    <path d="M14.5 9.5 8 16" />
+                    <path d="M2 22s2.5-3 5-3 4.5 3 7 3c1 0 1.5-.5 2-1.5L18 16l-6-6-4.5 2C6.5 12.5 6 13 6 14c0 2.5 3 4.5 3 7" />
+                  </svg>
                 </button>
               </div>
             </div>
@@ -392,59 +423,76 @@ export const CreditosSuscripcionesView: React.FC = () => {
 
             {/* Lista de Compras */}
             <div className="space-y-2">
-              {(!selectedCard.purchases || selectedCard.purchases.length === 0) ? (
-                <div className="p-8 text-center text-slate-400 dark:text-slate-500 text-xs">
-                  No hay compras registradas en esta tarjeta. Haz clic en <strong>Agregar Compra</strong> para añadir una.
-                </div>
-              ) : (
-                <div className="divide-y divide-slate-200 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden">
-                  {(selectedCard.purchases || []).map(p => {
-                    return (
-                      <div
-                        key={p.id}
-                        className="p-3 flex items-center justify-between text-xs transition-colors"
-                      >
-                        <div className="flex items-center gap-2 flex-wrap min-w-0 flex-1">
-                          <span className="font-semibold text-slate-800 dark:text-white truncate">
-                            {p.concept}
-                          </span>
-                          {p.isAfterCutoff && (
-                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 flex-shrink-0">
-                              Post-Corte
+              {(() => {
+                const visiblePurchases = (selectedCard.purchases || []).filter(p => !p.hidden);
+                if (visiblePurchases.length === 0) {
+                  return (
+                    <div className="p-8 text-center text-slate-400 dark:text-slate-500 text-xs">
+                      No hay compras visibles registradas. Haz clic en <strong>+</strong> para añadir una.
+                    </div>
+                  );
+                }
+                return (
+                  <div className="divide-y divide-slate-200 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden">
+                    {visiblePurchases.map((p, pIdx) => {
+                      const isDragging = draggedPurchaseIdx === pIdx;
+                      return (
+                        <div
+                          key={p.id}
+                          draggable
+                          onDragStart={e => handlePurchaseDragStart(e, pIdx)}
+                          onDragOver={e => handlePurchaseDragOver(e, pIdx)}
+                          onDrop={e => handlePurchaseDrop(e, pIdx)}
+                          onDragEnd={() => setDraggedPurchaseIdx(null)}
+                          className={`p-3 flex items-center justify-between text-xs transition-colors cursor-grab active:cursor-grabbing ${
+                            isDragging ? 'opacity-40 scale-[0.99] bg-blue-50/50 dark:bg-blue-950/30' : 'bg-white dark:bg-slate-900'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2 min-w-0 flex-1">
+                            <div className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-0.5 cursor-grab active:cursor-grabbing flex-shrink-0">
+                              <GripVertical className="w-3.5 h-3.5" />
+                            </div>
+                            <span className="font-semibold text-slate-800 dark:text-white truncate">
+                              {p.concept}
                             </span>
-                          )}
-                        </div>
-
-                        <div className="flex items-center gap-2.5 flex-shrink-0">
-                          <div className="text-right">
-                            <span className="font-mono font-bold text-slate-800 dark:text-white">
-                              {formatCurrency(p.amount)}
-                            </span>
+                            {p.isAfterCutoff && (
+                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 flex-shrink-0">
+                                Post-Corte
+                              </span>
+                            )}
                           </div>
 
-                          <button
-                            onClick={() => {
-                              setConfirmConfig({
-                                isOpen: true,
-                                title: 'Eliminar Compra',
-                                message: `¿Estás seguro de eliminar la compra "${p.concept}"?`,
-                                confirmText: 'Sí, eliminar',
-                                cancelText: 'Cancelar',
-                                variant: 'danger',
-                                onConfirm: () => deleteCardPurchase(selectedCard.id, p.id)
-                              });
-                            }}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors"
-                            title="Eliminar compra"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+                          <div className="flex items-center gap-2.5 flex-shrink-0">
+                            <div className="text-right">
+                              <span className="font-mono font-bold text-slate-800 dark:text-white">
+                                {formatCurrency(p.amount)}
+                              </span>
+                            </div>
+
+                            <button
+                              onClick={() => {
+                                setConfirmConfig({
+                                  isOpen: true,
+                                  title: 'Eliminar Compra',
+                                  message: `¿Estás seguro de eliminar la compra "${p.concept}"?`,
+                                  confirmText: 'Sí, eliminar',
+                                  cancelText: 'Cancelar',
+                                  variant: 'danger',
+                                  onConfirm: () => deleteCardPurchase(selectedCard.id, p.id)
+                                });
+                              }}
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors"
+                              title="Eliminar compra"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+                      );
+                    })}
+                  </div>
+                );
+              })()}
             </div>
           </div>
         )}

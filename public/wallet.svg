@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="piggyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6" />
+      <stop offset="100%" stop-color="#1d4ed8" />
+    </linearGradient>
+    <linearGradient id="coinGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24" />
+      <stop offset="100%" stop-color="#f59e0b" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background rounded soft squircle -->
+  <rect width="512" height="512" rx="128" fill="url(#piggyGrad)"/>
+  
+  <!-- Golden Coin falling into slot -->
+  <circle cx="256" cy="130" r="44" fill="url(#coinGrad)" stroke="#d97706" stroke-width="8"/>
+  <text x="256" y="145" font-size="40" font-weight="900" fill="#78350f" text-anchor="middle" font-family="system-ui, sans-serif">$</text>
+  
+  <!-- Piggy Body -->
+  <path d="M380 230 C380 180 340 170 290 170 C240 170 190 190 160 220 L130 215 C110 215 100 230 100 245 C100 260 115 270 135 270 L145 275 C140 290 140 310 145 330 L130 380 C125 395 135 410 150 410 L180 410 C195 410 205 395 205 380 L210 355 C225 360 240 365 260 365 C280 365 300 360 315 355 L320 380 C320 395 330 410 345 410 L375 410 C390 410 400 395 395 380 L380 330 C395 305 400 270 380 230 Z" fill="#ffffff" />
+  
+  <!-- Coin Slot -->
+  <rect x="236" y="175" width="40" height="10" rx="5" fill="#93c5fd" />
+  
+  <!-- Piggy Ear -->
+  <path d="M290 180 C300 150 330 150 340 180 C340 200 320 210 290 180 Z" fill="#dbeafe" stroke="#ffffff" stroke-width="6" />
+  
+  <!-- Piggy Eye -->
+  <circle cx="335" cy="245" r="9" fill="#1e3a8a" />
+  <circle cx="337" cy="243" r="3" fill="#ffffff" />
+  
+  <!-- Piggy Snout -->
+  <rect x="360" y="240" width="34" height="44" rx="17" fill="#dbeafe" />
+  <circle cx="372" cy="262" r="4" fill="#3b82f6" />
+  <circle cx="382" cy="262" r="4" fill="#3b82f6" />
+  
+  <!-- Cute blush -->
+  <circle cx="315" cy="275" r="12" fill="#bfdbfe" opacity="0.8" />
+</svg>
