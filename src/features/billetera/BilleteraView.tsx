@@ -396,6 +396,14 @@ export const BilleteraView: React.FC = () => {
           </h3>
 
           <div className="flex items-center gap-2">
+            <button
+              onClick={openCreateMovement}
+              className="p-2 rounded-xl text-xs font-semibold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800/40 hover:bg-blue-200 transition-all flex items-center justify-center shadow-sm"
+              title="Registrar Movimiento"
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+
             {movements.length > 0 && (
               <button
                 onClick={() => {
@@ -423,14 +431,6 @@ export const BilleteraView: React.FC = () => {
                 </svg>
               </button>
             )}
-
-            <button
-              onClick={openCreateMovement}
-              className="p-2 rounded-xl text-xs font-semibold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800/40 hover:bg-blue-200 transition-all flex items-center justify-center shadow-sm"
-              title="Registrar Movimiento"
-            >
-              <Plus className="w-4 h-4" />
-            </button>
           </div>
         </div>
 
