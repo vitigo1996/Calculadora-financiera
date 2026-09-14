@@ -68,16 +68,8 @@ export function calculateSubscriptionMonthlyCost(sub: SubscriptionItem): number 
 }
 
 export function calculateCardPurchasesTotal(cc: CreditCardItem): number {
-  const totalPayments = (cc.payments || []).reduce((sum, pay) => sum + (pay.amount || 0), 0);
-
-  if (cc.billingCutoffAmount !== undefined) {
-    const afterCutoffPurchases = (cc.purchases || [])
-      .filter(p => p.isAfterCutoff)
-      .reduce((sum, p) => sum + (p.amount || 0), 0);
-    return Math.max(0, (cc.billingCutoffAmount - totalPayments) + afterCutoffPurchases);
-  }
-
   const totalPurchases = (cc.purchases || []).reduce((sum, p) => sum + (p.amount || 0), 0);
+  const totalPayments = (cc.payments || []).reduce((sum, pay) => sum + (pay.amount || 0), 0);
   return Math.max(0, totalPurchases - totalPayments);
 }
 
@@ -86,9 +78,17 @@ export function calculateCardPaymentDue(cc: CreditCardItem): number {
     return cc.minPaymentOverride;
   }
   const totalPayments = (cc.payments || []).reduce((sum, pay) => sum + (pay.amount || 0), 0);
+
   if (cc.billingCutoffAmount !== undefined) {
-    return Math.max(0, cc.billingCutoffAmount - totalPayments);
+    const paymentsSinceCutoff = Math.max(0, totalPayments - (cc.cutoffBasePayments || 0));
+    const cutoffRemaining = Math.max(0, cc.billingCutoffAmount - paymentsSinceCutoff);
+    if (cutoffRemaining > 0) {
+      return cutoffRemaining;
+    }
+    // Si la deuda facturada en el corte ya se pagó en su totalidad, continuar con lo que siga activo en la deuda
+    return calculateCardPurchasesTotal(cc);
   }
+
   return calculateCardPurchasesTotal(cc);
 }
 

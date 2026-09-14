@@ -236,9 +236,9 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         moneda: movement.moneda,
         sourceAccountId: movement.sourceAccountId,
         sourceAccountName,
-        destinationType: isIncome ? undefined : (isTransfer ? (isDestPortfolio ? 'portfolio' : 'account') : (movement.destinationType || 'none')),
-        destinationId: isIncome ? undefined : movement.destinationId,
-        destinationName: isIncome ? undefined : destinationName,
+        destinationType: isIncome ? (movement.destinationType === 'deuda' ? 'deuda' : undefined) : (isTransfer ? (isDestPortfolio ? 'portfolio' : 'account') : (movement.destinationType || 'none')),
+        destinationId: isIncome ? (movement.destinationType === 'deuda' ? movement.destinationId : undefined) : movement.destinationId,
+        destinationName: isIncome ? (movement.destinationType === 'deuda' ? destinationName : undefined) : destinationName,
         date: new Date().toISOString()
       };
 
@@ -284,9 +284,30 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
               concept: movement.name.trim() || 'Abono / Pago',
               sourceAccountName
             };
+            const updatedPayments = [newPayment, ...(c.payments || [])];
+            const totalPayments = updatedPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+
+            let newCutoffAmount = c.billingCutoffAmount;
+            let newCutoffDate = c.billingCutoffDate;
+            let newCutoffBasePayments = c.cutoffBasePayments;
+
+            // Si hay corte activo y los pagos cubren el monto facturado, se quita el corte
+            if (c.billingCutoffAmount !== undefined) {
+              const paymentsSinceCutoff = Math.max(0, totalPayments - (c.cutoffBasePayments || 0));
+              if (paymentsSinceCutoff >= c.billingCutoffAmount) {
+                newCutoffAmount = undefined;
+                newCutoffDate = undefined;
+                newCutoffBasePayments = undefined;
+              }
+            }
+
             return {
               ...c,
-              payments: [newPayment, ...(c.payments || [])]
+              billingCutoffAmount: newCutoffAmount,
+              billingCutoffDate: newCutoffDate,
+              cutoffBasePayments: newCutoffBasePayments,
+              payments: updatedPayments,
+              purchases: newCutoffAmount === undefined ? (c.purchases || []).map(p => ({ ...p, isAfterCutoff: false })) : c.purchases
             };
           }
           return c;
@@ -296,6 +317,8 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       // 4. Si el destino es Deuda / Obligación, restar al saldo adeudado
       let updatedDeudas = prev.deudaItems;
       let updatedObligations = prev.obligations;
+
+      // Descontar si es Gasto hacia una deuda por pagar / obligación
       if (!isIncome && !isTransfer && (movement.destinationType === 'deuda' || movement.destinationType === 'obligation') && movement.destinationId) {
         const destId = movement.destinationId;
         const rawId = destId.startsWith('d-') ? destId.replace('d-', '') : (destId.startsWith('o-') ? destId.replace('o-', '') : destId);
@@ -318,6 +341,20 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
             };
           }
           return ob;
+        });
+      }
+
+      // Descontar si es Ingreso proveniente de una deuda a mi favor (por_cobrar)
+      if (isIncome && movement.destinationType === 'deuda' && movement.destinationId) {
+        const debtId = movement.destinationId;
+        updatedDeudas = (prev.deudaItems || []).map(d => {
+          if (d.id === debtId) {
+            return {
+              ...d,
+              monto: Math.max(0, (d.monto || 0) - movement.amount)
+            };
+          }
+          return d;
         });
       }
 
@@ -470,12 +507,13 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       creditCards: prev.creditCards.map(c => {
         if (c.id === cardId) {
           const currentTotal = calculateCardPurchasesTotal(c);
+          const currentPaymentsTotal = (c.payments || []).reduce((sum, p) => sum + (p.amount || 0), 0);
           return {
             ...c,
             billingCutoffAmount: currentTotal,
             billingCutoffDate: new Date().toLocaleDateString('es-CO', { day: '2-digit', month: 'short' }),
-            purchases: (c.purchases || []).map(p => ({ ...p, isAfterCutoff: false })),
-            payments: []
+            cutoffBasePayments: currentPaymentsTotal,
+            purchases: (c.purchases || []).map(p => ({ ...p, isAfterCutoff: false }))
           };
         }
         return c;
@@ -496,8 +534,8 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
             ...c,
             billingCutoffAmount: undefined,
             billingCutoffDate: undefined,
-            purchases: remainingPurchases,
-            payments: []
+            cutoffBasePayments: undefined,
+            purchases: remainingPurchases
           };
         }
         return c;
@@ -515,6 +553,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
             ...c,
             billingCutoffAmount: undefined,
             billingCutoffDate: undefined,
+            cutoffBasePayments: undefined,
             purchases: (c.purchases || []).map(p => ({ ...p, isAfterCutoff: false }))
           };
         }

@@ -29,7 +29,8 @@ export const BilleteraView: React.FC = () => {
     deleteBilleteraItem,
     moveBilleteraItem,
     addExpenseMovement,
-    deleteExpenseMovement
+    deleteExpenseMovement,
+    clearExpenseMovements
   } = useFinance();
 
   // Confirmation modal state
@@ -72,7 +73,12 @@ export const BilleteraView: React.FC = () => {
   const [movementDestId, setMovementDestId] = useState('');
   const [movementDestTransferId, setMovementDestTransferId] = useState('');
 
+  // Origen de Ingreso (General vs Deuda a mi favor)
+  const [incomeOriginType, setIncomeOriginType] = useState<'general' | 'deuda'>('general');
+  const [incomeOriginDeudaId, setIncomeOriginDeudaId] = useState('');
+
   const deudasPorPagar = (data.deudaItems || []).filter(d => d.tipo === 'por_pagar');
+  const deudasPorCobrar = (data.deudaItems || []).filter(d => d.tipo === 'por_cobrar');
 
   // Uniform neutral blue icon container
   const getItemIconStyle = () => {
@@ -167,6 +173,8 @@ export const BilleteraView: React.FC = () => {
     const firstBilletera = data.billeteraItems[0] ? `billetera:${data.billeteraItems[0].id}` : '';
     setMovementSourceId(firstBilletera);
     setMovementDestType('none');
+    setIncomeOriginType('general');
+    setIncomeOriginDeudaId(deudasPorCobrar[0]?.id || '');
     const firstTarget = data.creditCards[0]
       ? `card:${data.creditCards[0].id}`
       : (deudasPorPagar[0] ? `deuda:${deudasPorPagar[0].id}` : '');
@@ -253,13 +261,18 @@ export const BilleteraView: React.FC = () => {
         destId = deudaId;
         destName = deuda ? `Deuda ${deuda.nombre}` : undefined;
       }
+    } else if (movementType === 'income' && incomeOriginType === 'deuda' && incomeOriginDeudaId) {
+      const deuda = deudasPorCobrar.find(d => d.id === incomeOriginDeudaId);
+      destType = 'deuda';
+      destId = incomeOriginDeudaId;
+      destName = deuda ? deuda.nombre : undefined;
     }
 
     const defaultName = movementType === 'expense'
       ? (destName ? `Pago a ${destName}` : 'Gasto')
       : movementType === 'transfer'
       ? (destName ? `Transferencia a ${destName}` : 'Transferencia')
-      : 'Ingreso';
+      : (destName ? `Cobro de deuda ${destName}` : 'Ingreso');
 
     addExpenseMovement({
       type: movementType,
@@ -383,6 +396,26 @@ export const BilleteraView: React.FC = () => {
           </h3>
 
           <div className="flex items-center gap-2">
+            {movements.length > 0 && (
+              <button
+                onClick={() => {
+                  setConfirmConfig({
+                    isOpen: true,
+                    title: 'Limpiar Registro',
+                    message: '¿Estás seguro?',
+                    confirmText: 'Sí, limpiar',
+                    cancelText: 'Cancelar',
+                    variant: 'warning',
+                    onConfirm: () => clearExpenseMovements()
+                  });
+                }}
+                className="p-2 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300/80 dark:border-transparent transition-all flex items-center justify-center shadow-sm"
+                title="Limpiar Registro"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            )}
+
             <button
               onClick={openCreateMovement}
               className="p-2 rounded-xl text-xs font-semibold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800/40 hover:bg-blue-200 transition-all flex items-center justify-center shadow-sm"
@@ -396,7 +429,7 @@ export const BilleteraView: React.FC = () => {
         <div className="divide-y divide-slate-200 dark:divide-slate-800">
           {movements.length === 0 ? (
             <div className="p-8 text-center text-slate-400 dark:text-slate-500 text-xs">
-              No hay movimientos registrados. Haz clic en <strong>Registrar</strong> para añadir uno.
+              No hay movimientos registrados. Haz clic en <strong>+</strong> para añadir uno.
             </div>
           ) : (
             movements.map(mov => {
@@ -441,18 +474,39 @@ export const BilleteraView: React.FC = () => {
                         <span className="inline-flex items-center gap-1 text-slate-400 dark:text-slate-500 font-medium">
                           <Calendar className="w-3 h-3 flex-shrink-0" /> {formattedDate}
                         </span>
-                        <span className="font-medium text-slate-600 dark:text-slate-300">
-                          De: <strong className="text-blue-600 dark:text-blue-400">{mov.sourceAccountName}</strong>
-                        </span>
-                        {mov.destinationName && (
-                          <span className="font-medium text-slate-600 dark:text-slate-300">
-                            Hacia:{' '}
-                            <strong className="text-slate-800 dark:text-slate-200">
-                              {isTransfer
-                                ? mov.destinationName
-                                : (mov.destinationType === 'card' ? `Tarjeta ${mov.destinationName}` : mov.destinationName)}
-                            </strong>
-                          </span>
+                        {isIncome ? (
+                          <>
+                            {mov.destinationType === 'deuda' && mov.destinationName ? (
+                              <>
+                                <span className="font-medium text-slate-600 dark:text-slate-300">
+                                  De: <strong className="text-emerald-600 dark:text-emerald-400">Deuda {mov.destinationName}</strong>
+                                </span>
+                                <span className="font-medium text-slate-600 dark:text-slate-300">
+                                  Hacia: <strong className="text-slate-800 dark:text-slate-200">{mov.sourceAccountName}</strong>
+                                </span>
+                              </>
+                            ) : (
+                              <span className="font-medium text-slate-600 dark:text-slate-300">
+                                Hacia: <strong className="text-emerald-600 dark:text-emerald-400">{mov.sourceAccountName}</strong>
+                              </span>
+                            )}
+                          </>
+                        ) : (
+                          <>
+                            <span className="font-medium text-slate-600 dark:text-slate-300">
+                              De: <strong className="text-blue-600 dark:text-blue-400">{mov.sourceAccountName}</strong>
+                            </span>
+                            {mov.destinationName && (
+                              <span className="font-medium text-slate-600 dark:text-slate-300">
+                                Hacia:{' '}
+                                <strong className="text-slate-800 dark:text-slate-200">
+                                  {isTransfer
+                                    ? mov.destinationName
+                                    : (mov.destinationType === 'card' ? `Tarjeta ${mov.destinationName}` : mov.destinationName)}
+                                </strong>
+                              </span>
+                            )}
+                          </>
                         )}
                       </div>
                     </div>
@@ -735,7 +789,7 @@ export const BilleteraView: React.FC = () => {
               ) : (
                 <div>
                   <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                    Cuenta Origen
+                    {movementType === 'income' ? 'Cuenta Destino' : 'Cuenta Origen'}
                   </label>
                   <select
                     value={movementSourceId}
@@ -749,6 +803,64 @@ export const BilleteraView: React.FC = () => {
                       </option>
                     ))}
                   </select>
+                </div>
+              )}
+
+              {/* Origen si es INGRESO */}
+              {movementType === 'income' && deudasPorCobrar.length > 0 && (
+                <div className="pt-1 border-t border-slate-200 dark:border-slate-800">
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
+                    Origen del Ingreso
+                  </label>
+                  <div className="grid grid-cols-2 gap-2 mb-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIncomeOriginType('general');
+                      }}
+                      className={`py-2 px-3 rounded-2xl text-xs font-bold border flex items-center justify-center gap-1.5 transition-all ${
+                        incomeOriginType === 'general'
+                          ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                          : 'bg-slate-50 dark:bg-slate-950/40 border-slate-300 dark:border-slate-800 text-slate-600 dark:text-slate-400'
+                      }`}
+                    >
+                      <ShoppingBag className="w-3.5 h-3.5" /> Ingreso General
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIncomeOriginType('deuda');
+                        if (!incomeOriginDeudaId && deudasPorCobrar[0]) {
+                          setIncomeOriginDeudaId(deudasPorCobrar[0].id);
+                        }
+                      }}
+                      className={`py-2 px-3 rounded-2xl text-xs font-bold border flex items-center justify-center gap-1.5 transition-all ${
+                        incomeOriginType === 'deuda'
+                          ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                          : 'bg-slate-50 dark:bg-slate-950/40 border-slate-300 dark:border-slate-800 text-slate-600 dark:text-slate-400'
+                      }`}
+                    >
+                      <CreditCard className="w-3.5 h-3.5" /> Deuda a mi favor
+                    </button>
+                  </div>
+
+                  {incomeOriginType === 'deuda' && (
+                    <div className="animate-fadeIn mt-2">
+                      <select
+                        value={incomeOriginDeudaId}
+                        onChange={e => setIncomeOriginDeudaId(e.target.value)}
+                        className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
+                        required
+                      >
+                        {deudasPorCobrar.map(d => (
+                          <option key={d.id} value={d.id}>
+                            {d.nombre} {d.monto !== undefined ? `(${formatCurrency(d.monto)})` : ''}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
                 </div>
               )}
 
