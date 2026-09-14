@@ -359,7 +359,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
                 {/* 1. Agregar Compra (+) */}
                 <button
                   onClick={openAddPurchase}
-                  className="p-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white transition-all flex items-center justify-center shadow-sm"
+                  className="p-2 rounded-xl text-xs font-semibold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800/40 hover:bg-blue-200 transition-all flex items-center justify-center shadow-sm"
                   title="Agregar Compra"
                 >
                   <Plus className="w-4 h-4" />
