@@ -175,8 +175,8 @@ export const PresupuestoView: React.FC = () => {
             </div>
           </div>
 
-          {/* 3 Recuadros: Mitad de Mes, Fin de Mes, Disponible */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {/* 3 Recuadros: Mitad de Mes, Fin de Mes, Disponible en vertical */}
+          <div className="space-y-3">
             {/* Mitad de Mes (1ª Quincena) */}
             <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm transition-colors overflow-hidden">
               <div className="flex items-center justify-between mb-1">
@@ -190,7 +190,7 @@ export const PresupuestoView: React.FC = () => {
                   <Eye className="w-3.5 h-3.5" />
                 </button>
               </div>
-              <div className="text-sm sm:text-base font-bold text-blue-700 dark:text-blue-400 font-mono tracking-tight whitespace-nowrap">
+              <div className="text-base font-bold text-blue-700 dark:text-blue-400 font-mono tracking-tight">
                 {formatCurrency(pres.m9_mitadDeMes)}
               </div>
             </div>
@@ -208,7 +208,7 @@ export const PresupuestoView: React.FC = () => {
                   <Eye className="w-3.5 h-3.5" />
                 </button>
               </div>
-              <div className="text-sm sm:text-base font-bold text-blue-700 dark:text-blue-400 font-mono tracking-tight whitespace-nowrap">
+              <div className="text-base font-bold text-blue-700 dark:text-blue-400 font-mono tracking-tight">
                 {formatCurrency(pres.m10_finDeMes)}
               </div>
             </div>
@@ -216,7 +216,7 @@ export const PresupuestoView: React.FC = () => {
             {/* Libre */}
             <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm transition-colors overflow-hidden">
               <span className="text-xs font-bold text-slate-900 dark:text-white block mb-1">Libre</span>
-              <div className="text-sm sm:text-base font-black text-slate-900 dark:text-white font-mono tracking-tight whitespace-nowrap">
+              <div className="text-base font-black text-slate-900 dark:text-white font-mono tracking-tight">
                 {formatCurrency(pres.m11_disponible)}
               </div>
             </div>
