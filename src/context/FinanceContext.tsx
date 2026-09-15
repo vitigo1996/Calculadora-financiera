@@ -637,19 +637,30 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       creditCards: prev.creditCards.map(c => {
         if (c.id === cardId) {
           const oldPurchase = (c.purchases || []).find(p => p.id === purchaseId);
-          const diff = oldPurchase ? updated.amount - oldPurchase.amount : 0;
+          const updatedPurchases = (c.purchases || []).map(p =>
+            p.id === purchaseId
+              ? { ...p, concept: updated.concept.trim(), amount: updated.amount, moneda: updated.moneda || p.moneda }
+              : p
+          );
           let newCutoff = c.billingCutoffAmount;
+          let newCutoffDate = c.billingCutoffDate;
+          let newBase = c.cutoffBasePayments;
+
           if (newCutoff !== undefined && oldPurchase && !oldPurchase.isAfterCutoff) {
-            newCutoff = Math.max(0, newCutoff + diff);
+            const preCutoffSum = updatedPurchases.filter(p => !p.isAfterCutoff).reduce((sum, p) => sum + (p.amount || 0), 0);
+            newCutoff = Math.max(0, preCutoffSum - (newBase || 0));
+            if (newCutoff <= 0) {
+              newCutoff = undefined;
+              newCutoffDate = undefined;
+              newBase = undefined;
+            }
           }
           return {
             ...c,
             billingCutoffAmount: newCutoff,
-            purchases: (c.purchases || []).map(p =>
-              p.id === purchaseId
-                ? { ...p, concept: updated.concept.trim(), amount: updated.amount, moneda: updated.moneda || p.moneda }
-                : p
-            )
+            billingCutoffDate: newCutoffDate,
+            cutoffBasePayments: newBase,
+            purchases: updatedPurchases
           };
         }
         return c;
@@ -664,14 +675,33 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       creditCards: prev.creditCards.map(c => {
         if (c.id === cardId) {
           const targetPurchase = (c.purchases || []).find(p => p.id === purchaseId);
+          const remainingPurchases = (c.purchases || []).filter(p => p.id !== purchaseId);
           let newCutoff = c.billingCutoffAmount;
+          let newCutoffDate = c.billingCutoffDate;
+          let newBase = c.cutoffBasePayments;
+
           if (targetPurchase && newCutoff !== undefined && !targetPurchase.isAfterCutoff) {
-            newCutoff = Math.max(0, newCutoff - targetPurchase.amount);
+            const remainingPreCutoff = remainingPurchases.filter(p => !p.isAfterCutoff);
+            const preCutoffSum = remainingPreCutoff.reduce((sum, p) => sum + (p.amount || 0), 0);
+            if (remainingPreCutoff.length === 0 || preCutoffSum <= 0) {
+              newCutoff = undefined;
+              newCutoffDate = undefined;
+              newBase = undefined;
+            } else {
+              newCutoff = Math.max(0, preCutoffSum - (newBase || 0));
+              if (newCutoff <= 0) {
+                newCutoff = undefined;
+                newCutoffDate = undefined;
+                newBase = undefined;
+              }
+            }
           }
           return {
             ...c,
             billingCutoffAmount: newCutoff,
-            purchases: (c.purchases || []).filter(p => p.id !== purchaseId)
+            billingCutoffDate: newCutoffDate,
+            cutoffBasePayments: newBase,
+            purchases: remainingPurchases
           };
         }
         return c;
@@ -687,6 +717,8 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         if (c.id === cardId) {
           const targetPurchase = (c.purchases || []).find(p => p.id === purchaseId);
           if (!targetPurchase) return c;
+
+          const remainingPurchases = (c.purchases || []).filter(p => p.id !== purchaseId);
 
           let amountToRetire = targetPurchase.amount;
           const updatedPayments: CreditCardPayment[] = [];
@@ -709,22 +741,36 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
           const totalRetired = targetPurchase.amount - amountToRetire;
 
           let newCutoff = c.billingCutoffAmount;
+          let newCutoffDate = c.billingCutoffDate;
           let newBase = c.cutoffBasePayments;
+
           if (newCutoff !== undefined) {
-            if (!targetPurchase.isAfterCutoff) {
-              newCutoff = Math.max(0, newCutoff - totalRetired);
-            }
-            if (newBase !== undefined) {
-              newBase = Math.max(0, newBase - totalRetired);
+            const remainingPreCutoff = remainingPurchases.filter(p => !p.isAfterCutoff);
+            const remainingPreCutoffSum = remainingPreCutoff.reduce((sum, p) => sum + (p.amount || 0), 0);
+
+            if (remainingPreCutoff.length === 0 || remainingPreCutoffSum <= 0) {
+              // Si ya no quedan compras previas al corte, se elimina por completo el corte facturado
+              newCutoff = undefined;
+              newCutoffDate = undefined;
+              newBase = undefined;
+            } else if (!targetPurchase.isAfterCutoff) {
+              newBase = Math.max(0, (newBase || 0) - totalRetired);
+              newCutoff = Math.max(0, remainingPreCutoffSum - (newBase || 0));
+              if (newCutoff <= 0) {
+                newCutoff = undefined;
+                newCutoffDate = undefined;
+                newBase = undefined;
+              }
             }
           }
 
           return {
             ...c,
             billingCutoffAmount: newCutoff,
+            billingCutoffDate: newCutoffDate,
             cutoffBasePayments: newBase,
             payments: updatedPayments,
-            purchases: (c.purchases || []).filter(p => p.id !== purchaseId)
+            purchases: remainingPurchases
           };
         }
         return c;

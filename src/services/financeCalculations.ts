@@ -77,11 +77,21 @@ export function calculateCardPaymentDue(cc: CreditCardItem): number {
   if (cc.minPaymentOverride !== undefined && cc.minPaymentOverride > 0) {
     return cc.minPaymentOverride;
   }
+  const totalPurchases = (cc.purchases || []).reduce((sum, p) => sum + (p.amount || 0), 0);
   const totalPayments = (cc.payments || []).reduce((sum, pay) => sum + (pay.amount || 0), 0);
 
-  if (cc.billingCutoffAmount !== undefined) {
+  if (totalPurchases === 0) {
+    return 0;
+  }
+
+  if (cc.billingCutoffAmount !== undefined && cc.billingCutoffAmount > 0) {
+    const preCutoffPurchasesSum = (cc.purchases || []).filter(p => !p.isAfterCutoff).reduce((sum, p) => sum + (p.amount || 0), 0);
+    if (preCutoffPurchasesSum === 0) {
+      return calculateCardPurchasesTotal(cc);
+    }
     const paymentsSinceCutoff = Math.max(0, totalPayments - (cc.cutoffBasePayments || 0));
-    const cutoffRemaining = Math.max(0, cc.billingCutoffAmount - paymentsSinceCutoff);
+    const effectiveCutoff = Math.min(preCutoffPurchasesSum, cc.billingCutoffAmount);
+    const cutoffRemaining = Math.max(0, effectiveCutoff - paymentsSinceCutoff);
     if (cutoffRemaining > 0) {
       return cutoffRemaining;
     }
