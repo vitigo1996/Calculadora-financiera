@@ -16,7 +16,7 @@ import {
 } from '../models/finance';
 import { StorageService } from '../services/storageService';
 import { CurrencyService } from '../services/currencyService';
-import { calculateAllFinances, CalculatedSummary, calculateCardPurchasesTotal } from '../services/financeCalculations';
+import { calculateAllFinances, CalculatedSummary, calculateCardPurchasesTotal, formatCurrency } from '../services/financeCalculations';
 
 interface FinanceContextType {
   data: AppFinanceData;
@@ -44,7 +44,7 @@ interface FinanceContextType {
   updatePortfolioItem: (id: string, updated: Partial<PortfolioAccountItem>) => void;
   deletePortfolioItem: (id: string) => void;
   movePortfolioItem: (index: number, direction: 'up' | 'down') => void;
-  addCreditCard: (card: { name: string; period: PaymentPeriod; creditLimit: number; moneda?: 'COP' | 'USD'; minPaymentOverride?: number }) => void;
+  addCreditCard: (item: { name: string; period: PaymentPeriod; creditLimit: number; moneda?: 'COP' | 'USD' }) => void;
   updateCreditCard: (id: string, updated: Partial<CreditCardItem>) => void;
   deleteCreditCard: (id: string) => void;
   moveCreditCard: (index: number, direction: 'up' | 'down') => void;
@@ -54,6 +54,9 @@ interface FinanceContextType {
   clearCardPurchases: (cardId: string) => void;
   clearCardPurchasesVisual: (cardId: string) => void;
   addCardPurchase: (cardId: string, purchase: { concept: string; amount: number; moneda?: 'COP' | 'USD' }) => void;
+  updateCardPurchase: (cardId: string, purchaseId: string, updated: { concept: string; amount: number; moneda?: 'COP' | 'USD' }) => void;
+  cancelCardPurchase: (cardId: string, purchaseId: string) => void;
+  deleteCardPurchaseRecord: (cardId: string, purchaseId: string) => void;
   deleteCardPurchase: (cardId: string, purchaseId: string) => void;
   moveCardPurchase: (cardId: string, fromIndex: number, toIndex: number) => void;
   addHousingExpense: (item: { name: string; period: PaymentPeriod; totalAmount: number; moneda?: 'COP' | 'USD'; isShared?: boolean; icon?: string }) => void;
@@ -209,22 +212,37 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const sourceAccountName = isSourcePortfolio
         ? (sourcePortfolio ? sourcePortfolio.nombre : 'Portafolio')
         : (sourceBilletera ? sourceBilletera.nombre : 'Billetera');
+      const sourceMoneda: 'COP' | 'USD' = (isSourcePortfolio ? sourcePortfolio?.moneda : sourceBilletera?.moneda) || 'COP';
 
       // Determine Destination Account for Transfer
       let destinationName = movement.destinationName;
       let isDestPortfolio = false;
       let rawDestId = movement.destinationId ? movement.destinationId.replace('portfolio:', '').replace('billetera:', '') : '';
+      let destObj: { id: string; nombre: string; saldo: number; moneda?: 'COP' | 'USD' } | undefined = undefined;
 
       if (isTransfer && movement.destinationId) {
         isDestPortfolio = movement.destinationId.startsWith('portfolio:') ||
           (!prev.billeteraItems.some(b => b.id === movement.destinationId) && prev.portfolioItems.some(p => p.id === rawDestId));
 
         if (isDestPortfolio) {
-          const destPortfolio = prev.portfolioItems.find(p => p.id === rawDestId || p.id === movement.destinationId);
-          destinationName = destPortfolio ? destPortfolio.nombre : 'Portafolio';
+          destObj = prev.portfolioItems.find(p => p.id === rawDestId || p.id === movement.destinationId);
+          destinationName = destObj ? destObj.nombre : 'Portafolio';
         } else {
-          const destBilletera = prev.billeteraItems.find(b => b.id === rawDestId || b.id === movement.destinationId);
-          destinationName = destBilletera ? destBilletera.nombre : 'Cuenta destino';
+          destObj = prev.billeteraItems.find(b => b.id === rawDestId || b.id === movement.destinationId);
+          destinationName = destObj ? destObj.nombre : 'Cuenta destino';
+        }
+      }
+
+      const destMoneda: 'COP' | 'USD' = destObj?.moneda || 'COP';
+      const rate = prev.dolarRate || 3600;
+
+      // Calcular monto convertido a transferir en la cuenta destino si las monedas difieren
+      let destTransferAmount = movement.amount;
+      if (isTransfer && sourceMoneda !== destMoneda) {
+        if (sourceMoneda === 'USD' && destMoneda === 'COP') {
+          destTransferAmount = movement.amount * rate;
+        } else if (sourceMoneda === 'COP' && destMoneda === 'USD') {
+          destTransferAmount = rate > 0 ? movement.amount / rate : 0;
         }
       }
 
@@ -233,12 +251,18 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         type,
         name: movement.name.trim(),
         amount: movement.amount,
-        moneda: movement.moneda,
+        moneda: movement.moneda || sourceMoneda,
         sourceAccountId: movement.sourceAccountId,
         sourceAccountName,
-        destinationType: isIncome ? (movement.destinationType === 'deuda' ? 'deuda' : undefined) : (isTransfer ? (isDestPortfolio ? 'portfolio' : 'account') : (movement.destinationType || 'none')),
+        destinationType: isIncome
+          ? (movement.destinationType === 'deuda' ? 'deuda' : undefined)
+          : (isTransfer ? (isDestPortfolio ? 'portfolio' : 'account') : (movement.destinationType || 'none')),
         destinationId: isIncome ? (movement.destinationType === 'deuda' ? movement.destinationId : undefined) : movement.destinationId,
-        destinationName: isIncome ? (movement.destinationType === 'deuda' ? destinationName : undefined) : destinationName,
+        destinationName: isIncome
+          ? (movement.destinationType === 'deuda' ? destinationName : undefined)
+          : (isTransfer && sourceMoneda !== destMoneda
+              ? `${destinationName} (Recibe: ${formatCurrency(destTransferAmount, destMoneda)})`
+              : destinationName),
         date: new Date().toISOString()
       };
 
@@ -252,7 +276,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
           }
         }
         if (isTransfer && !isDestPortfolio && (acc.id === rawDestId || acc.id === movement.destinationId)) {
-          return { ...acc, saldo: acc.saldo + movement.amount };
+          return { ...acc, saldo: acc.saldo + destTransferAmount };
         }
         return acc;
       });
@@ -267,7 +291,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
           }
         }
         if (isTransfer && isDestPortfolio && (port.id === rawDestId || port.id === movement.destinationId)) {
-          return { ...port, saldo: port.saldo + movement.amount };
+          return { ...port, saldo: port.saldo + destTransferAmount };
         }
         return port;
       });
@@ -602,7 +626,39 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }));
   };
 
-  const deleteCardPurchase = (cardId: string, purchaseId: string) => {
+  // Editar Compra (modifica concepto y monto)
+  const updateCardPurchase = (
+    cardId: string,
+    purchaseId: string,
+    updated: { concept: string; amount: number; moneda?: 'COP' | 'USD' }
+  ) => {
+    setData(prev => ({
+      ...prev,
+      creditCards: prev.creditCards.map(c => {
+        if (c.id === cardId) {
+          const oldPurchase = (c.purchases || []).find(p => p.id === purchaseId);
+          const diff = oldPurchase ? updated.amount - oldPurchase.amount : 0;
+          let newCutoff = c.billingCutoffAmount;
+          if (newCutoff !== undefined && oldPurchase && !oldPurchase.isAfterCutoff) {
+            newCutoff = Math.max(0, newCutoff + diff);
+          }
+          return {
+            ...c,
+            billingCutoffAmount: newCutoff,
+            purchases: (c.purchases || []).map(p =>
+              p.id === purchaseId
+                ? { ...p, concept: updated.concept.trim(), amount: updated.amount, moneda: updated.moneda || p.moneda }
+                : p
+            )
+          };
+        }
+        return c;
+      })
+    }));
+  };
+
+  // Cancelar Compra (Anular la compra y restaurar el cupo / disminuir deuda)
+  const cancelCardPurchase = (cardId: string, purchaseId: string) => {
     setData(prev => ({
       ...prev,
       creditCards: prev.creditCards.map(c => {
@@ -622,6 +678,61 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       })
     }));
   };
+
+  // Eliminar Registro (Quitar el registro sin alterar el saldo neto de la tarjeta, absorbiendo pagos realizados)
+  const deleteCardPurchaseRecord = (cardId: string, purchaseId: string) => {
+    setData(prev => ({
+      ...prev,
+      creditCards: prev.creditCards.map(c => {
+        if (c.id === cardId) {
+          const targetPurchase = (c.purchases || []).find(p => p.id === purchaseId);
+          if (!targetPurchase) return c;
+
+          let amountToRetire = targetPurchase.amount;
+          const updatedPayments: CreditCardPayment[] = [];
+
+          // Consumir pagos aplicados a este registro para que no descuenten de compras futuras
+          for (const pay of (c.payments || [])) {
+            if (amountToRetire <= 0) {
+              updatedPayments.push(pay);
+            } else if (pay.amount <= amountToRetire) {
+              amountToRetire -= pay.amount;
+            } else {
+              updatedPayments.push({
+                ...pay,
+                amount: pay.amount - amountToRetire
+              });
+              amountToRetire = 0;
+            }
+          }
+
+          const totalRetired = targetPurchase.amount - amountToRetire;
+
+          let newCutoff = c.billingCutoffAmount;
+          let newBase = c.cutoffBasePayments;
+          if (newCutoff !== undefined) {
+            if (!targetPurchase.isAfterCutoff) {
+              newCutoff = Math.max(0, newCutoff - totalRetired);
+            }
+            if (newBase !== undefined) {
+              newBase = Math.max(0, newBase - totalRetired);
+            }
+          }
+
+          return {
+            ...c,
+            billingCutoffAmount: newCutoff,
+            cutoffBasePayments: newBase,
+            payments: updatedPayments,
+            purchases: (c.purchases || []).filter(p => p.id !== purchaseId)
+          };
+        }
+        return c;
+      })
+    }));
+  };
+
+  const deleteCardPurchase = cancelCardPurchase;
 
   const moveCardPurchase = (cardId: string, fromIndex: number, toIndex: number) => {
     setData(prev => ({
@@ -850,6 +961,9 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         clearCardPurchases,
         clearCardPurchasesVisual,
         addCardPurchase,
+        updateCardPurchase,
+        cancelCardPurchase,
+        deleteCardPurchaseRecord,
         deleteCardPurchase,
         moveCardPurchase,
         addHousingExpense,

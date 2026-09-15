@@ -274,11 +274,13 @@ export const BilleteraView: React.FC = () => {
       ? (destName ? `Transferencia a ${destName}` : 'Transferencia')
       : (destName ? `Cobro de deuda ${destName}` : 'Ingreso');
 
+    const sourceMoneda = sourceAccount?.moneda || 'COP';
+
     addExpenseMovement({
       type: movementType,
       name: movementName.trim() || defaultName,
       amount,
-      moneda: 'COP',
+      moneda: sourceMoneda,
       sourceAccountId: sourceId,
       destinationType: destType,
       destinationId: destId,
@@ -793,6 +795,54 @@ export const BilleteraView: React.FC = () => {
                       )}
                     </select>
                   </div>
+
+                  {(() => {
+                    const isSrcPort = movementSourceId.startsWith('portfolio:');
+                    const rSrcId = movementSourceId.replace('portfolio:', '').replace('billetera:', '');
+                    const srcAcc = isSrcPort
+                      ? (data.portfolioItems || []).find(p => p.id === rSrcId)
+                      : (data.billeteraItems || []).find(b => b.id === rSrcId);
+                    const srcCurr = srcAcc?.moneda || 'COP';
+
+                    const isDstPort = movementDestTransferId.startsWith('portfolio:');
+                    const rDstId = movementDestTransferId.replace('portfolio:', '').replace('billetera:', '');
+                    const dstAcc = isDstPort
+                      ? (data.portfolioItems || []).find(p => p.id === rDstId)
+                      : (data.billeteraItems || []).find(b => b.id === rDstId);
+                    const dstCurr = dstAcc?.moneda || 'COP';
+
+                    const isDiff = srcCurr !== dstCurr;
+                    const numAmt = parseFloat(movementAmount) || 0;
+                    const rate = data.dolarRate || 3600;
+                    const convertedAmt = srcCurr === 'USD' && dstCurr === 'COP'
+                      ? numAmt * rate
+                      : (rate > 0 ? numAmt / rate : 0);
+
+                    if (!isDiff || numAmt <= 0) return null;
+
+                    return (
+                      <div className="p-3.5 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/40 rounded-2xl text-xs space-y-1.5 animate-fadeIn">
+                        <div className="flex items-center justify-between text-slate-600 dark:text-slate-400 font-medium">
+                          <span>Tasa de cambio (TRM):</span>
+                          <span className="font-mono font-bold text-slate-800 dark:text-white">
+                            1 USD = {formatCurrency(rate, 'COP')}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-slate-700 dark:text-slate-300 font-semibold">
+                          <span>Se descuenta ({srcCurr}):</span>
+                          <span className="font-mono font-bold text-rose-600 dark:text-rose-400">
+                            {formatCurrency(numAmt, srcCurr)}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-slate-700 dark:text-slate-300 font-semibold">
+                          <span>Se acredita ({dstCurr}):</span>
+                          <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                            {formatCurrency(convertedAmt, dstCurr)}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
               ) : (
                 <div>

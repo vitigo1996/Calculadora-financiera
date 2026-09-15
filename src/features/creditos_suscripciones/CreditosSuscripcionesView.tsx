@@ -12,6 +12,7 @@ import {
   CreditCard,
   Plus,
   Edit2,
+  Undo2,
   Trash2,
   X,
   GripVertical,
@@ -31,6 +32,9 @@ export const CreditosSuscripcionesView: React.FC = () => {
     clearCardPurchases,
     clearCardPurchasesVisual,
     addCardPurchase,
+    updateCardPurchase,
+    cancelCardPurchase,
+    deleteCardPurchaseRecord,
     deleteCardPurchase,
     moveCardPurchase
   } = useFinance();
@@ -57,8 +61,9 @@ export const CreditosSuscripcionesView: React.FC = () => {
   const [cardLimit, setCardLimit] = useState('');
   const [cardPeriod, setCardPeriod] = useState<PaymentPeriod>('1st_fortnight');
 
-  // Modal: Add Purchase
+  // Modal: Add / Edit Purchase
   const [showAddPurchaseModal, setShowAddPurchaseModal] = useState(false);
+  const [editingPurchase, setEditingPurchase] = useState<{ id: string; concept: string; amount: number; moneda?: 'COP' | 'USD' } | null>(null);
   const [purchaseConcept, setPurchaseConcept] = useState('');
   const [purchaseAmount, setPurchaseAmount] = useState('');
 
@@ -132,24 +137,34 @@ export const CreditosSuscripcionesView: React.FC = () => {
 
   // Open Add Purchase Modal
   const openAddPurchase = () => {
+    setEditingPurchase(null);
     setPurchaseConcept('');
     setPurchaseAmount('');
     setShowAddPurchaseModal(true);
   };
 
-  // Save Purchase
+  // Save Purchase (Add or Edit)
   const handleAddPurchase = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedCard || !purchaseConcept.trim()) return;
     const amount = parseFloat(purchaseAmount) || 0;
     if (amount <= 0) return;
 
-    addCardPurchase(selectedCard.id, {
-      concept: purchaseConcept.trim(),
-      amount,
-      moneda: 'COP'
-    });
+    if (editingPurchase) {
+      updateCardPurchase(selectedCard.id, editingPurchase.id, {
+        concept: purchaseConcept.trim(),
+        amount,
+        moneda: editingPurchase.moneda || selectedCard.moneda || 'COP'
+      });
+    } else {
+      addCardPurchase(selectedCard.id, {
+        concept: purchaseConcept.trim(),
+        amount,
+        moneda: selectedCard.moneda || 'COP'
+      });
+    }
 
+    setEditingPurchase(null);
     setPurchaseConcept('');
     setPurchaseAmount('');
     setShowAddPurchaseModal(false);
@@ -439,27 +454,61 @@ export const CreditosSuscripcionesView: React.FC = () => {
                             )}
                           </div>
 
-                          <div className="flex items-center gap-2.5 flex-shrink-0">
-                            <div className="text-right">
+                          <div className="flex items-center gap-1.5 flex-shrink-0">
+                            <div className="text-right mr-1">
                               <span className="font-mono font-bold text-slate-800 dark:text-white">
                                 {formatCurrency(p.amount)}
                               </span>
                             </div>
 
+                            {/* 1. Editar Compra */}
+                            <button
+                              onClick={() => {
+                                setEditingPurchase(p);
+                                setPurchaseConcept(p.concept);
+                                setPurchaseAmount(p.amount.toString());
+                                setShowAddPurchaseModal(true);
+                              }}
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/50 transition-colors"
+                              title="Editar compra"
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </button>
+
+                            {/* 2. Cancelar Compra (Anular y restaurar saldo) */}
                             <button
                               onClick={() => {
                                 setConfirmConfig({
                                   isOpen: true,
-                                  title: 'Eliminar Compra',
-                                  message: `¿Estás seguro de eliminar la compra "${p.concept}"?`,
-                                  confirmText: 'Sí, eliminar',
-                                  cancelText: 'Cancelar',
+                                  title: 'Cancelar Compra',
+                                  message: `¿Estás seguro de cancelar la compra "${p.concept}"? Se anulará y se devolverá el cupo a la tarjeta.`,
+                                  confirmText: 'Sí, cancelar compra',
+                                  cancelText: 'Volver',
+                                  variant: 'warning',
+                                  onConfirm: () => cancelCardPurchase(selectedCard.id, p.id)
+                                });
+                              }}
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/50 transition-colors"
+                              title="Cancelar compra (restaurar cupo)"
+                            >
+                              <Undo2 className="w-3.5 h-3.5" />
+                            </button>
+
+                            {/* 3. Eliminar Registro (Quitar sin alterar saldo neto) */}
+                            <button
+                              onClick={() => {
+                                setConfirmConfig({
+                                  isOpen: true,
+                                  title: 'Eliminar Registro',
+                                  message: `¿Estás seguro de eliminar el registro de "${p.concept}"? Se quitará de la lista sin alterar el saldo de la tarjeta.`,
+                                  confirmText: 'Sí, eliminar registro',
+                                  cancelText: 'Volver',
                                   variant: 'danger',
-                                  onConfirm: () => deleteCardPurchase(selectedCard.id, p.id)
+                                  onConfirm: () => deleteCardPurchaseRecord(selectedCard.id, p.id)
                                 });
                               }}
                               className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors"
-                              title="Eliminar compra"
+                              title="Eliminar registro (sin afectar saldo)"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
@@ -584,7 +633,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
           <div className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl animate-scaleUp max-h-[90vh] overflow-y-auto my-auto">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold text-slate-800 dark:text-white">
-                Nueva Compra en {selectedCard?.name}
+                {editingPurchase ? 'Editar Compra' : `Nueva Compra en ${selectedCard?.name || 'Tarjeta'}`}
               </h3>
               <button
                 onClick={() => setShowAddPurchaseModal(false)}
@@ -633,7 +682,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
                   type="submit"
                   className="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs py-3 rounded-2xl shadow-sm transition-all text-center"
                 >
-                  Guardar Compra
+                  {editingPurchase ? 'Actualizar Compra' : 'Guardar Compra'}
                 </button>
               </div>
             </form>
