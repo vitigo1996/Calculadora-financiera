@@ -12,7 +12,6 @@ import {
   CreditCard,
   Plus,
   Edit2,
-  Undo2,
   Trash2,
   X,
   GripVertical,
@@ -475,40 +474,21 @@ export const CreditosSuscripcionesView: React.FC = () => {
                               <Edit2 className="w-3.5 h-3.5" />
                             </button>
 
-                            {/* 2. Cancelar Compra (Anular y restaurar saldo) */}
-                            <button
-                              onClick={() => {
-                                setConfirmConfig({
-                                  isOpen: true,
-                                  title: 'Cancelar Compra',
-                                  message: `¿Estás seguro de cancelar la compra "${p.concept}"? Se anulará y se devolverá el cupo a la tarjeta.`,
-                                  confirmText: 'Sí, cancelar compra',
-                                  cancelText: 'Volver',
-                                  variant: 'warning',
-                                  onConfirm: () => cancelCardPurchase(selectedCard.id, p.id)
-                                });
-                              }}
-                              className="p-1.5 rounded-lg text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/50 transition-colors"
-                              title="Cancelar compra (restaurar cupo)"
-                            >
-                              <Undo2 className="w-3.5 h-3.5" />
-                            </button>
-
-                            {/* 3. Eliminar Registro (Quitar sin alterar saldo neto) */}
+                            {/* 2. Eliminar Registro */}
                             <button
                               onClick={() => {
                                 setConfirmConfig({
                                   isOpen: true,
                                   title: 'Eliminar Registro',
-                                  message: `¿Estás seguro de eliminar el registro de "${p.concept}"? Se quitará de la lista sin alterar el saldo de la tarjeta.`,
-                                  confirmText: 'Sí, eliminar registro',
-                                  cancelText: 'Volver',
+                                  message: '¿Estás seguro?',
+                                  confirmText: 'Sí, eliminar',
+                                  cancelText: 'Cancelar',
                                   variant: 'danger',
                                   onConfirm: () => deleteCardPurchaseRecord(selectedCard.id, p.id)
                                 });
                               }}
                               className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors"
-                              title="Eliminar registro (sin afectar saldo)"
+                              title="Eliminar registro"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
