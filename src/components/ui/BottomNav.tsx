@@ -1,7 +1,7 @@
 import React from 'react';
-import { Wallet, CreditCard, Receipt, PieChart } from 'lucide-react';
+import { Wallet, Receipt, PieChart } from 'lucide-react';
 
-export type TabType = 'billetera' | 'presupuesto' | 'creditos_suscripciones' | 'portafolio';
+export type TabType = 'billetera' | 'presupuesto' | 'portafolio';
 
 interface BottomNavProps {
   activeTab: TabType;
@@ -11,7 +11,6 @@ interface BottomNavProps {
 export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab }) => {
   const tabs = [
     { id: 'billetera', label: 'Billetera', icon: Wallet },
-    { id: 'creditos_suscripciones', label: 'Tarjetas', icon: CreditCard },
     { id: 'presupuesto', label: 'Presupuesto', icon: Receipt },
     { id: 'portafolio', label: 'Portafolio', icon: PieChart },
   ] as const;

@@ -4,7 +4,6 @@ import { ThemeProvider } from './context/ThemeContext';
 import { Navbar } from './components/ui/Navbar';
 import { BottomNav, TabType } from './components/ui/BottomNav';
 import { BilleteraView } from './features/billetera/BilleteraView';
-import { CreditosSuscripcionesView } from './features/creditos_suscripciones/CreditosSuscripcionesView';
 import { PresupuestoView } from './features/presupuesto/PresupuestoView';
 import { PortafolioView } from './features/portafolio/PortafolioView';
 
@@ -15,8 +14,6 @@ export const AppContent: React.FC = () => {
     switch (activeTab) {
       case 'billetera':
         return <BilleteraView />;
-      case 'creditos_suscripciones':
-        return <CreditosSuscripcionesView />;
       case 'presupuesto':
         return <PresupuestoView />;
       case 'portafolio':

@@ -39,8 +39,6 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab = 'billetera' }) => {
     switch (activeTab) {
       case 'billetera':
         return 'BILLETERA';
-      case 'creditos_suscripciones':
-        return 'TARJETAS';
       case 'presupuesto':
         return 'PRESUPUESTO';
       case 'portafolio':

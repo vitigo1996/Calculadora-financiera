@@ -5,6 +5,7 @@ import { BilleteraAccountItem } from '../../models/finance';
 import { getIconComponent, IconPickerModal } from '../../components/ui/IconPicker';
 import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import { AmountCalculatorInput } from '../../components/ui/AmountCalculatorInput';
+import { CreditosSuscripcionesView } from '../creditos_suscripciones/CreditosSuscripcionesView';
 import {
   Wallet,
   Edit2,
@@ -50,6 +51,9 @@ export const BilleteraView: React.FC = () => {
     currentIcon: string;
     title: string;
   } | null>(null);
+
+  // Submenu: Billetera | Tarjetas
+  const [subView, setSubView] = useState<'billetera' | 'tarjetas'>('billetera');
 
   // Drag and drop states
   const [draggedBilleteraIdx, setDraggedBilleteraIdx] = useState<number | null>(null);
@@ -294,8 +298,40 @@ export const BilleteraView: React.FC = () => {
 
   return (
     <div className="space-y-6 pb-24 animate-fadeIn">
-      {/* SECCIÓN 1: BILLETERA */}
-      <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
+      {/* Menú Superior de 2 opciones: Billetera | Tarjetas */}
+      <div className="flex items-center justify-center">
+        <div className="bg-slate-200/80 dark:bg-slate-800 p-1 rounded-2xl flex items-center gap-1 shadow-inner border border-slate-300/80 dark:border-slate-700/60 w-full sm:w-auto">
+          <button
+            type="button"
+            onClick={() => setSubView('billetera')}
+            className={`flex-1 sm:px-8 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+              subView === 'billetera'
+                ? 'bg-blue-600 text-white shadow-sm'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+            }`}
+          >
+            <Wallet className="w-4 h-4" /> Billetera
+          </button>
+          <button
+            type="button"
+            onClick={() => setSubView('tarjetas')}
+            className={`flex-1 sm:px-8 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+              subView === 'tarjetas'
+                ? 'bg-blue-600 text-white shadow-sm'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+            }`}
+          >
+            <CreditCard className="w-4 h-4" /> Tarjetas
+          </button>
+        </div>
+      </div>
+
+      {subView === 'tarjetas' ? (
+        <CreditosSuscripcionesView />
+      ) : (
+        <>
+          {/* SECCIÓN 1: BILLETERA */}
+          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
         <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
           <h3 className="font-bold text-slate-800 dark:text-white text-sm flex items-center gap-2">
             <Wallet className="w-4 h-4 text-blue-600 dark:text-blue-400" /> Billetera
@@ -561,6 +597,8 @@ export const BilleteraView: React.FC = () => {
           )}
         </div>
       </div>
+        </>
+      )}
 
       {/* Modal: Crear / Editar Billetera */}
       {showAddBilleteraModal && (
