@@ -38,13 +38,13 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab = 'billetera' }) => {
   const getTitle = () => {
     switch (activeTab) {
       case 'billetera':
-        return 'BILLETERA';
+        return 'MOVIMIENTOS';
       case 'presupuesto':
         return 'PRESUPUESTO';
       case 'portafolio':
         return 'PORTAFOLIO';
       default:
-        return 'BILLETERA';
+        return 'MOVIMIENTOS';
     }
   };
 

@@ -6,6 +6,7 @@ import { getIconComponent, IconPickerModal } from '../../components/ui/IconPicke
 import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import { AmountCalculatorInput } from '../../components/ui/AmountCalculatorInput';
 import { CreditosSuscripcionesView } from '../creditos_suscripciones/CreditosSuscripcionesView';
+import { useSwipe } from '../../hooks/useSwipe';
 import {
   Wallet,
   Edit2,
@@ -296,8 +297,24 @@ export const BilleteraView: React.FC = () => {
 
   const movements = data.expenseMovements || [];
 
+  const isAnyModalOpen =
+    showAddBilleteraModal ||
+    showAddMovementModal ||
+    Boolean(iconPickerTarget) ||
+    Boolean(confirmConfig?.isOpen);
+
+  const swipeHandlers = useSwipe({
+    onSwipeLeft: () => {
+      if (subView === 'billetera') setSubView('tarjetas');
+    },
+    onSwipeRight: () => {
+      if (subView === 'tarjetas') setSubView('billetera');
+    },
+    enabled: !isAnyModalOpen
+  });
+
   return (
-    <div className="space-y-6 pb-24 animate-fadeIn">
+    <div className="space-y-6 pb-24 animate-fadeIn" {...swipeHandlers}>
       {/* Menú Superior de 2 opciones: Billetera | Tarjetas */}
       <div className="flex items-center justify-center">
         <div className="bg-slate-200/80 dark:bg-slate-800 p-1 rounded-2xl flex items-center gap-1 shadow-inner border border-slate-300/80 dark:border-slate-700/60 w-full sm:w-auto">

@@ -10,7 +10,7 @@ interface BottomNavProps {
 
 export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab }) => {
   const tabs = [
-    { id: 'billetera', label: 'Billetera', icon: Wallet },
+    { id: 'billetera', label: 'Movimientos', icon: Wallet },
     { id: 'presupuesto', label: 'Presupuesto', icon: Receipt },
     { id: 'portafolio', label: 'Portafolio', icon: PieChart },
   ] as const;

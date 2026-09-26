@@ -3,6 +3,7 @@ import { useFinance } from '../../context/FinanceContext';
 import { formatCurrency, calculateCardPaymentDue } from '../../services/financeCalculations';
 import { GastosFijosView } from '../gastos_fijos/GastosFijosView';
 import { DeudasView } from '../deudas/DeudasView';
+import { useSwipe } from '../../hooks/useSwipe';
 import {
   Receipt,
   ShieldCheck,
@@ -58,8 +59,20 @@ export const PresupuestoView: React.FC = () => {
       amount: calculateCardPaymentDue(c) || 0
     }));
 
+  const swipeHandlers = useSwipe({
+    onSwipeLeft: () => {
+      if (subView === 'presupuesto') setSubView('gastos');
+      else if (subView === 'gastos') setSubView('deudas');
+    },
+    onSwipeRight: () => {
+      if (subView === 'deudas') setSubView('gastos');
+      else if (subView === 'gastos') setSubView('presupuesto');
+    },
+    enabled: fortnightDetail === null
+  });
+
   return (
-    <div className="space-y-6 pb-24 animate-fadeIn">
+    <div className="space-y-6 pb-24 animate-fadeIn" {...swipeHandlers}>
       {/* Menú Superior de 3 opciones: Presupuesto | Gastos | Deudas */}
       <div className="flex items-center justify-center">
         <div className="bg-slate-200/80 dark:bg-slate-800 p-1 rounded-2xl flex items-center gap-1 shadow-inner border border-slate-300/80 dark:border-slate-700/60 w-full sm:w-auto">
