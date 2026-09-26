@@ -6,7 +6,7 @@ import { getIconComponent, IconPickerModal } from '../../components/ui/IconPicke
 import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import { AmountCalculatorInput } from '../../components/ui/AmountCalculatorInput';
 import { CreditosSuscripcionesView } from '../creditos_suscripciones/CreditosSuscripcionesView';
-import { useSwipe } from '../../hooks/useSwipe';
+import { useInteractiveSlider } from '../../hooks/useSwipe';
 import {
   Wallet,
   Edit2,
@@ -303,18 +303,19 @@ export const BilleteraView: React.FC = () => {
     Boolean(iconPickerTarget) ||
     Boolean(confirmConfig?.isOpen);
 
-  const swipeHandlers = useSwipe({
-    onSwipeLeft: () => {
-      if (subView === 'billetera') setSubView('tarjetas');
-    },
-    onSwipeRight: () => {
-      if (subView === 'tarjetas') setSubView('billetera');
-    },
+  const {
+    containerStyle,
+    isSlideActive,
+    swipeHandlers
+  } = useInteractiveSlider({
+    tabs: ['billetera', 'tarjetas'] as const,
+    activeTab: subView,
+    onTabChange: setSubView,
     enabled: !isAnyModalOpen
   });
 
   return (
-    <div className="space-y-6 pb-24 animate-fadeIn" {...swipeHandlers}>
+    <div className="space-y-6 pb-24 animate-fadeIn">
       {/* Menú Superior de 2 opciones: Billetera | Tarjetas */}
       <div className="flex items-center justify-center">
         <div className="bg-slate-200/80 dark:bg-slate-800 p-1 rounded-2xl flex items-center gap-1 shadow-inner border border-slate-300/80 dark:border-slate-700/60 w-full sm:w-auto">
@@ -344,13 +345,13 @@ export const BilleteraView: React.FC = () => {
       </div>
 
       {/* Contenedor con transición fluida de deslizamiento */}
-      <div className="overflow-hidden w-full">
+      <div className="overflow-hidden w-full" {...swipeHandlers}>
         <div
-          className="flex w-[200%] transition-transform duration-300 ease-out items-start"
-          style={{ transform: `translateX(${subView === 'billetera' ? '0%' : '-50%'})` }}
+          className="flex items-start"
+          style={containerStyle}
         >
           {/* Slide 1: Billetera */}
-          <div className="w-1/2 flex-shrink-0 space-y-6">
+          <div className={`w-1/2 flex-shrink-0 space-y-6 ${isSlideActive(0) ? 'h-auto' : 'h-0 overflow-hidden'}`}>
             {/* SECCIÓN 1: BILLETERA */}
           <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
         <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
@@ -621,7 +622,7 @@ export const BilleteraView: React.FC = () => {
     </div>
 
           {/* Slide 2: Tarjetas */}
-          <div className="w-1/2 flex-shrink-0">
+          <div className={`w-1/2 flex-shrink-0 ${isSlideActive(1) ? 'h-auto' : 'h-0 overflow-hidden'}`}>
             <CreditosSuscripcionesView />
           </div>
         </div>

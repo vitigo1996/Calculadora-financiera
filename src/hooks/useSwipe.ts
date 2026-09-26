@@ -1,65 +1,124 @@
-import { useRef, TouchEvent } from 'react';
+import React, { useState, useRef, useEffect, TouchEvent } from 'react';
 
-interface UseSwipeOptions {
-  onSwipeLeft?: () => void;
-  onSwipeRight?: () => void;
-  minSwipeDistance?: number;
-  maxSwipeTimeMs?: number;
+interface UseInteractiveSliderOptions<T extends string> {
+  tabs: readonly T[] | T[];
+  activeTab: T;
+  onTabChange: (tab: T) => void;
   enabled?: boolean;
 }
 
-export const useSwipe = ({
-  onSwipeLeft,
-  onSwipeRight,
-  minSwipeDistance = 35,
-  maxSwipeTimeMs = 800,
+export function useInteractiveSlider<T extends string>({
+  tabs,
+  activeTab,
+  onTabChange,
   enabled = true
-}: UseSwipeOptions) => {
+}: UseInteractiveSliderOptions<T>) {
+  const currentIndex = tabs.indexOf(activeTab);
+  const [dragOffset, setDragOffset] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
+
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
-  const touchStartTime = useRef<number | null>(null);
+  const isHorizontalScroll = useRef<boolean | null>(null);
+  const animationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const onTouchStart = (e: TouchEvent) => {
     if (!enabled || e.touches.length !== 1) return;
     touchStartX.current = e.touches[0].clientX;
     touchStartY.current = e.touches[0].clientY;
-    touchStartTime.current = Date.now();
+    isHorizontalScroll.current = null;
+    setIsAnimating(true);
   };
 
-  const onTouchEnd = (e: TouchEvent) => {
-    if (!enabled || touchStartX.current === null || touchStartY.current === null || touchStartTime.current === null) {
-      touchStartX.current = null;
-      touchStartY.current = null;
-      touchStartTime.current = null;
-      return;
-    }
+  const onTouchMove = (e: TouchEvent) => {
+    if (!enabled || touchStartX.current === null || touchStartY.current === null) return;
 
-    const elapsedTime = Date.now() - touchStartTime.current;
-    if (elapsedTime <= maxSwipeTimeMs && e.changedTouches.length > 0) {
-      const touchEndX = e.changedTouches[0].clientX;
-      const touchEndY = e.changedTouches[0].clientY;
+    const currentX = e.touches[0].clientX;
+    const currentY = e.touches[0].clientY;
+    const diffX = currentX - touchStartX.current;
+    const diffY = currentY - touchStartY.current;
 
-      const diffX = touchStartX.current - touchEndX;
-      const diffY = touchStartY.current - touchEndY;
-
-      if (Math.abs(diffX) >= minSwipeDistance && Math.abs(diffX) > Math.abs(diffY) * 1.1) {
-        if (diffX > 0) {
-          // Swipe Left -> Next
-          onSwipeLeft?.();
-        } else {
-          // Swipe Right -> Prev
-          onSwipeRight?.();
-        }
+    // Detect if gesture is primarily horizontal
+    if (isHorizontalScroll.current === null) {
+      if (Math.abs(diffX) > 6 || Math.abs(diffY) > 6) {
+        isHorizontalScroll.current = Math.abs(diffX) > Math.abs(diffY);
       }
     }
 
+    if (isHorizontalScroll.current) {
+      setIsDragging(true);
+      let offset = diffX;
+      // Resistance at edges
+      if ((currentIndex === 0 && offset > 0) || (currentIndex === tabs.length - 1 && offset < 0)) {
+        offset = offset * 0.25;
+      }
+      setDragOffset(offset);
+    }
+  };
+
+  const onTouchEnd = () => {
+    if (touchStartX.current === null) return;
+
+    if (isDragging) {
+      const threshold = 45; // px
+      if (dragOffset < -threshold && currentIndex < tabs.length - 1) {
+        onTabChange(tabs[currentIndex + 1]);
+      } else if (dragOffset > threshold && currentIndex > 0) {
+        onTabChange(tabs[currentIndex - 1]);
+      }
+    }
+
+    setIsDragging(false);
+    setDragOffset(0);
     touchStartX.current = null;
     touchStartY.current = null;
-    touchStartTime.current = null;
+    isHorizontalScroll.current = null;
+
+    if (animationTimeoutRef.current) clearTimeout(animationTimeoutRef.current);
+    animationTimeoutRef.current = setTimeout(() => {
+      setIsAnimating(false);
+    }, 320);
+  };
+
+  // Trigger animation window on activeTab change
+  useEffect(() => {
+    setIsAnimating(true);
+    if (animationTimeoutRef.current) clearTimeout(animationTimeoutRef.current);
+    animationTimeoutRef.current = setTimeout(() => {
+      setIsAnimating(false);
+    }, 320);
+    return () => {
+      if (animationTimeoutRef.current) clearTimeout(animationTimeoutRef.current);
+    };
+  }, [activeTab]);
+
+  const numTabs = tabs.length;
+  const basePercent = -(currentIndex * 100);
+
+  const containerStyle: React.CSSProperties = {
+    width: `${numTabs * 100}%`,
+    transform: isDragging
+      ? `translateX(calc(${basePercent / numTabs}% + ${dragOffset}px))`
+      : `translateX(${basePercent / numTabs}%)`,
+    transition: isDragging ? 'none' : 'transform 300ms cubic-bezier(0.25, 1, 0.5, 1)',
+    willChange: 'transform'
+  };
+
+  const isSlideActive = (idx: number) => {
+    return isDragging || isAnimating || currentIndex === idx;
   };
 
   return {
-    onTouchStart,
-    onTouchEnd
+    currentIndex,
+    isDragging,
+    isAnimating,
+    isSlideActive,
+    containerStyle,
+    swipeHandlers: {
+      onTouchStart,
+      onTouchMove,
+      onTouchEnd
+    }
   };
-};
+}

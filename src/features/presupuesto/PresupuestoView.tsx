@@ -3,7 +3,7 @@ import { useFinance } from '../../context/FinanceContext';
 import { formatCurrency, calculateCardPaymentDue } from '../../services/financeCalculations';
 import { GastosFijosView } from '../gastos_fijos/GastosFijosView';
 import { DeudasView } from '../deudas/DeudasView';
-import { useSwipe } from '../../hooks/useSwipe';
+import { useInteractiveSlider } from '../../hooks/useSwipe';
 import {
   Receipt,
   ShieldCheck,
@@ -59,33 +59,19 @@ export const PresupuestoView: React.FC = () => {
       amount: calculateCardPaymentDue(c) || 0
     }));
 
-  const getTranslateX = () => {
-    switch (subView) {
-      case 'presupuesto':
-        return '0%';
-      case 'gastos':
-        return '-33.333333%';
-      case 'deudas':
-        return '-66.666666%';
-      default:
-        return '0%';
-    }
-  };
-
-  const swipeHandlers = useSwipe({
-    onSwipeLeft: () => {
-      if (subView === 'presupuesto') setSubView('gastos');
-      else if (subView === 'gastos') setSubView('deudas');
-    },
-    onSwipeRight: () => {
-      if (subView === 'deudas') setSubView('gastos');
-      else if (subView === 'gastos') setSubView('presupuesto');
-    },
+  const {
+    containerStyle,
+    isSlideActive,
+    swipeHandlers
+  } = useInteractiveSlider({
+    tabs: ['presupuesto', 'gastos', 'deudas'] as const,
+    activeTab: subView,
+    onTabChange: setSubView,
     enabled: fortnightDetail === null
   });
 
   return (
-    <div className="space-y-6 pb-24 animate-fadeIn" {...swipeHandlers}>
+    <div className="space-y-6 pb-24 animate-fadeIn">
       {/* Menú Superior de 3 opciones: Presupuesto | Gastos | Deudas */}
       <div className="flex items-center justify-center">
         <div className="bg-slate-200/80 dark:bg-slate-800 p-1 rounded-2xl flex items-center gap-1 shadow-inner border border-slate-300/80 dark:border-slate-700/60 w-full sm:w-auto">
@@ -126,13 +112,13 @@ export const PresupuestoView: React.FC = () => {
       </div>
 
       {/* Contenedor con transición fluida de deslizamiento */}
-      <div className="overflow-hidden w-full">
+      <div className="overflow-hidden w-full" {...swipeHandlers}>
         <div
-          className="flex w-[300%] transition-transform duration-300 ease-out items-start"
-          style={{ transform: `translateX(${getTranslateX()})` }}
+          className="flex items-start"
+          style={containerStyle}
         >
           {/* Slide 1: Presupuesto */}
-          <div className="w-1/3 flex-shrink-0 space-y-6">
+          <div className={`w-1/3 flex-shrink-0 space-y-6 ${isSlideActive(0) ? 'h-auto' : 'h-0 overflow-hidden'}`}>
             {/* Lista de Gastos */}
           <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
             <div className="divide-y divide-slate-200 dark:divide-slate-800 text-sm">
@@ -252,12 +238,12 @@ export const PresupuestoView: React.FC = () => {
         </div>
 
         {/* Slide 2: Gastos */}
-        <div className="w-1/3 flex-shrink-0">
+        <div className={`w-1/3 flex-shrink-0 ${isSlideActive(1) ? 'h-auto' : 'h-0 overflow-hidden'}`}>
           <GastosFijosView hideHeader={true} />
         </div>
 
         {/* Slide 3: Deudas */}
-        <div className="w-1/3 flex-shrink-0">
+        <div className={`w-1/3 flex-shrink-0 ${isSlideActive(2) ? 'h-auto' : 'h-0 overflow-hidden'}`}>
           <DeudasView />
         </div>
       </div>
