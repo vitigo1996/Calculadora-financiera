@@ -3,7 +3,6 @@ import { useFinance } from '../../context/FinanceContext';
 import { formatCurrency, calculateCardPaymentDue } from '../../services/financeCalculations';
 import { GastosFijosView } from '../gastos_fijos/GastosFijosView';
 import { DeudasView } from '../deudas/DeudasView';
-import { useInteractiveSlider } from '../../hooks/useSwipe';
 import {
   Receipt,
   ShieldCheck,
@@ -59,17 +58,6 @@ export const PresupuestoView: React.FC = () => {
       amount: calculateCardPaymentDue(c) || 0
     }));
 
-  const {
-    containerStyle,
-    isSlideActive,
-    swipeHandlers
-  } = useInteractiveSlider({
-    tabs: ['presupuesto', 'gastos', 'deudas'] as const,
-    activeTab: subView,
-    onTabChange: setSubView,
-    enabled: fortnightDetail === null
-  });
-
   return (
     <div className="space-y-6 pb-2 animate-fadeIn">
       {/* Menú Superior de 3 opciones: Presupuesto | Gastos | Deudas */}
@@ -111,15 +99,13 @@ export const PresupuestoView: React.FC = () => {
         </div>
       </div>
 
-      {/* Contenedor con transición fluida de deslizamiento */}
-      <div className="overflow-hidden w-full -mx-2 px-2" {...swipeHandlers}>
-        <div
-          className="flex items-start"
-          style={containerStyle}
-        >
-          {/* Slide 1: Presupuesto */}
-          <div className={`w-1/3 flex-shrink-0 space-y-6 px-2 transition-opacity duration-200 ${isSlideActive(0) ? 'h-auto opacity-100' : 'h-0 max-h-0 overflow-hidden opacity-0 pointer-events-none'}`}>
-            {/* Lista de Gastos */}
+      {subView === 'gastos' ? (
+        <GastosFijosView hideHeader={true} />
+      ) : subView === 'deudas' ? (
+        <DeudasView />
+      ) : (
+        <div className="space-y-6">
+          {/* Lista de Gastos */}
           <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
             <div className="divide-y divide-slate-200 dark:divide-slate-800 text-sm">
               {/* 1. Deducciones de ley */}
@@ -236,18 +222,7 @@ export const PresupuestoView: React.FC = () => {
             </div>
           </div>
         </div>
-
-        {/* Slide 2: Gastos */}
-        <div className={`w-1/3 flex-shrink-0 px-2 transition-opacity duration-200 ${isSlideActive(1) ? 'h-auto opacity-100' : 'h-0 max-h-0 overflow-hidden opacity-0 pointer-events-none'}`}>
-          <GastosFijosView hideHeader={true} />
-        </div>
-
-        {/* Slide 3: Deudas */}
-        <div className={`w-1/3 flex-shrink-0 px-2 transition-opacity duration-200 ${isSlideActive(2) ? 'h-auto opacity-100' : 'h-0 max-h-0 overflow-hidden opacity-0 pointer-events-none'}`}>
-          <DeudasView />
-        </div>
-      </div>
-    </div>
+      )}
 
       {/* Ventana pequeña emergente con el detalle de gastos de la quincena */}
       {fortnightDetail !== null && (

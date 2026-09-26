@@ -6,7 +6,6 @@ import { getIconComponent, IconPickerModal } from '../../components/ui/IconPicke
 import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import { AmountCalculatorInput } from '../../components/ui/AmountCalculatorInput';
 import { CreditosSuscripcionesView } from '../creditos_suscripciones/CreditosSuscripcionesView';
-import { useInteractiveSlider } from '../../hooks/useSwipe';
 import {
   Wallet,
   Edit2,
@@ -303,17 +302,6 @@ export const BilleteraView: React.FC = () => {
     Boolean(iconPickerTarget) ||
     Boolean(confirmConfig?.isOpen);
 
-  const {
-    containerStyle,
-    isSlideActive,
-    swipeHandlers
-  } = useInteractiveSlider({
-    tabs: ['billetera', 'tarjetas'] as const,
-    activeTab: subView,
-    onTabChange: setSubView,
-    enabled: !isAnyModalOpen
-  });
-
   return (
     <div className="space-y-6 pb-2 animate-fadeIn">
       {/* Menú Superior de 2 opciones: Billetera | Tarjetas */}
@@ -344,15 +332,11 @@ export const BilleteraView: React.FC = () => {
         </div>
       </div>
 
-      {/* Contenedor con transición fluida de deslizamiento */}
-      <div className="overflow-hidden w-full -mx-2 px-2" {...swipeHandlers}>
-        <div
-          className="flex items-start"
-          style={containerStyle}
-        >
-          {/* Slide 1: Billetera */}
-          <div className={`w-1/2 flex-shrink-0 space-y-6 px-2 transition-opacity duration-200 ${isSlideActive(0) ? 'h-auto opacity-100' : 'h-0 max-h-0 overflow-hidden opacity-0 pointer-events-none'}`}>
-            {/* SECCIÓN 1: BILLETERA */}
+      {subView === 'tarjetas' ? (
+        <CreditosSuscripcionesView />
+      ) : (
+        <>
+          {/* SECCIÓN 1: BILLETERA */}
           <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
         <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
           <h3 className="font-bold text-slate-800 dark:text-white text-sm flex items-center gap-2">
@@ -619,14 +603,8 @@ export const BilleteraView: React.FC = () => {
           )}
         </div>
       </div>
-    </div>
-
-          {/* Slide 2: Tarjetas */}
-          <div className={`w-1/2 flex-shrink-0 px-2 transition-opacity duration-200 ${isSlideActive(1) ? 'h-auto opacity-100' : 'h-0 max-h-0 overflow-hidden opacity-0 pointer-events-none'}`}>
-            <CreditosSuscripcionesView />
-          </div>
-        </div>
-      </div>
+        </>
+      )}
 
       {/* Modal: Crear / Editar Billetera */}
       {showAddBilleteraModal && (
