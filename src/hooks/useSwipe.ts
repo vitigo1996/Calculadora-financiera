@@ -11,7 +11,7 @@ interface UseSwipeOptions {
 export const useSwipe = ({
   onSwipeLeft,
   onSwipeRight,
-  minSwipeDistance = 45,
+  minSwipeDistance = 35,
   maxSwipeTimeMs = 800,
   enabled = true
 }: UseSwipeOptions) => {
@@ -42,7 +42,7 @@ export const useSwipe = ({
       const diffX = touchStartX.current - touchEndX;
       const diffY = touchStartY.current - touchEndY;
 
-      if (Math.abs(diffX) >= minSwipeDistance && Math.abs(diffX) > Math.abs(diffY) * 1.2) {
+      if (Math.abs(diffX) >= minSwipeDistance && Math.abs(diffX) > Math.abs(diffY) * 1.1) {
         if (diffX > 0) {
           // Swipe Left -> Next
           onSwipeLeft?.();

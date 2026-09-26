@@ -252,7 +252,12 @@ export const CreditosSuscripcionesView: React.FC = () => {
             No tienes tarjetas agregadas. Haz clic en <strong>+</strong> para registrar una.
           </div>
         ) : (
-          <div className="flex items-stretch gap-4 overflow-x-auto pb-3 pt-1 scrollbar-thin snap-x">
+          <div
+            onTouchStart={e => e.stopPropagation()}
+            onTouchMove={e => e.stopPropagation()}
+            onTouchEnd={e => e.stopPropagation()}
+            className="flex items-stretch gap-4 overflow-x-auto pb-3 pt-1 scrollbar-thin snap-x"
+          >
             {data.creditCards.map((cc, idx) => {
               const isSelected = (selectedCard?.id === cc.id);
               const totalDeuda = calculateCardPurchasesTotal(cc);

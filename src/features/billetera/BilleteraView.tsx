@@ -343,11 +343,15 @@ export const BilleteraView: React.FC = () => {
         </div>
       </div>
 
-      {subView === 'tarjetas' ? (
-        <CreditosSuscripcionesView />
-      ) : (
-        <>
-          {/* SECCIÓN 1: BILLETERA */}
+      {/* Contenedor con transición fluida de deslizamiento */}
+      <div className="overflow-hidden w-full">
+        <div
+          className="flex w-[200%] transition-transform duration-300 ease-out items-start"
+          style={{ transform: `translateX(${subView === 'billetera' ? '0%' : '-50%'})` }}
+        >
+          {/* Slide 1: Billetera */}
+          <div className="w-1/2 flex-shrink-0 space-y-6">
+            {/* SECCIÓN 1: BILLETERA */}
           <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
         <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
           <h3 className="font-bold text-slate-800 dark:text-white text-sm flex items-center gap-2">
@@ -614,8 +618,14 @@ export const BilleteraView: React.FC = () => {
           )}
         </div>
       </div>
-        </>
-      )}
+    </div>
+
+          {/* Slide 2: Tarjetas */}
+          <div className="w-1/2 flex-shrink-0">
+            <CreditosSuscripcionesView />
+          </div>
+        </div>
+      </div>
 
       {/* Modal: Crear / Editar Billetera */}
       {showAddBilleteraModal && (

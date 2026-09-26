@@ -59,6 +59,19 @@ export const PresupuestoView: React.FC = () => {
       amount: calculateCardPaymentDue(c) || 0
     }));
 
+  const getTranslateX = () => {
+    switch (subView) {
+      case 'presupuesto':
+        return '0%';
+      case 'gastos':
+        return '-33.333333%';
+      case 'deudas':
+        return '-66.666666%';
+      default:
+        return '0%';
+    }
+  };
+
   const swipeHandlers = useSwipe({
     onSwipeLeft: () => {
       if (subView === 'presupuesto') setSubView('gastos');
@@ -112,13 +125,15 @@ export const PresupuestoView: React.FC = () => {
         </div>
       </div>
 
-      {subView === 'gastos' ? (
-        <GastosFijosView hideHeader={true} />
-      ) : subView === 'deudas' ? (
-        <DeudasView />
-      ) : (
-        <div className="space-y-6">
-          {/* Lista de Gastos */}
+      {/* Contenedor con transición fluida de deslizamiento */}
+      <div className="overflow-hidden w-full">
+        <div
+          className="flex w-[300%] transition-transform duration-300 ease-out items-start"
+          style={{ transform: `translateX(${getTranslateX()})` }}
+        >
+          {/* Slide 1: Presupuesto */}
+          <div className="w-1/3 flex-shrink-0 space-y-6">
+            {/* Lista de Gastos */}
           <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
             <div className="divide-y divide-slate-200 dark:divide-slate-800 text-sm">
               {/* 1. Deducciones de ley */}
@@ -235,7 +250,18 @@ export const PresupuestoView: React.FC = () => {
             </div>
           </div>
         </div>
-      )}
+
+        {/* Slide 2: Gastos */}
+        <div className="w-1/3 flex-shrink-0">
+          <GastosFijosView hideHeader={true} />
+        </div>
+
+        {/* Slide 3: Deudas */}
+        <div className="w-1/3 flex-shrink-0">
+          <DeudasView />
+        </div>
+      </div>
+    </div>
 
       {/* Ventana pequeña emergente con el detalle de gastos de la quincena */}
       {fortnightDetail !== null && (
