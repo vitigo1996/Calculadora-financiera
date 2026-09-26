@@ -5,6 +5,7 @@ import { BottomNav, TabType } from './components/ui/BottomNav';
 import { BilleteraView } from './features/billetera/BilleteraView';
 import { PresupuestoView } from './features/presupuesto/PresupuestoView';
 import { PortafolioView } from './features/portafolio/PortafolioView';
+import { AjustesView } from './features/ajustes/AjustesView';
 
 export const AppContent: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('billetera');
@@ -17,6 +18,8 @@ export const AppContent: React.FC = () => {
         return <PresupuestoView />;
       case 'portafolio':
         return <PortafolioView />;
+      case 'ajustes':
+        return <AjustesView />;
       default:
         return <BilleteraView />;
     }

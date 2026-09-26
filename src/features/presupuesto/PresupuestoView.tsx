@@ -71,7 +71,7 @@ export const PresupuestoView: React.FC = () => {
   });
 
   return (
-    <div className="space-y-6 pb-24 animate-fadeIn">
+    <div className="space-y-6 pb-2 animate-fadeIn">
       {/* Menú Superior de 3 opciones: Presupuesto | Gastos | Deudas */}
       <div className="flex items-center justify-center">
         <div className="bg-slate-200/80 dark:bg-slate-800 p-1 rounded-2xl flex items-center gap-1 shadow-inner border border-slate-300/80 dark:border-slate-700/60 w-full sm:w-auto">
@@ -112,13 +112,13 @@ export const PresupuestoView: React.FC = () => {
       </div>
 
       {/* Contenedor con transición fluida de deslizamiento */}
-      <div className="overflow-hidden w-full" {...swipeHandlers}>
+      <div className="overflow-hidden w-full -mx-2 px-2" {...swipeHandlers}>
         <div
           className="flex items-start"
           style={containerStyle}
         >
           {/* Slide 1: Presupuesto */}
-          <div className={`w-1/3 flex-shrink-0 space-y-6 ${isSlideActive(0) ? 'h-auto' : 'h-0 overflow-hidden'}`}>
+          <div className={`w-1/3 flex-shrink-0 space-y-6 px-2 transition-opacity duration-200 ${isSlideActive(0) ? 'h-auto opacity-100' : 'h-0 max-h-0 overflow-hidden opacity-0 pointer-events-none'}`}>
             {/* Lista de Gastos */}
           <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
             <div className="divide-y divide-slate-200 dark:divide-slate-800 text-sm">
@@ -238,12 +238,12 @@ export const PresupuestoView: React.FC = () => {
         </div>
 
         {/* Slide 2: Gastos */}
-        <div className={`w-1/3 flex-shrink-0 ${isSlideActive(1) ? 'h-auto' : 'h-0 overflow-hidden'}`}>
+        <div className={`w-1/3 flex-shrink-0 px-2 transition-opacity duration-200 ${isSlideActive(1) ? 'h-auto opacity-100' : 'h-0 max-h-0 overflow-hidden opacity-0 pointer-events-none'}`}>
           <GastosFijosView hideHeader={true} />
         </div>
 
         {/* Slide 3: Deudas */}
-        <div className={`w-1/3 flex-shrink-0 ${isSlideActive(2) ? 'h-auto' : 'h-0 overflow-hidden'}`}>
+        <div className={`w-1/3 flex-shrink-0 px-2 transition-opacity duration-200 ${isSlideActive(2) ? 'h-auto opacity-100' : 'h-0 max-h-0 overflow-hidden opacity-0 pointer-events-none'}`}>
           <DeudasView />
         </div>
       </div>

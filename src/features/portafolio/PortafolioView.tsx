@@ -194,7 +194,7 @@ export const PortafolioView: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 pb-24 animate-fadeIn">
+    <div className="space-y-6 pb-2 animate-fadeIn">
       {/* Recuadro Portafolio con Filas Arrastrables */}
       <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
         <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">

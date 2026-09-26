@@ -20,6 +20,7 @@ export function useInteractiveSlider<T extends string>({
 
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
+  const touchStartTime = useRef<number | null>(null);
   const isHorizontalScroll = useRef<boolean | null>(null);
   const animationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -27,6 +28,7 @@ export function useInteractiveSlider<T extends string>({
     if (!enabled || e.touches.length !== 1) return;
     touchStartX.current = e.touches[0].clientX;
     touchStartY.current = e.touches[0].clientY;
+    touchStartTime.current = Date.now();
     isHorizontalScroll.current = null;
     setIsAnimating(true);
   };
@@ -41,19 +43,14 @@ export function useInteractiveSlider<T extends string>({
 
     // Detect if gesture is primarily horizontal
     if (isHorizontalScroll.current === null) {
-      if (Math.abs(diffX) > 6 || Math.abs(diffY) > 6) {
+      if (Math.abs(diffX) > 5 || Math.abs(diffY) > 5) {
         isHorizontalScroll.current = Math.abs(diffX) > Math.abs(diffY);
       }
     }
 
     if (isHorizontalScroll.current) {
       setIsDragging(true);
-      let offset = diffX;
-      // Resistance at edges
-      if ((currentIndex === 0 && offset > 0) || (currentIndex === tabs.length - 1 && offset < 0)) {
-        offset = offset * 0.25;
-      }
-      setDragOffset(offset);
+      setDragOffset(diffX);
     }
   };
 
@@ -61,11 +58,24 @@ export function useInteractiveSlider<T extends string>({
     if (touchStartX.current === null) return;
 
     if (isDragging) {
-      const threshold = 45; // px
-      if (dragOffset < -threshold && currentIndex < tabs.length - 1) {
-        onTabChange(tabs[currentIndex + 1]);
-      } else if (dragOffset > threshold && currentIndex > 0) {
-        onTabChange(tabs[currentIndex - 1]);
+      const elapsed = touchStartTime.current ? Date.now() - touchStartTime.current : 300;
+      const isQuickFlick = elapsed < 300 && Math.abs(dragOffset) > 20;
+      const threshold = isQuickFlick ? 20 : 35; // px
+
+      if (dragOffset < -threshold) {
+        // Dragged Left -> advance to next tab (or loop to first if on last tab)
+        if (currentIndex < tabs.length - 1) {
+          onTabChange(tabs[currentIndex + 1]);
+        } else {
+          onTabChange(tabs[0]);
+        }
+      } else if (dragOffset > threshold) {
+        // Dragged Right -> go to previous tab (or loop to last if on first tab)
+        if (currentIndex > 0) {
+          onTabChange(tabs[currentIndex - 1]);
+        } else {
+          onTabChange(tabs[tabs.length - 1]);
+        }
       }
     }
 
@@ -73,6 +83,7 @@ export function useInteractiveSlider<T extends string>({
     setDragOffset(0);
     touchStartX.current = null;
     touchStartY.current = null;
+    touchStartTime.current = null;
     isHorizontalScroll.current = null;
 
     if (animationTimeoutRef.current) clearTimeout(animationTimeoutRef.current);
