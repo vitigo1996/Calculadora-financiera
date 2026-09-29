@@ -12,10 +12,12 @@ import {
   Plus,
   Trash2,
   X,
-  GripVertical,
   Check,
   Globe,
-  RefreshCw
+  RefreshCw,
+  ArrowUpDown,
+  ChevronUp,
+  ChevronDown
 } from 'lucide-react';
 
 // Malla de 4x4 colores predefinidos (16 colores elegantes y distinguibles)
@@ -65,8 +67,8 @@ export const PortafolioView: React.FC = () => {
   const dolarRate = data.dolarRate || 3600;
   const port = summary.portafolio;
 
-  // Drag and Drop state
-  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  // Reorder state
+  const [isReorderingPortfolio, setIsReorderingPortfolio] = useState(false);
 
   // Active item for the 4x4 color palette popover
   const [colorPickerTarget, setColorPickerTarget] = useState<{ id: string; label: string; currentColor: string } | null>(null);
@@ -155,36 +157,6 @@ export const PortafolioView: React.FC = () => {
     });
   };
 
-  // Drag and Drop handlers
-  const handleDragStart = (e: React.DragEvent, index: number) => {
-    setDraggedIndex(index);
-    e.dataTransfer.effectAllowed = 'move';
-  };
-
-  const handleDragOver = (e: React.DragEvent, index: number) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-  };
-
-  const handleDrop = (e: React.DragEvent, targetIndex: number) => {
-    e.preventDefault();
-    if (draggedIndex === null || draggedIndex === targetIndex) {
-      setDraggedIndex(null);
-      return;
-    }
-    const diff = targetIndex - draggedIndex;
-    if (diff > 0) {
-      for (let i = draggedIndex; i < targetIndex; i++) {
-        movePortfolioItem(i, 'down');
-      }
-    } else {
-      for (let i = draggedIndex; i > targetIndex; i--) {
-        movePortfolioItem(i, 'up');
-      }
-    }
-    setDraggedIndex(null);
-  };
-
   // Handle selecting a color from the 4x4 grid
   const handleSelectColor = (colorHex: string) => {
     if (colorPickerTarget) {
@@ -195,19 +167,35 @@ export const PortafolioView: React.FC = () => {
 
   return (
     <div className="space-y-6 pb-2 animate-fadeIn">
-      {/* Recuadro Portafolio con Filas Arrastrables */}
+      {/* Recuadro Portafolio */}
       <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
         <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
           <h3 className="font-bold text-slate-800 dark:text-white text-sm">Portafolio</h3>
 
-          {/* Botón directo de Agregar (+) */}
-          <button
-            onClick={openCreateModal}
-            className="p-2 rounded-xl text-xs font-semibold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800/40 hover:bg-blue-200 transition-all flex items-center justify-center shadow-sm"
-            title="Agregar Activo"
-          >
-            <Plus className="w-4 h-4" />
-          </button>
+          {/* Botones de acción: Reordenar y Agregar (+) */}
+          <div className="flex items-center gap-2">
+            {(data.portfolioItems || []).length > 1 && (
+              <button
+                onClick={() => setIsReorderingPortfolio(!isReorderingPortfolio)}
+                className={`p-2 rounded-xl text-xs font-semibold border transition-all flex items-center justify-center shadow-sm ${
+                  isReorderingPortfolio
+                    ? 'bg-blue-600 text-white border-blue-600'
+                    : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-300/80 dark:border-transparent'
+                }`}
+                title={isReorderingPortfolio ? 'Listo' : 'Reordenar Portafolio'}
+              >
+                {isReorderingPortfolio ? <Check className="w-4 h-4" /> : <ArrowUpDown className="w-4 h-4" />}
+              </button>
+            )}
+
+            <button
+              onClick={openCreateModal}
+              className="p-2 rounded-xl text-xs font-semibold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800/40 hover:bg-blue-200 transition-all flex items-center justify-center shadow-sm"
+              title="Agregar Activo"
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         <div className="divide-y divide-slate-200 dark:divide-slate-800">
@@ -221,26 +209,13 @@ export const PortafolioView: React.FC = () => {
               const itemMoneda = item.moneda || 'COP';
               const isDiff = itemMoneda !== baseCurrency;
               const equivalentInBase = convertToBase(item.saldo, itemMoneda, baseCurrency, dolarRate);
-              const isDragging = draggedIndex === idx;
 
               return (
                 <div
                   key={item.id}
-                  draggable
-                  onDragStart={e => handleDragStart(e, idx)}
-                  onDragOver={e => handleDragOver(e, idx)}
-                  onDrop={e => handleDrop(e, idx)}
-                  onDragEnd={() => setDraggedIndex(null)}
-                  className={`p-4 bg-white dark:bg-slate-900 transition-all flex items-center justify-between cursor-grab active:cursor-grabbing ${
-                    isDragging ? 'opacity-40 scale-[0.99] bg-blue-50/50 dark:bg-blue-950/30' : ''
-                  }`}
+                  className="p-4 bg-white dark:bg-slate-900 transition-all flex items-center justify-between"
                 >
                   <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                    {/* Ícono de agarre arrastrable */}
-                    <div className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-1 cursor-grab active:cursor-grabbing flex-shrink-0">
-                      <GripVertical className="w-4 h-4" />
-                    </div>
-
                     <button
                       type="button"
                       onClick={(e) => {
@@ -281,13 +256,34 @@ export const PortafolioView: React.FC = () => {
                       )}
                     </div>
 
-                    <button
-                      onClick={() => openEditModal(item)}
-                      className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-300/80 dark:border-transparent transition-colors"
-                      title="Editar activo y monto"
-                    >
-                      <Edit2 className="w-3.5 h-3.5" />
-                    </button>
+                    {isReorderingPortfolio ? (
+                      <div className="flex items-center gap-1">
+                        <button
+                          disabled={idx === 0}
+                          onClick={() => movePortfolioItem(idx, 'up')}
+                          className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                          title="Mover arriba"
+                        >
+                          <ChevronUp className="w-4 h-4" />
+                        </button>
+                        <button
+                          disabled={idx === data.portfolioItems.length - 1}
+                          onClick={() => movePortfolioItem(idx, 'down')}
+                          className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                          title="Mover abajo"
+                        >
+                          <ChevronDown className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => openEditModal(item)}
+                        className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-300/80 dark:border-transparent transition-colors"
+                        title="Editar activo y monto"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                   </div>
                 </div>
               );
