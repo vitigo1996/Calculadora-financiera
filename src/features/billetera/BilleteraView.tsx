@@ -618,7 +618,7 @@ export const BilleteraView: React.FC = () => {
                   onClick={() => setVisibleMovementsCount(prev => prev + 10)}
                   className="px-4 py-2 rounded-xl text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900/60 border border-blue-200 dark:border-blue-800/50 transition-all shadow-sm inline-flex items-center gap-1.5"
                 >
-                  Mostrar más ({movements.length - visibleMovementsCount} restantes)
+                  Mostrar más
                 </button>
               </div>
             )}

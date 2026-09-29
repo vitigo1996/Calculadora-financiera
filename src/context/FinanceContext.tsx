@@ -614,7 +614,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       id: `p-${Date.now()}`,
       ...purchase,
       moneda: purchase.moneda || targetCard?.moneda || 'COP',
-      date: new Date().toLocaleDateString('es-CO', { day: '2-digit', month: 'short' }),
+      date: new Date().toISOString(),
       isAfterCutoff: hasActiveCutoff
     };
 

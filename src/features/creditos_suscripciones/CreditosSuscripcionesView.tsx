@@ -16,7 +16,7 @@ import {
   X,
   Scissors,
   RotateCcw,
-  ShoppingBag,
+  Calendar,
   ArrowUpDown,
   Check,
   ChevronUp,
@@ -442,28 +442,37 @@ export const CreditosSuscripcionesView: React.FC = () => {
                   );
                 }
                 return visiblePurchases.slice(0, visiblePurchasesCount).map((p, pIdx) => {
+                  const formattedDate = p.date ? (() => {
+                    const d = new Date(p.date);
+                    return isNaN(d.getTime())
+                      ? p.date
+                      : d.toLocaleDateString('es-CO', {
+                          day: '2-digit',
+                          month: 'short',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        });
+                  })() : '';
+
                   return (
                     <div
                       key={p.id}
                       className="p-4 transition-colors flex items-center justify-between gap-3 bg-white dark:bg-slate-900"
                     >
                       <div className="flex items-start gap-3 min-w-0 flex-1">
-                        <div className="w-9 h-9 rounded-2xl flex items-center justify-center shadow-sm flex-shrink-0 mt-0.5 bg-rose-100 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/40">
-                          <ShoppingBag className="w-4 h-4" />
-                        </div>
-
                         <div className="min-w-0 flex-1">
                           <h4 className="font-bold text-slate-800 dark:text-white text-sm truncate">{p.concept}</h4>
 
-                          {/* Metadatos en Columna Vertical */}
+                          {/* Metadatos en Columna Vertical: Fecha y Hora */}
                           <div className="flex flex-col gap-0.5 mt-1 text-[11px] text-slate-500 dark:text-slate-400 leading-tight">
-                            {p.isAfterCutoff ? (
+                            {formattedDate && (
+                              <span className="inline-flex items-center gap-1 text-slate-400 dark:text-slate-500 font-medium">
+                                <Calendar className="w-3 h-3 flex-shrink-0" /> {formattedDate}
+                              </span>
+                            )}
+                            {p.isAfterCutoff && (
                               <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
                                 <Scissors className="w-3 h-3 flex-shrink-0" /> Compra Post-Corte
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1 text-slate-400 dark:text-slate-500 font-medium">
-                                <CreditCard className="w-3 h-3 flex-shrink-0" /> {selectedCard.name}
                               </span>
                             )}
                           </div>
@@ -550,7 +559,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
                       onClick={() => setVisiblePurchasesCount(prev => prev + 10)}
                       className="px-4 py-2 rounded-xl text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900/60 border border-blue-200 dark:border-blue-800/50 transition-all shadow-sm inline-flex items-center gap-1.5"
                     >
-                      Mostrar más ({visiblePurchases.length - visiblePurchasesCount} restantes)
+                      Mostrar más
                     </button>
                   </div>
                 );
