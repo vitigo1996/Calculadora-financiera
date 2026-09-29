@@ -17,12 +17,8 @@ import {
   Scissors,
   RotateCcw,
   Calendar,
-  ArrowUpDown,
   Check,
-  ChevronUp,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight
+  GripVertical
 } from 'lucide-react';
 
 export const CreditosSuscripcionesView: React.FC = () => {
@@ -31,7 +27,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
     addCreditCard,
     updateCreditCard,
     deleteCreditCard,
-    moveCreditCard,
+    reorderCreditCards,
     performCardCutoff,
     cancelCardCutoff,
     clearCardPurchases,
@@ -45,8 +41,10 @@ export const CreditosSuscripcionesView: React.FC = () => {
   } = useFinance();
 
   const [selectedCardId, setSelectedCardId] = useState<string>(data.creditCards[0]?.id || '');
-  const [isReorderingCards, setIsReorderingCards] = useState(false);
-  const [isReorderingPurchases, setIsReorderingPurchases] = useState(false);
+  const [isEditingCards, setIsEditingCards] = useState(false);
+  const [isEditingPurchases, setIsEditingPurchases] = useState(false);
+  const [draggedCardIdx, setDraggedCardIdx] = useState<number | null>(null);
+  const [draggedPurchaseIdx, setDraggedPurchaseIdx] = useState<number | null>(null);
   const [visiblePurchasesCount, setVisiblePurchasesCount] = useState(10);
 
   // Confirmation modal state
@@ -195,22 +193,22 @@ export const CreditosSuscripcionesView: React.FC = () => {
     <div className="space-y-6 pb-24 animate-fadeIn">
       {/* Header Principal de Tarjetas Alineado */}
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
-          <CreditCard className="w-5 h-5 text-blue-600 dark:text-blue-400" /> Tarjetas
+        <h2 className="text-sm font-bold text-slate-800 dark:text-white flex items-center gap-2 uppercase tracking-wide">
+          <CreditCard className="w-4 h-4 text-blue-600 dark:text-blue-400" /> TARJETAS
         </h2>
 
         <div className="flex items-center gap-2">
-          {data.creditCards.length > 1 && (
+          {data.creditCards.length > 0 && (
             <button
-              onClick={() => setIsReorderingCards(!isReorderingCards)}
+              onClick={() => setIsEditingCards(!isEditingCards)}
               className={`p-2 rounded-xl text-xs font-semibold border transition-all flex items-center justify-center shadow-sm ${
-                isReorderingCards
+                isEditingCards
                   ? 'bg-blue-600 text-white border-blue-600'
                   : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-300/80 dark:border-transparent'
               }`}
-              title={isReorderingCards ? 'Listo' : 'Reordenar Tarjetas'}
+              title={isEditingCards ? 'Listo' : 'Editar Tarjetas'}
             >
-              {isReorderingCards ? <Check className="w-4 h-4" /> : <ArrowUpDown className="w-4 h-4" />}
+              {isEditingCards ? <Check className="w-4 h-4" /> : <Edit2 className="w-4 h-4" />}
             </button>
           )}
 
@@ -242,6 +240,23 @@ export const CreditosSuscripcionesView: React.FC = () => {
               return (
                 <div
                   key={cc.id}
+                  draggable={isEditingCards}
+                  onDragStart={(e) => {
+                    setDraggedCardIdx(idx);
+                    e.dataTransfer.effectAllowed = 'move';
+                  }}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    if (draggedCardIdx !== null && draggedCardIdx !== idx) {
+                      reorderCreditCards(draggedCardIdx, idx);
+                    }
+                    setDraggedCardIdx(null);
+                  }}
+                  onDragEnd={() => setDraggedCardIdx(null)}
                   onClick={() => {
                     if (selectedCardId !== cc.id) {
                       setSelectedCardId(cc.id);
@@ -252,12 +267,17 @@ export const CreditosSuscripcionesView: React.FC = () => {
                     isSelected
                       ? 'bg-white dark:bg-slate-900 border-blue-500 shadow-md ring-2 ring-blue-500/20'
                       : 'bg-white/80 dark:bg-slate-900/80 border-slate-300 dark:border-slate-800 shadow-sm'
-                  }`}
+                  } ${isEditingCards ? 'cursor-move select-none' : ''}`}
                 >
                   <div>
                     {/* Header de la Tarjeta */}
                     <div className="flex items-center justify-between gap-2 mb-3">
                       <div className="flex items-center gap-2 min-w-0">
+                        {isEditingCards && (
+                          <div className="text-slate-400 dark:text-slate-500 cursor-grab active:cursor-grabbing p-1 flex-shrink-0">
+                            <GripVertical className="w-4 h-4" />
+                          </div>
+                        )}
                         <div className="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-200 dark:border-blue-800/50 flex-shrink-0">
                           <CreditCard className="w-4 h-4" />
                         </div>
@@ -267,31 +287,31 @@ export const CreditosSuscripcionesView: React.FC = () => {
                       </div>
 
                       <div className="flex items-center gap-1">
-                        {isReorderingCards ? (
-                          <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
-                            <button
-                              disabled={idx === 0}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                moveCreditCard(idx, 'up');
-                              }}
-                              className="p-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-200 dark:hover:bg-slate-700"
-                              title="Mover a la izquierda"
-                            >
-                              <ChevronLeft className="w-4 h-4" />
-                            </button>
-                            <button
-                              disabled={idx === data.creditCards.length - 1}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                moveCreditCard(idx, 'down');
-                              }}
-                              className="p-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-200 dark:hover:bg-slate-700"
-                              title="Mover a la derecha"
-                            >
-                              <ChevronRight className="w-4 h-4" />
-                            </button>
-                          </div>
+                        {isEditingCards ? (
+                          <button
+                            onClick={e => {
+                              e.stopPropagation();
+                              setConfirmConfig({
+                                isOpen: true,
+                                title: 'Eliminar Tarjeta',
+                                message: `¿Estás seguro de eliminar la tarjeta "${cc.name}"?`,
+                                confirmText: 'Sí, eliminar',
+                                cancelText: 'Cancelar',
+                                variant: 'danger',
+                                onConfirm: () => {
+                                  deleteCreditCard(cc.id);
+                                  if (selectedCardId === cc.id) {
+                                    const remaining = data.creditCards.filter(c => c.id !== cc.id);
+                                    setSelectedCardId(remaining[0]?.id || '');
+                                  }
+                                }
+                              });
+                            }}
+                            className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-rose-100 dark:hover:bg-rose-950/50 text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 border border-slate-300/80 dark:border-transparent transition-colors"
+                            title="Eliminar tarjeta"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
                         ) : (
                           <button
                             onClick={e => {
@@ -360,9 +380,9 @@ export const CreditosSuscripcionesView: React.FC = () => {
             <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between flex-wrap gap-2">
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="text-base font-bold text-slate-800 dark:text-white flex items-center gap-2">
-                    <CreditCard className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                    Compras con {selectedCard.name}
+                  <h3 className="text-sm font-bold text-slate-800 dark:text-white flex items-center gap-2 uppercase tracking-wide">
+                    <CreditCard className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                    COMPRAS CON {selectedCard.name.toUpperCase()}
                   </h3>
                 </div>
 
@@ -371,33 +391,9 @@ export const CreditosSuscripcionesView: React.FC = () => {
                 </p>
               </div>
 
-              {/* Botones de acción: Reordenar, Agregar (+), Corte */}
+              {/* Botones de acción: Corte, Limpiar, Editar, Agregar (+) */}
               <div className="flex items-center gap-2 flex-wrap">
-                {/* Botón Reordenar Compras */}
-                {(selectedCard.purchases || []).filter(p => !p.hidden).length > 1 && (
-                  <button
-                    onClick={() => setIsReorderingPurchases(!isReorderingPurchases)}
-                    className={`p-2 rounded-xl text-xs font-semibold border transition-all flex items-center justify-center shadow-sm ${
-                      isReorderingPurchases
-                        ? 'bg-blue-600 text-white border-blue-600'
-                        : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-300/80 dark:border-transparent'
-                    }`}
-                    title={isReorderingPurchases ? 'Listo' : 'Reordenar Compras'}
-                  >
-                    {isReorderingPurchases ? <Check className="w-4 h-4" /> : <ArrowUpDown className="w-4 h-4" />}
-                  </button>
-                )}
-
-                {/* 1. Agregar Compra (+) */}
-                <button
-                  onClick={openAddPurchase}
-                  className="p-2 rounded-xl text-xs font-semibold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800/40 hover:bg-blue-200 transition-all flex items-center justify-center shadow-sm"
-                  title="Agregar Compra"
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
-
-                {/* 2. Corte (Solo icono) */}
+                {/* 1. Corte (Solo icono) */}
                 {selectedCard.billingCutoffAmount !== undefined ? (
                   <button
                     onClick={() => cancelCardCutoff(selectedCard.id)}
@@ -415,6 +411,59 @@ export const CreditosSuscripcionesView: React.FC = () => {
                     <Scissors className="w-4 h-4" />
                   </button>
                 )}
+
+                {/* 2. Limpiar registro */}
+                {(selectedCard.purchases || []).filter(p => !p.hidden).length > 0 && (
+                  <button
+                    onClick={() => {
+                      setConfirmConfig({
+                        isOpen: true,
+                        title: 'Limpiar Compras de Tarjeta',
+                        message: '¿Estás seguro de limpiar los registros de compras pasadas?',
+                        confirmText: 'Sí, limpiar',
+                        cancelText: 'Cancelar',
+                        variant: 'warning',
+                        onConfirm: () => clearCardPurchasesVisual(selectedCard.id)
+                      });
+                    }}
+                    className="p-2 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300/80 dark:border-transparent transition-all flex items-center justify-center shadow-sm"
+                    title="Limpiar Registro de Compras"
+                  >
+                    <svg className="w-4 h-4 text-slate-700 dark:text-slate-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 2v9" />
+                      <path d="M8.5 13.5C8.5 12 9.8 11 12 11s3.5 1 3.5 2.5" />
+                      <path d="M7 13.5h10" />
+                      <path d="M7 13.5c-.5 3-1.8 5.5-2.5 7.5a1 1 0 0 0 1 1h13a1 1 0 0 0 1-1c-.7-2-2-4.5-2.5-7.5" />
+                      <path d="M9.5 17.5 9 22" />
+                      <path d="M12 16.5v5.5" />
+                      <path d="M14.5 17.5 15 22" />
+                    </svg>
+                  </button>
+                )}
+
+                {/* 3. Botón Editar Compras */}
+                {(selectedCard.purchases || []).filter(p => !p.hidden).length > 0 && (
+                  <button
+                    onClick={() => setIsEditingPurchases(!isEditingPurchases)}
+                    className={`p-2 rounded-xl text-xs font-semibold border transition-all flex items-center justify-center shadow-sm ${
+                      isEditingPurchases
+                        ? 'bg-blue-600 text-white border-blue-600'
+                        : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-300/80 dark:border-transparent'
+                    }`}
+                    title={isEditingPurchases ? 'Listo' : 'Editar Compras'}
+                  >
+                    {isEditingPurchases ? <Check className="w-4 h-4" /> : <Edit2 className="w-4 h-4" />}
+                  </button>
+                )}
+
+                {/* 4. Agregar Compra (+) */}
+                <button
+                  onClick={openAddPurchase}
+                  className="p-2 rounded-xl text-xs font-semibold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800/40 hover:bg-blue-200 transition-all flex items-center justify-center shadow-sm"
+                  title="Agregar Compra"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
               </div>
             </div>
 
@@ -457,9 +506,33 @@ export const CreditosSuscripcionesView: React.FC = () => {
                   return (
                     <div
                       key={p.id}
-                      className="p-4 transition-colors flex items-center justify-between gap-3 bg-white dark:bg-slate-900"
+                      draggable={isEditingPurchases}
+                      onDragStart={(e) => {
+                        setDraggedPurchaseIdx(pIdx);
+                        e.dataTransfer.effectAllowed = 'move';
+                      }}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        e.dataTransfer.dropEffect = 'move';
+                      }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        if (draggedPurchaseIdx !== null && draggedPurchaseIdx !== pIdx) {
+                          moveCardPurchase(selectedCard.id, draggedPurchaseIdx, pIdx);
+                        }
+                        setDraggedPurchaseIdx(null);
+                      }}
+                      onDragEnd={() => setDraggedPurchaseIdx(null)}
+                      className={`p-4 transition-colors flex items-center justify-between gap-3 bg-white dark:bg-slate-900 ${
+                        isEditingPurchases ? 'cursor-move select-none' : ''
+                      }`}
                     >
                       <div className="flex items-start gap-3 min-w-0 flex-1">
+                        {isEditingPurchases && (
+                          <div className="text-slate-400 dark:text-slate-500 cursor-grab active:cursor-grabbing p-1 flex-shrink-0 mt-0.5">
+                            <GripVertical className="w-4 h-4" />
+                          </div>
+                        )}
                         <div className="min-w-0 flex-1">
                           <h4 className="font-bold text-slate-800 dark:text-white text-sm truncate">{p.concept}</h4>
 
@@ -486,60 +559,37 @@ export const CreditosSuscripcionesView: React.FC = () => {
                           </span>
                         </div>
 
-                        {isReorderingPurchases ? (
-                          <div className="flex items-center gap-1">
-                            <button
-                              disabled={pIdx === 0}
-                              onClick={() => moveCardPurchase(selectedCard.id, pIdx, pIdx - 1)}
-                              className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-                              title="Mover arriba"
-                            >
-                              <ChevronUp className="w-4 h-4" />
-                            </button>
-                            <button
-                              disabled={pIdx === visiblePurchases.length - 1}
-                              onClick={() => moveCardPurchase(selectedCard.id, pIdx, pIdx + 1)}
-                              className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-                              title="Mover abajo"
-                            >
-                              <ChevronDown className="w-4 h-4" />
-                            </button>
-                          </div>
+                        {isEditingPurchases ? (
+                          <button
+                            onClick={() => {
+                              setConfirmConfig({
+                                isOpen: true,
+                                title: 'Eliminar Registro',
+                                message: '¿Estás seguro de eliminar este registro?',
+                                confirmText: 'Sí, eliminar',
+                                cancelText: 'Cancelar',
+                                variant: 'danger',
+                                onConfirm: () => deleteCardPurchaseRecord(selectedCard.id, p.id)
+                              });
+                            }}
+                            className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-rose-100 dark:hover:bg-rose-950/50 text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 border border-slate-300/80 dark:border-transparent transition-colors"
+                            title="Eliminar registro"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
                         ) : (
-                          <div className="flex items-center gap-1.5">
-                            {/* 1. Editar Compra */}
-                            <button
-                              onClick={() => {
-                                setEditingPurchase(p);
-                                setPurchaseConcept(p.concept);
-                                setPurchaseAmount(p.amount.toString());
-                                setShowAddPurchaseModal(true);
-                              }}
-                              className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-300/80 dark:border-transparent transition-colors"
-                              title="Editar compra"
-                            >
-                              <Edit2 className="w-3.5 h-3.5" />
-                            </button>
-
-                            {/* 2. Eliminar Registro */}
-                            <button
-                              onClick={() => {
-                                setConfirmConfig({
-                                  isOpen: true,
-                                  title: 'Eliminar Registro',
-                                  message: '¿Estás seguro de eliminar este registro?',
-                                  confirmText: 'Sí, eliminar',
-                                  cancelText: 'Cancelar',
-                                  variant: 'danger',
-                                  onConfirm: () => deleteCardPurchaseRecord(selectedCard.id, p.id)
-                                });
-                              }}
-                              className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-rose-100 dark:hover:bg-rose-950/50 text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 border border-slate-300/80 dark:border-transparent transition-colors"
-                              title="Eliminar registro"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
+                          <button
+                            onClick={() => {
+                              setEditingPurchase(p);
+                              setPurchaseConcept(p.concept);
+                              setPurchaseAmount(p.amount.toString());
+                              setShowAddPurchaseModal(true);
+                            }}
+                            className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-300/80 dark:border-transparent transition-colors"
+                            title="Editar compra"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </button>
                         )}
                       </div>
                     </div>

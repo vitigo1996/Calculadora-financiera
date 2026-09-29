@@ -6,6 +6,7 @@ import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import { AmountCalculatorInput } from '../../components/ui/AmountCalculatorInput';
 import {
   Home,
+  Layers,
   Edit2,
   Plus,
   Trash2,
@@ -13,10 +14,8 @@ import {
   Users,
   User,
   Calendar,
-  ArrowUpDown,
   Check,
-  ChevronUp,
-  ChevronDown
+  GripVertical
 } from 'lucide-react';
 
 export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader = false }) => {
@@ -26,12 +25,12 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
     addHousingExpense,
     updateHousingExpense,
     deleteHousingExpense,
-    moveHousingExpense,
+    reorderHousingExpenses,
     toggleHousingShared,
     addObligation,
     updateObligation,
     deleteObligation,
-    moveObligation,
+    reorderObligations,
     toggleObligationShared
   } = useFinance();
 
@@ -50,9 +49,11 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
   const activePeople = (data.people || []).filter(p => p.enabled);
   const totalCombinedIncome = activePeople.reduce((sum, p) => sum + (p.monthlyIncome || 0), 0);
 
-  // Reordering states
-  const [isReorderingHousing, setIsReorderingHousing] = useState(false);
-  const [isReorderingObligations, setIsReorderingObligations] = useState(false);
+  // Edit states
+  const [isEditingHousing, setIsEditingHousing] = useState(false);
+  const [isEditingObligations, setIsEditingObligations] = useState(false);
+  const [draggedHousingIdx, setDraggedHousingIdx] = useState<number | null>(null);
+  const [draggedObligationIdx, setDraggedObligationIdx] = useState<number | null>(null);
 
   // Modal: Housing
   const [showHousingModal, setShowHousingModal] = useState(false);
@@ -224,21 +225,23 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
       {/* SECCIÓN 1: VIVIENDA */}
       <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
         <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-          <h3 className="font-bold text-slate-800 dark:text-white text-sm">Vivienda</h3>
+          <h3 className="font-bold text-slate-800 dark:text-white text-sm flex items-center gap-2 uppercase tracking-wide">
+            <Home className="w-4 h-4 text-blue-600 dark:text-blue-400" /> VIVIENDA
+          </h3>
 
-          {/* Botones de acción: Reordenar y Agregar (+) */}
+          {/* Botones de acción: Editar y Agregar (+) */}
           <div className="flex items-center gap-2">
-            {(data.housingExpenses || []).length > 1 && (
+            {(data.housingExpenses || []).length > 0 && (
               <button
-                onClick={() => setIsReorderingHousing(!isReorderingHousing)}
+                onClick={() => setIsEditingHousing(!isEditingHousing)}
                 className={`p-2 rounded-xl text-xs font-semibold border transition-all flex items-center justify-center shadow-sm ${
-                  isReorderingHousing
+                  isEditingHousing
                     ? 'bg-blue-600 text-white border-blue-600'
                     : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-300/80 dark:border-transparent'
                 }`}
-                title={isReorderingHousing ? 'Listo' : 'Reordenar Vivienda'}
+                title={isEditingHousing ? 'Listo' : 'Editar Vivienda'}
               >
-                {isReorderingHousing ? <Check className="w-4 h-4" /> : <ArrowUpDown className="w-4 h-4" />}
+                {isEditingHousing ? <Check className="w-4 h-4" /> : <Edit2 className="w-4 h-4" />}
               </button>
             )}
 
@@ -264,10 +267,34 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
               return (
                 <div
                   key={item.id}
-                  className="p-4 bg-white dark:bg-slate-900 transition-all flex flex-col gap-2"
+                  draggable={isEditingHousing}
+                  onDragStart={(e) => {
+                    setDraggedHousingIdx(idx);
+                    e.dataTransfer.effectAllowed = 'move';
+                  }}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    if (draggedHousingIdx !== null && draggedHousingIdx !== idx) {
+                      reorderHousingExpenses(draggedHousingIdx, idx);
+                    }
+                    setDraggedHousingIdx(null);
+                  }}
+                  onDragEnd={() => setDraggedHousingIdx(null)}
+                  className={`p-4 bg-white dark:bg-slate-900 transition-all flex flex-col gap-2 ${
+                    isEditingHousing ? 'cursor-move select-none' : ''
+                  }`}
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-2 min-w-0 flex-1">
+                      {isEditingHousing && (
+                        <div className="text-slate-400 dark:text-slate-500 cursor-grab active:cursor-grabbing p-1 flex-shrink-0">
+                          <GripVertical className="w-4 h-4" />
+                        </div>
+                      )}
                       <h4 className="font-bold text-slate-800 dark:text-white text-sm truncate">{item.name}</h4>
 
                       <span className={`px-1.5 py-0.5 rounded-lg text-[10px] font-bold whitespace-nowrap flex-shrink-0 border ${
@@ -284,25 +311,24 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
                         {formatCurrency(item.totalAmount)}
                       </span>
 
-                      {isReorderingHousing ? (
-                        <div className="flex items-center gap-1">
-                          <button
-                            disabled={idx === 0}
-                            onClick={() => moveHousingExpense(idx, 'up')}
-                            className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-                            title="Mover arriba"
-                          >
-                            <ChevronUp className="w-4 h-4" />
-                          </button>
-                          <button
-                            disabled={idx === data.housingExpenses.length - 1}
-                            onClick={() => moveHousingExpense(idx, 'down')}
-                            className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-                            title="Mover abajo"
-                          >
-                            <ChevronDown className="w-4 h-4" />
-                          </button>
-                        </div>
+                      {isEditingHousing ? (
+                        <button
+                          onClick={() => {
+                            setConfirmConfig({
+                              isOpen: true,
+                              title: 'Eliminar Gasto de Vivienda',
+                              message: `¿Estás seguro de eliminar el gasto "${item.name}"?`,
+                              confirmText: 'Sí, eliminar',
+                              cancelText: 'Cancelar',
+                              variant: 'danger',
+                              onConfirm: () => deleteHousingExpense(item.id)
+                            });
+                          }}
+                          className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-rose-100 dark:hover:bg-rose-950/50 text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 border border-slate-300/80 dark:border-transparent transition-colors"
+                          title="Eliminar gasto"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
                       ) : (
                         <div className="flex items-center gap-1.5">
                           {activePeople.length > 1 && (
@@ -368,21 +394,23 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
       {/* SECCIÓN 2: OBLIGACIONES */}
       <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
         <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-          <h3 className="font-bold text-slate-800 dark:text-white text-sm">Obligaciones</h3>
+          <h3 className="font-bold text-slate-800 dark:text-white text-sm flex items-center gap-2 uppercase tracking-wide">
+            <Layers className="w-4 h-4 text-blue-600 dark:text-blue-400" /> OBLIGACIONES
+          </h3>
 
-          {/* Botones de acción: Reordenar y Agregar (+) */}
+          {/* Botones de acción: Editar y Agregar (+) */}
           <div className="flex items-center gap-2">
-            {(data.obligations || []).length > 1 && (
+            {(data.obligations || []).length > 0 && (
               <button
-                onClick={() => setIsReorderingObligations(!isReorderingObligations)}
+                onClick={() => setIsEditingObligations(!isEditingObligations)}
                 className={`p-2 rounded-xl text-xs font-semibold border transition-all flex items-center justify-center shadow-sm ${
-                  isReorderingObligations
+                  isEditingObligations
                     ? 'bg-blue-600 text-white border-blue-600'
                     : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-300/80 dark:border-transparent'
                 }`}
-                title={isReorderingObligations ? 'Listo' : 'Reordenar Obligaciones'}
+                title={isEditingObligations ? 'Listo' : 'Editar Obligaciones'}
               >
-                {isReorderingObligations ? <Check className="w-4 h-4" /> : <ArrowUpDown className="w-4 h-4" />}
+                {isEditingObligations ? <Check className="w-4 h-4" /> : <Edit2 className="w-4 h-4" />}
               </button>
             )}
 
@@ -411,10 +439,34 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
               return (
                 <div
                   key={ob.id}
-                  className="p-4 bg-white dark:bg-slate-900 transition-all flex flex-col gap-2"
+                  draggable={isEditingObligations}
+                  onDragStart={(e) => {
+                    setDraggedObligationIdx(idx);
+                    e.dataTransfer.effectAllowed = 'move';
+                  }}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    if (draggedObligationIdx !== null && draggedObligationIdx !== idx) {
+                      reorderObligations(draggedObligationIdx, idx);
+                    }
+                    setDraggedObligationIdx(null);
+                  }}
+                  onDragEnd={() => setDraggedObligationIdx(null)}
+                  className={`p-4 bg-white dark:bg-slate-900 transition-all flex flex-col gap-2 ${
+                    isEditingObligations ? 'cursor-move select-none' : ''
+                  }`}
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-2 min-w-0 flex-1">
+                      {isEditingObligations && (
+                        <div className="text-slate-400 dark:text-slate-500 cursor-grab active:cursor-grabbing p-1 flex-shrink-0">
+                          <GripVertical className="w-4 h-4" />
+                        </div>
+                      )}
                       <h4 className="font-bold text-slate-800 dark:text-white text-sm truncate">{ob.name}</h4>
 
                       <span className={`px-1.5 py-0.5 rounded-lg text-[10px] font-bold whitespace-nowrap flex-shrink-0 border ${
@@ -431,25 +483,24 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
                         {formatCurrency(monthlyPayment)}
                       </span>
 
-                      {isReorderingObligations ? (
-                        <div className="flex items-center gap-1">
-                          <button
-                            disabled={idx === 0}
-                            onClick={() => moveObligation(idx, 'up')}
-                            className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-                            title="Mover arriba"
-                          >
-                            <ChevronUp className="w-4 h-4" />
-                          </button>
-                          <button
-                            disabled={idx === data.obligations.length - 1}
-                            onClick={() => moveObligation(idx, 'down')}
-                            className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-                            title="Mover abajo"
-                          >
-                            <ChevronDown className="w-4 h-4" />
-                          </button>
-                        </div>
+                      {isEditingObligations ? (
+                        <button
+                          onClick={() => {
+                            setConfirmConfig({
+                              isOpen: true,
+                              title: 'Eliminar Obligación',
+                              message: `¿Estás seguro de eliminar "${ob.name}"?`,
+                              confirmText: 'Sí, eliminar',
+                              cancelText: 'Cancelar',
+                              variant: 'danger',
+                              onConfirm: () => deleteObligation(ob.id)
+                            });
+                          }}
+                          className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-rose-100 dark:hover:bg-rose-950/50 text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 border border-slate-300/80 dark:border-transparent transition-colors"
+                          title="Eliminar obligación"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
                       ) : (
                         <div className="flex items-center gap-1.5">
                           {activePeople.length > 1 && (

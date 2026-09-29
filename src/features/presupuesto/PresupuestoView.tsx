@@ -61,7 +61,7 @@ export const PresupuestoView: React.FC = () => {
   return (
     <div className="space-y-6 pb-2 animate-fadeIn">
       {/* Menú Superior de 3 opciones: Presupuesto | Gastos | Deudas */}
-      <div className="flex items-center justify-center">
+      <div className="sticky top-0 z-30 bg-slate-50/95 dark:bg-slate-900/95 backdrop-blur-md pt-2 pb-2 -mx-3.5 px-3.5 flex items-center justify-center">
         <div className="bg-slate-200/80 dark:bg-slate-800 p-1 rounded-2xl flex items-center gap-1 shadow-inner border border-slate-300/80 dark:border-slate-700/60 w-full sm:w-auto">
           <button
             type="button"
@@ -159,23 +159,10 @@ export const PresupuestoView: React.FC = () => {
                   {formatCurrency(pres.m5_tarjetas)}
                 </span>
               </div>
-
-              {/* 5. Gastos del mes */}
-              <div className="p-4 bg-slate-50 dark:bg-slate-950/70 flex items-center justify-between border-t border-slate-200 dark:border-slate-800">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-950/70 text-blue-700 dark:text-blue-300 flex items-center justify-center font-bold text-xs">
-                    <ArrowDownRight className="w-4 h-4" />
-                  </div>
-                  <span className="font-black text-slate-900 dark:text-white">Gastos del mes</span>
-                </div>
-                <span className="font-black text-base text-slate-900 dark:text-white font-mono">
-                  {formatCurrency(pres.m7_totalGastos)}
-                </span>
-              </div>
             </div>
           </div>
 
-          {/* 3 Recuadros: Mitad de Mes, Fin de Mes, Disponible en vertical */}
+          {/* Recuadros: Mitad de Mes, Fin de Mes, y Malla 2x1 (Gastos del Mes | Libre) */}
           <div className="space-y-3">
             {/* Mitad de Mes (1ª Quincena) */}
             <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm transition-colors overflow-hidden">
@@ -213,11 +200,20 @@ export const PresupuestoView: React.FC = () => {
               </div>
             </div>
 
-            {/* Libre */}
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm transition-colors overflow-hidden">
-              <span className="text-xs font-bold text-slate-900 dark:text-white block mb-1">Libre</span>
-              <div className="text-base font-black text-slate-900 dark:text-white font-mono tracking-tight">
-                {formatCurrency(pres.m11_disponible)}
+            {/* Malla 2x1: Gastos del Mes (Columna 1) | Libre (Columna 2) */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm transition-colors overflow-hidden">
+                <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">Gastos del mes</span>
+                <div className="text-base font-bold text-slate-900 dark:text-white font-mono tracking-tight">
+                  {formatCurrency(pres.m7_totalGastos)}
+                </div>
+              </div>
+
+              <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm transition-colors overflow-hidden">
+                <span className="text-xs font-bold text-slate-900 dark:text-white block mb-1">Libre</span>
+                <div className="text-base font-black text-slate-900 dark:text-white font-mono tracking-tight">
+                  {formatCurrency(pres.m11_disponible)}
+                </div>
               </div>
             </div>
           </div>

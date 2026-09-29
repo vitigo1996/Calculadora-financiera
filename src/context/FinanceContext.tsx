@@ -33,6 +33,7 @@ interface FinanceContextType {
   updateBilleteraItem: (id: string, updated: Partial<BilleteraAccountItem>) => void;
   deleteBilleteraItem: (id: string) => void;
   moveBilleteraItem: (index: number, direction: 'up' | 'down') => void;
+  reorderBilleteraItems: (fromIndex: number, toIndex: number) => void;
   addExpenseMovement: (movement: { type?: 'expense' | 'income' | 'transfer'; name: string; amount: number; moneda: 'COP' | 'USD'; sourceAccountId: string; destinationType?: 'none' | 'card' | 'obligation' | 'account' | 'deuda' | 'portfolio'; destinationId?: string; destinationName?: string }) => void;
   deleteExpenseMovement: (id: string) => void;
   clearExpenseMovements: () => void;
@@ -40,14 +41,17 @@ interface FinanceContextType {
   updateDeudaItem: (id: string, updated: Partial<DeudaItem>) => void;
   deleteDeudaItem: (id: string) => void;
   moveDeudaItem: (index: number, direction: 'up' | 'down') => void;
+  reorderDeudaItems: (fromIndex: number, toIndex: number) => void;
   addPortfolioItem: (item: { nombre: string; moneda: 'COP' | 'USD'; saldo: number; icon?: string; color?: string }) => void;
   updatePortfolioItem: (id: string, updated: Partial<PortfolioAccountItem>) => void;
   deletePortfolioItem: (id: string) => void;
   movePortfolioItem: (index: number, direction: 'up' | 'down') => void;
+  reorderPortfolioItems: (fromIndex: number, toIndex: number) => void;
   addCreditCard: (item: { name: string; period: PaymentPeriod; creditLimit: number; moneda?: 'COP' | 'USD' }) => void;
   updateCreditCard: (id: string, updated: Partial<CreditCardItem>) => void;
   deleteCreditCard: (id: string) => void;
   moveCreditCard: (index: number, direction: 'up' | 'down') => void;
+  reorderCreditCards: (fromIndex: number, toIndex: number) => void;
   performCardCutoff: (cardId: string) => void;
   payCardCutoff: (cardId: string) => void;
   cancelCardCutoff: (cardId: string) => void;
@@ -63,16 +67,19 @@ interface FinanceContextType {
   updateHousingExpense: (id: string, updated: Partial<HousingExpense>) => void;
   deleteHousingExpense: (id: string) => void;
   moveHousingExpense: (index: number, direction: 'up' | 'down') => void;
+  reorderHousingExpenses: (fromIndex: number, toIndex: number) => void;
   toggleHousingShared: (id: string) => void;
   addObligation: (item: { name: string; period: PaymentPeriod; totalAmount: number; totalDebtBalance?: number; moneda?: 'COP' | 'USD'; isShared?: boolean; icon?: string }) => void;
   updateObligation: (id: string, updated: Partial<ObligationItem>) => void;
   deleteObligation: (id: string) => void;
   moveObligation: (index: number, direction: 'up' | 'down') => void;
+  reorderObligations: (fromIndex: number, toIndex: number) => void;
   toggleObligationShared: (id: string) => void;
   addSubscription: (item: { name: string; totalPrice: number; members: number; billing: 'monthly' | 'yearly'; period?: PaymentPeriod; billingMonth?: string; moneda?: 'COP' | 'USD'; icon?: string }) => void;
   updateSubscription: (id: string, updated: Partial<SubscriptionItem>) => void;
   deleteSubscription: (id: string) => void;
   moveSubscription: (index: number, direction: 'up' | 'down') => void;
+  reorderSubscriptions: (fromIndex: number, toIndex: number) => void;
   toggleSubscription: (id: string) => void;
   resetToDefault: () => void;
   importData: (imported: AppFinanceData) => void;
@@ -175,6 +182,16 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }));
   };
 
+  const reorderArray = <T,>(list: T[], fromIndex: number, toIndex: number): T[] => {
+    if (fromIndex < 0 || fromIndex >= list.length || toIndex < 0 || toIndex >= list.length || fromIndex === toIndex) {
+      return list;
+    }
+    const result = [...list];
+    const [removed] = result.splice(fromIndex, 1);
+    result.splice(toIndex, 0, removed);
+    return result;
+  };
+
   const moveBilleteraItem = (index: number, direction: 'up' | 'down') => {
     setData(prev => {
       const list = [...prev.billeteraItems];
@@ -185,6 +202,13 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       list[targetIndex] = temp;
       return { ...prev, billeteraItems: list };
     });
+  };
+
+  const reorderBilleteraItems = (fromIndex: number, toIndex: number) => {
+    setData(prev => ({
+      ...prev,
+      billeteraItems: reorderArray(prev.billeteraItems, fromIndex, toIndex)
+    }));
   };
 
   const addExpenseMovement = (movement: {
@@ -445,6 +469,13 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     });
   };
 
+  const reorderDeudaItems = (fromIndex: number, toIndex: number) => {
+    setData(prev => ({
+      ...prev,
+      deudaItems: reorderArray(prev.deudaItems, fromIndex, toIndex)
+    }));
+  };
+
   const addPortfolioItem = (item: { nombre: string; moneda: 'COP' | 'USD'; saldo: number; icon?: string; color?: string }) => {
     const newItem: PortfolioAccountItem = {
       id: `port-${Date.now()}`,
@@ -480,6 +511,13 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       list[targetIndex] = temp;
       return { ...prev, portfolioItems: list };
     });
+  };
+
+  const reorderPortfolioItems = (fromIndex: number, toIndex: number) => {
+    setData(prev => ({
+      ...prev,
+      portfolioItems: reorderArray(prev.portfolioItems || [], fromIndex, toIndex)
+    }));
   };
 
   const addCreditCard = (card: { name: string; period: PaymentPeriod; creditLimit: number; moneda?: 'COP' | 'USD'; minPaymentOverride?: number }) => {
@@ -522,6 +560,13 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       list[targetIndex] = temp;
       return { ...prev, creditCards: list };
     });
+  };
+
+  const reorderCreditCards = (fromIndex: number, toIndex: number) => {
+    setData(prev => ({
+      ...prev,
+      creditCards: reorderArray(prev.creditCards, fromIndex, toIndex)
+    }));
   };
 
   // Realizar Corte de Tarjeta
@@ -853,6 +898,13 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     });
   };
 
+  const reorderHousingExpenses = (fromIndex: number, toIndex: number) => {
+    setData(prev => ({
+      ...prev,
+      housingExpenses: reorderArray(prev.housingExpenses, fromIndex, toIndex)
+    }));
+  };
+
   const toggleHousingShared = (id: string) => {
     setData(prev => ({
       ...prev,
@@ -900,6 +952,13 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       list[targetIndex] = temp;
       return { ...prev, obligations: list };
     });
+  };
+
+  const reorderObligations = (fromIndex: number, toIndex: number) => {
+    setData(prev => ({
+      ...prev,
+      obligations: reorderArray(prev.obligations, fromIndex, toIndex)
+    }));
   };
 
   const toggleObligationShared = (id: string) => {
@@ -953,6 +1012,13 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     });
   };
 
+  const reorderSubscriptions = (fromIndex: number, toIndex: number) => {
+    setData(prev => ({
+      ...prev,
+      subscriptions: reorderArray(prev.subscriptions || [], fromIndex, toIndex)
+    }));
+  };
+
   const toggleSubscription = (id: string) => {
     setData(prev => ({
       ...prev,
@@ -986,6 +1052,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         updateBilleteraItem,
         deleteBilleteraItem,
         moveBilleteraItem,
+        reorderBilleteraItems,
         addExpenseMovement,
         deleteExpenseMovement,
         clearExpenseMovements,
@@ -993,14 +1060,17 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         updateDeudaItem,
         deleteDeudaItem,
         moveDeudaItem,
+        reorderDeudaItems,
         addPortfolioItem,
         updatePortfolioItem,
         deletePortfolioItem,
         movePortfolioItem,
+        reorderPortfolioItems,
         addCreditCard,
         updateCreditCard,
         deleteCreditCard,
         moveCreditCard,
+        reorderCreditCards,
         performCardCutoff,
         payCardCutoff,
         cancelCardCutoff,
@@ -1016,16 +1086,19 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         updateHousingExpense,
         deleteHousingExpense,
         moveHousingExpense,
+        reorderHousingExpenses,
         toggleHousingShared,
         addObligation,
         updateObligation,
         deleteObligation,
         moveObligation,
+        reorderObligations,
         toggleObligationShared,
         addSubscription,
         updateSubscription,
         deleteSubscription,
         moveSubscription,
+        reorderSubscriptions,
         toggleSubscription,
         resetToDefault,
         importData

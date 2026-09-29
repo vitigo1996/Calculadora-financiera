@@ -19,10 +19,8 @@ import {
   CreditCard,
   ShoppingBag,
   Calendar,
-  ArrowUpDown,
   Check,
-  ChevronUp,
-  ChevronDown
+  GripVertical
 } from 'lucide-react';
 
 export const BilleteraView: React.FC = () => {
@@ -31,7 +29,7 @@ export const BilleteraView: React.FC = () => {
     addBilleteraItem,
     updateBilleteraItem,
     deleteBilleteraItem,
-    moveBilleteraItem,
+    reorderBilleteraItems,
     addExpenseMovement,
     deleteExpenseMovement,
     clearExpenseMovements
@@ -58,8 +56,10 @@ export const BilleteraView: React.FC = () => {
   // Submenu: Billetera | Tarjetas
   const [subView, setSubView] = useState<'billetera' | 'tarjetas'>('billetera');
 
-  // Reordering state for Billetera accounts
-  const [isReorderingBilletera, setIsReorderingBilletera] = useState(false);
+  // Edit states for Billetera and Registro
+  const [isEditingBilletera, setIsEditingBilletera] = useState(false);
+  const [isEditingMovements, setIsEditingMovements] = useState(false);
+  const [draggedBilleteraIdx, setDraggedBilleteraIdx] = useState<number | null>(null);
 
   // Pagination for movements (10 records at a time)
   const [visibleMovementsCount, setVisibleMovementsCount] = useState(10);
@@ -292,7 +292,7 @@ export const BilleteraView: React.FC = () => {
   return (
     <div className="space-y-6 pb-2 animate-fadeIn">
       {/* Menú Superior de 2 opciones: Billetera | Tarjetas */}
-      <div className="flex items-center justify-center">
+      <div className="sticky top-0 z-30 bg-slate-50/95 dark:bg-slate-900/95 backdrop-blur-md pt-2 pb-2 -mx-3.5 px-3.5 flex items-center justify-center">
         <div className="bg-slate-200/80 dark:bg-slate-800 p-1 rounded-2xl flex items-center gap-1 shadow-inner border border-slate-300/80 dark:border-slate-700/60 w-full sm:w-auto">
           <button
             type="button"
@@ -326,23 +326,23 @@ export const BilleteraView: React.FC = () => {
           {/* SECCIÓN 1: BILLETERA */}
           <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
             <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-              <h3 className="font-bold text-slate-800 dark:text-white text-sm flex items-center gap-2">
-                <Wallet className="w-4 h-4 text-blue-600 dark:text-blue-400" /> Billetera
+              <h3 className="font-bold text-slate-800 dark:text-white text-sm flex items-center gap-2 uppercase tracking-wide">
+                <Wallet className="w-4 h-4 text-blue-600 dark:text-blue-400" /> BILLETERA
               </h3>
 
-              {/* Botones de acción: Reordenar y Agregar (+) */}
+              {/* Botones de acción: Editar y Agregar (+) */}
               <div className="flex items-center gap-2">
-                {data.billeteraItems && data.billeteraItems.length > 1 && (
+                {(data.billeteraItems || []).length > 0 && (
                   <button
-                    onClick={() => setIsReorderingBilletera(!isReorderingBilletera)}
+                    onClick={() => setIsEditingBilletera(!isEditingBilletera)}
                     className={`p-2 rounded-xl text-xs font-semibold border transition-all flex items-center justify-center shadow-sm ${
-                      isReorderingBilletera
+                      isEditingBilletera
                         ? 'bg-blue-600 text-white border-blue-600'
                         : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-300/80 dark:border-transparent'
                     }`}
-                    title={isReorderingBilletera ? 'Listo' : 'Reordenar Cuentas'}
+                    title={isEditingBilletera ? 'Listo' : 'Editar Billetera'}
                   >
-                    {isReorderingBilletera ? <Check className="w-4 h-4" /> : <ArrowUpDown className="w-4 h-4" />}
+                    {isEditingBilletera ? <Check className="w-4 h-4" /> : <Edit2 className="w-4 h-4" />}
                   </button>
                 )}
 
@@ -363,29 +363,36 @@ export const BilleteraView: React.FC = () => {
                 </div>
               ) : (
                 data.billeteraItems.map((item, idx) => {
-                  const Icon = getIconComponent(item.icon);
-
                   return (
                     <div
                       key={item.id}
-                      className="p-4 bg-white dark:bg-slate-900 transition-all flex items-center justify-between"
+                      draggable={isEditingBilletera}
+                      onDragStart={(e) => {
+                        setDraggedBilleteraIdx(idx);
+                        e.dataTransfer.effectAllowed = 'move';
+                      }}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        e.dataTransfer.dropEffect = 'move';
+                      }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        if (draggedBilleteraIdx !== null && draggedBilleteraIdx !== idx) {
+                          reorderBilleteraItems(draggedBilleteraIdx, idx);
+                        }
+                        setDraggedBilleteraIdx(null);
+                      }}
+                      onDragEnd={() => setDraggedBilleteraIdx(null)}
+                      className={`p-4 bg-white dark:bg-slate-900 transition-all flex items-center justify-between ${
+                        isEditingBilletera ? 'cursor-move select-none' : ''
+                      }`}
                     >
                       <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setIconPickerTarget({
-                              targetId: item.id,
-                              currentIcon: item.icon || 'wallet',
-                              title: `Ícono para ${item.nombre}`
-                            });
-                          }}
-                          className={`w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 cursor-pointer hover:scale-105 transition-transform ${getItemIconStyle()}`}
-                          title="Toca para cambiar ícono"
-                        >
-                          <Icon className="w-5 h-5" />
-                        </button>
+                        {isEditingBilletera && (
+                          <div className="text-slate-400 dark:text-slate-500 cursor-grab active:cursor-grabbing p-1 flex-shrink-0">
+                            <GripVertical className="w-4 h-4" />
+                          </div>
+                        )}
                         <div className="min-w-0 flex-1">
                           <h4 className="font-bold text-slate-800 dark:text-white text-sm truncate">{item.nombre}</h4>
                         </div>
@@ -398,31 +405,25 @@ export const BilleteraView: React.FC = () => {
                           </span>
                         </div>
 
-                        {isReorderingBilletera ? (
-                          <div className="flex items-center gap-1">
-                            <button
-                              disabled={idx === 0}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                moveBilleteraItem(idx, 'up');
-                              }}
-                              className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-                              title="Mover arriba"
-                            >
-                              <ChevronUp className="w-4 h-4" />
-                            </button>
-                            <button
-                              disabled={idx === data.billeteraItems.length - 1}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                moveBilleteraItem(idx, 'down');
-                              }}
-                              className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-                              title="Mover abajo"
-                            >
-                              <ChevronDown className="w-4 h-4" />
-                            </button>
-                          </div>
+                        {isEditingBilletera ? (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setConfirmConfig({
+                                isOpen: true,
+                                title: 'Eliminar Cuenta',
+                                message: `¿Estás seguro de eliminar "${item.nombre}"?`,
+                                confirmText: 'Sí, eliminar',
+                                cancelText: 'Cancelar',
+                                variant: 'danger',
+                                onConfirm: () => deleteBilleteraItem(item.id)
+                              });
+                            }}
+                            className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-rose-100 dark:hover:bg-rose-950/50 text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 border border-slate-300/80 dark:border-transparent transition-colors"
+                            title="Eliminar cuenta"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
                         ) : (
                           <button
                             onClick={() => openEditBilletera(item)}
@@ -443,26 +444,18 @@ export const BilleteraView: React.FC = () => {
           {/* SECCIÓN 2: REGISTRO (Movimientos) DIRECTAMENTE DEBAJO */}
           <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
             <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between flex-wrap gap-2">
-              <h3 className="font-bold text-slate-800 dark:text-white text-sm flex items-center gap-2">
-                <History className="w-4 h-4 text-blue-600 dark:text-blue-400" /> Registro
+              <h3 className="font-bold text-slate-800 dark:text-white text-sm flex items-center gap-2 uppercase tracking-wide">
+                <History className="w-4 h-4 text-blue-600 dark:text-blue-400" /> REGISTRO
               </h3>
 
               <div className="flex items-center gap-2">
-                <button
-                  onClick={openCreateMovement}
-                  className="p-2 rounded-xl text-xs font-semibold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800/40 hover:bg-blue-200 transition-all flex items-center justify-center shadow-sm"
-                  title="Registrar Movimiento"
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
-
                 {movements.length > 0 && (
                   <button
                     onClick={() => {
                       setConfirmConfig({
                         isOpen: true,
                         title: 'Limpiar Registro',
-                        message: '¿Estás seguro?',
+                        message: '¿Estás seguro de limpiar todo el registro de movimientos?',
                         confirmText: 'Sí, limpiar',
                         cancelText: 'Cancelar',
                         variant: 'warning',
@@ -483,6 +476,28 @@ export const BilleteraView: React.FC = () => {
                     </svg>
                   </button>
                 )}
+
+                {movements.length > 0 && (
+                  <button
+                    onClick={() => setIsEditingMovements(!isEditingMovements)}
+                    className={`p-2 rounded-xl text-xs font-semibold border transition-all flex items-center justify-center shadow-sm ${
+                      isEditingMovements
+                        ? 'bg-blue-600 text-white border-blue-600'
+                        : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-300/80 dark:border-transparent'
+                    }`}
+                    title={isEditingMovements ? 'Listo' : 'Editar Registro'}
+                  >
+                    {isEditingMovements ? <Check className="w-4 h-4" /> : <Edit2 className="w-4 h-4" />}
+                  </button>
+                )}
+
+                <button
+                  onClick={openCreateMovement}
+                  className="p-2 rounded-xl text-xs font-semibold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800/40 hover:bg-blue-200 transition-all flex items-center justify-center shadow-sm"
+                  title="Registrar Movimiento"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
               </div>
             </div>
 
@@ -509,20 +524,20 @@ export const BilleteraView: React.FC = () => {
                     >
                       <div className="flex items-start gap-3 min-w-0 flex-1">
                         <div
-                          className={`w-9 h-9 rounded-2xl flex items-center justify-center shadow-sm flex-shrink-0 mt-0.5 ${
+                          className={`w-10 h-10 rounded-2xl flex items-center justify-center shadow-sm flex-shrink-0 mt-0.5 border ${
                             isIncome
-                              ? 'bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40'
+                              ? 'bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/40'
                               : isTransfer
-                              ? 'bg-blue-100 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800/40'
-                              : 'bg-rose-100 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/40'
+                              ? 'bg-blue-100 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800/40'
+                              : 'bg-rose-100 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-800/40'
                           }`}
                         >
                           {isIncome ? (
-                            <ArrowDownLeft className="w-4 h-4" />
+                            <ArrowDownLeft className="w-5 h-5" />
                           ) : isTransfer ? (
-                            <ArrowLeftRight className="w-4 h-4" />
+                            <ArrowLeftRight className="w-5 h-5" />
                           ) : (
-                            <ArrowUpRight className="w-4 h-4" />
+                            <ArrowUpRight className="w-5 h-5" />
                           )}
                         </div>
 
@@ -537,7 +552,7 @@ export const BilleteraView: React.FC = () => {
                             {isIncome ? (
                               <>
                                 {mov.destinationType === 'deuda' && mov.destinationName ? (
-                                  <>
+                                   <>
                                     <span className="font-medium text-slate-600 dark:text-slate-300">
                                       De: <strong className="text-emerald-600 dark:text-emerald-400">Deuda {mov.destinationName}</strong>
                                     </span>
@@ -587,23 +602,25 @@ export const BilleteraView: React.FC = () => {
                           </span>
                         </div>
 
-                        <button
-                          onClick={() => {
-                            setConfirmConfig({
-                              isOpen: true,
-                              title: 'Eliminar Registro',
-                              message: `¿Estás seguro de eliminar el registro "${mov.name}"?`,
-                              confirmText: 'Sí, eliminar',
-                              cancelText: 'Cancelar',
-                              variant: 'danger',
-                              onConfirm: () => deleteExpenseMovement(mov.id)
-                            });
-                          }}
-                          className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-rose-100 dark:hover:bg-rose-950/50 text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 border border-slate-300/80 dark:border-transparent transition-colors"
-                          title="Eliminar este registro"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                        {isEditingMovements && (
+                          <button
+                            onClick={() => {
+                              setConfirmConfig({
+                                isOpen: true,
+                                title: 'Eliminar Registro',
+                                message: `¿Estás seguro de eliminar el registro "${mov.name}"?`,
+                                confirmText: 'Sí, eliminar',
+                                cancelText: 'Cancelar',
+                                variant: 'danger',
+                                onConfirm: () => deleteExpenseMovement(mov.id)
+                              });
+                            }}
+                            className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-rose-100 dark:hover:bg-rose-950/50 text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 border border-slate-300/80 dark:border-transparent transition-colors"
+                            title="Eliminar este registro"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
                       </div>
                     </div>
                   );

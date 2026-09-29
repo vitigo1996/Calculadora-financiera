@@ -12,10 +12,10 @@ import {
   X,
   ArrowDownLeft,
   ArrowUpRight,
-  ArrowUpDown,
+  ArrowLeftRight,
+  Calendar,
   Check,
-  ChevronUp,
-  ChevronDown
+  GripVertical
 } from 'lucide-react';
 
 const MONTHS = [
@@ -29,16 +29,18 @@ export const DeudasView: React.FC = () => {
     addDeudaItem,
     updateDeudaItem,
     deleteDeudaItem,
-    moveDeudaItem,
+    reorderDeudaItems,
     addSubscription,
     updateSubscription,
     deleteSubscription,
-    moveSubscription
+    reorderSubscriptions
   } = useFinance();
 
-  // Reordering states
-  const [isReorderingDeudas, setIsReorderingDeudas] = useState(false);
-  const [isReorderingSubs, setIsReorderingSubs] = useState(false);
+  // Edit states
+  const [isEditingDeudas, setIsEditingDeudas] = useState(false);
+  const [isEditingSubs, setIsEditingSubs] = useState(false);
+  const [draggedDeudaIdx, setDraggedDeudaIdx] = useState<number | null>(null);
+  const [draggedSubIdx, setDraggedSubIdx] = useState<number | null>(null);
 
   // Modal: Deuda
   const [showAddDeudaModal, setShowAddDeudaModal] = useState(false);
@@ -222,21 +224,23 @@ export const DeudasView: React.FC = () => {
       {/* SECCIÓN 1: DEUDAS */}
       <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
         <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-          <h3 className="font-bold text-slate-800 dark:text-white text-sm">Deudas</h3>
+          <h3 className="font-bold text-slate-800 dark:text-white text-sm flex items-center gap-2 uppercase tracking-wide">
+            <ArrowLeftRight className="w-4 h-4 text-blue-600 dark:text-blue-400" /> DEUDAS
+          </h3>
 
-          {/* Botones de acción: Reordenar y Agregar (+) */}
+          {/* Botones de acción: Editar y Agregar (+) */}
           <div className="flex items-center gap-2">
-            {(data.deudaItems || []).length > 1 && (
+            {(data.deudaItems || []).length > 0 && (
               <button
-                onClick={() => setIsReorderingDeudas(!isReorderingDeudas)}
+                onClick={() => setIsEditingDeudas(!isEditingDeudas)}
                 className={`p-2 rounded-xl text-xs font-semibold border transition-all flex items-center justify-center shadow-sm ${
-                  isReorderingDeudas
+                  isEditingDeudas
                     ? 'bg-blue-600 text-white border-blue-600'
                     : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-300/80 dark:border-transparent'
                 }`}
-                title={isReorderingDeudas ? 'Listo' : 'Reordenar Deudas'}
+                title={isEditingDeudas ? 'Listo' : 'Editar Deudas'}
               >
-                {isReorderingDeudas ? <Check className="w-4 h-4" /> : <ArrowUpDown className="w-4 h-4" />}
+                {isEditingDeudas ? <Check className="w-4 h-4" /> : <Edit2 className="w-4 h-4" />}
               </button>
             )}
 
@@ -257,32 +261,39 @@ export const DeudasView: React.FC = () => {
             </div>
           ) : (
             data.deudaItems.map((item, idx) => {
-              const Icon = getIconComponent(item.icon);
               const isPorCobrar = item.tipo === 'por_cobrar';
               const hasAmount = item.monto !== undefined && item.monto > 0;
 
               return (
                 <div
                   key={item.id}
-                  className="p-4 bg-white dark:bg-slate-900 transition-all flex items-center justify-between"
+                  draggable={isEditingDeudas}
+                  onDragStart={(e) => {
+                    setDraggedDeudaIdx(idx);
+                    e.dataTransfer.effectAllowed = 'move';
+                  }}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    if (draggedDeudaIdx !== null && draggedDeudaIdx !== idx) {
+                      reorderDeudaItems(draggedDeudaIdx, idx);
+                    }
+                    setDraggedDeudaIdx(null);
+                  }}
+                  onDragEnd={() => setDraggedDeudaIdx(null)}
+                  className={`p-4 bg-white dark:bg-slate-900 transition-all flex items-center justify-between ${
+                    isEditingDeudas ? 'cursor-move select-none' : ''
+                  }`}
                 >
                   <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setIconPickerTarget({
-                          targetId: item.id,
-                          currentIcon: item.icon || (isPorCobrar ? 'coins' : 'shield_alert'),
-                          title: `Ícono para ${item.nombre}`
-                        });
-                      }}
-                      className={`w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 cursor-pointer hover:scale-105 transition-transform ${getItemIconStyle()}`}
-                      title="Toca para cambiar ícono"
-                    >
-                      <Icon className="w-5 h-5" />
-                    </button>
-
+                    {isEditingDeudas && (
+                      <div className="text-slate-400 dark:text-slate-500 cursor-grab active:cursor-grabbing p-1 flex-shrink-0">
+                        <GripVertical className="w-4 h-4" />
+                      </div>
+                    )}
                     {/* Nombre y etiqueta Debo/Me deben debajo */}
                     <div className="min-w-0 flex-1">
                       <h4 className="font-bold text-slate-800 dark:text-white text-sm truncate">{item.nombre}</h4>
@@ -311,25 +322,24 @@ export const DeudasView: React.FC = () => {
                       </div>
                     ) : null}
 
-                    {isReorderingDeudas ? (
-                      <div className="flex items-center gap-1">
-                        <button
-                          disabled={idx === 0}
-                          onClick={() => moveDeudaItem(idx, 'up')}
-                          className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-                          title="Mover arriba"
-                        >
-                          <ChevronUp className="w-4 h-4" />
-                        </button>
-                        <button
-                          disabled={idx === data.deudaItems.length - 1}
-                          onClick={() => moveDeudaItem(idx, 'down')}
-                          className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-                          title="Mover abajo"
-                        >
-                          <ChevronDown className="w-4 h-4" />
-                        </button>
-                      </div>
+                    {isEditingDeudas ? (
+                      <button
+                        onClick={() => {
+                          setConfirmConfig({
+                            isOpen: true,
+                            title: 'Eliminar Registro de Deuda',
+                            message: `¿Estás seguro de eliminar "${item.nombre}"?`,
+                            confirmText: 'Sí, eliminar',
+                            cancelText: 'Cancelar',
+                            variant: 'danger',
+                            onConfirm: () => deleteDeudaItem(item.id)
+                          });
+                        }}
+                        className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-rose-100 dark:hover:bg-rose-950/50 text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 border border-slate-300/80 dark:border-transparent transition-colors"
+                        title="Eliminar deuda"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     ) : (
                       <button
                         onClick={() => openEditDeuda(item)}
@@ -350,23 +360,23 @@ export const DeudasView: React.FC = () => {
       {/* SECCIÓN 2: SUSCRIPCIONES */}
       <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
         <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-          <h3 className="font-bold text-slate-800 dark:text-white text-sm">
-            Suscripciones
+          <h3 className="font-bold text-slate-800 dark:text-white text-sm flex items-center gap-2 uppercase tracking-wide">
+            <Calendar className="w-4 h-4 text-blue-600 dark:text-blue-400" /> SUSCRIPCIONES
           </h3>
 
-          {/* Botones de acción: Reordenar y Agregar (+) */}
+          {/* Botones de acción: Editar y Agregar (+) */}
           <div className="flex items-center gap-2">
-            {(data.subscriptions || []).length > 1 && (
+            {(data.subscriptions || []).length > 0 && (
               <button
-                onClick={() => setIsReorderingSubs(!isReorderingSubs)}
+                onClick={() => setIsEditingSubs(!isEditingSubs)}
                 className={`p-2 rounded-xl text-xs font-semibold border transition-all flex items-center justify-center shadow-sm ${
-                  isReorderingSubs
+                  isEditingSubs
                     ? 'bg-blue-600 text-white border-blue-600'
                     : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-300/80 dark:border-transparent'
                 }`}
-                title={isReorderingSubs ? 'Listo' : 'Reordenar Suscripciones'}
+                title={isEditingSubs ? 'Listo' : 'Editar Suscripciones'}
               >
-                {isReorderingSubs ? <Check className="w-4 h-4" /> : <ArrowUpDown className="w-4 h-4" />}
+                {isEditingSubs ? <Check className="w-4 h-4" /> : <Edit2 className="w-4 h-4" />}
               </button>
             )}
 
@@ -393,9 +403,33 @@ export const DeudasView: React.FC = () => {
               return (
                 <div
                   key={sub.id}
-                  className="p-4 bg-white dark:bg-slate-900 transition-all flex items-center justify-between"
+                  draggable={isEditingSubs}
+                  onDragStart={(e) => {
+                    setDraggedSubIdx(idx);
+                    e.dataTransfer.effectAllowed = 'move';
+                  }}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    if (draggedSubIdx !== null && draggedSubIdx !== idx) {
+                      reorderSubscriptions(draggedSubIdx, idx);
+                    }
+                    setDraggedSubIdx(null);
+                  }}
+                  onDragEnd={() => setDraggedSubIdx(null)}
+                  className={`p-4 bg-white dark:bg-slate-900 transition-all flex items-center justify-between ${
+                    isEditingSubs ? 'cursor-move select-none' : ''
+                  }`}
                 >
                   <div className="flex items-center gap-3 min-w-0 flex-1">
+                    {isEditingSubs && (
+                      <div className="text-slate-400 dark:text-slate-500 cursor-grab active:cursor-grabbing p-1 flex-shrink-0">
+                        <GripVertical className="w-4 h-4" />
+                      </div>
+                    )}
                     <div className="min-w-0 flex-1">
                       <h4 className="font-bold text-slate-800 dark:text-white text-sm truncate">{sub.name}</h4>
                     </div>
@@ -408,25 +442,24 @@ export const DeudasView: React.FC = () => {
                       </span>
                     </div>
 
-                    {isReorderingSubs ? (
-                      <div className="flex items-center gap-1">
-                        <button
-                          disabled={idx === 0}
-                          onClick={() => moveSubscription(idx, 'up')}
-                          className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-                          title="Mover arriba"
-                        >
-                          <ChevronUp className="w-4 h-4" />
-                        </button>
-                        <button
-                          disabled={idx === data.subscriptions.length - 1}
-                          onClick={() => moveSubscription(idx, 'down')}
-                          className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-                          title="Mover abajo"
-                        >
-                          <ChevronDown className="w-4 h-4" />
-                        </button>
-                      </div>
+                    {isEditingSubs ? (
+                      <button
+                        onClick={() => {
+                          setConfirmConfig({
+                            isOpen: true,
+                            title: 'Eliminar Suscripción',
+                            message: `¿Estás seguro de eliminar "${sub.name}"?`,
+                            confirmText: 'Sí, eliminar',
+                            cancelText: 'Cancelar',
+                            variant: 'danger',
+                            onConfirm: () => deleteSubscription(sub.id)
+                          });
+                        }}
+                        className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-rose-100 dark:hover:bg-rose-950/50 text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 border border-slate-300/80 dark:border-transparent transition-colors"
+                        title="Eliminar suscripción"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     ) : (
                       <button
                         onClick={() => openEditSub(sub)}
