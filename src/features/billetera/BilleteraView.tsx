@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useFinance } from '../../context/FinanceContext';
 import { formatCurrency, calculateCardPurchasesTotal } from '../../services/financeCalculations';
 import { BilleteraAccountItem } from '../../models/finance';
-import { getIconComponent, IconPickerModal } from '../../components/ui/IconPicker';
+import { getIconComponent, IconPickerModal, IconPickerTrigger } from '../../components/ui/IconPicker';
 import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import { AmountCalculatorInput } from '../../components/ui/AmountCalculatorInput';
 import { CreditosSuscripcionesView } from '../creditos_suscripciones/CreditosSuscripcionesView';
@@ -51,6 +51,7 @@ export const BilleteraView: React.FC = () => {
     targetId?: string;
     currentIcon: string;
     title: string;
+    type?: 'billetera_item' | 'billetera_form' | 'movement_form';
   } | null>(null);
 
   // Submenu: Billetera | Tarjetas
@@ -78,6 +79,7 @@ export const BilleteraView: React.FC = () => {
   const [movementType, setMovementType] = useState<'expense' | 'income' | 'transfer'>('expense');
   const [movementName, setMovementName] = useState('');
   const [movementAmount, setMovementAmount] = useState('');
+  const [movementIcon, setMovementIcon] = useState('shopping_bag');
   const [movementSourceId, setMovementSourceId] = useState('');
   const [movementDestType, setMovementDestType] = useState<'none' | 'payment'>('none');
   const [movementDestId, setMovementDestId] = useState('');
@@ -161,6 +163,7 @@ export const BilleteraView: React.FC = () => {
     setMovementName('');
     setMovementAmount('');
     setMovementType('expense');
+    setMovementIcon('shopping_bag');
     const firstBilletera = data.billeteraItems[0] ? `billetera:${data.billeteraItems[0].id}` : '';
     setMovementSourceId(firstBilletera);
     setMovementDestType('none');
@@ -272,6 +275,7 @@ export const BilleteraView: React.FC = () => {
       name: movementName.trim() || defaultName,
       amount,
       moneda: sourceMoneda,
+      icon: movementIcon,
       sourceAccountId: sourceId,
       destinationType: destType,
       destinationId: destId,
@@ -292,7 +296,7 @@ export const BilleteraView: React.FC = () => {
   return (
     <div className="space-y-6 pb-2 animate-fadeIn">
       {/* Menú Superior de 2 opciones: Billetera | Tarjetas */}
-      <div className="sticky top-0 z-30 bg-slate-50/95 dark:bg-slate-900/95 backdrop-blur-md pt-2 pb-2 -mx-3.5 px-3.5 flex items-center justify-center">
+      <div className="sticky top-0 z-30 bg-slate-50 dark:bg-slate-900 pt-1 pb-2.5 -mx-3.5 px-3.5 flex items-center justify-center border-b border-slate-200/80 dark:border-slate-800/80 shadow-xs">
         <div className="bg-slate-200/80 dark:bg-slate-800 p-1 rounded-2xl flex items-center gap-1 shadow-inner border border-slate-300/80 dark:border-slate-700/60 w-full sm:w-auto">
           <button
             type="button"
@@ -325,9 +329,9 @@ export const BilleteraView: React.FC = () => {
         <>
           {/* SECCIÓN 1: BILLETERA */}
           <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
-            <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-              <h3 className="font-bold text-slate-800 dark:text-white text-sm flex items-center gap-2 uppercase tracking-wide">
-                <Wallet className="w-4 h-4 text-blue-600 dark:text-blue-400" /> BILLETERA
+            <div className="p-4 bg-slate-100 dark:bg-slate-800/70 border-b border-slate-200 dark:border-slate-700/60 flex items-center justify-between">
+              <h3 className="font-extrabold text-slate-800 dark:text-white text-base flex items-center gap-2.5 uppercase tracking-wide">
+                <Wallet className="w-5 h-5 text-blue-600 dark:text-blue-400" /> BILLETERA
               </h3>
 
               {/* Botones de acción: Editar y Agregar (+) */}
@@ -443,9 +447,9 @@ export const BilleteraView: React.FC = () => {
 
           {/* SECCIÓN 2: REGISTRO (Movimientos) DIRECTAMENTE DEBAJO */}
           <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
-            <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between flex-wrap gap-2">
-              <h3 className="font-bold text-slate-800 dark:text-white text-sm flex items-center gap-2 uppercase tracking-wide">
-                <History className="w-4 h-4 text-blue-600 dark:text-blue-400" /> REGISTRO
+            <div className="p-4 bg-slate-100 dark:bg-slate-800/70 border-b border-slate-200 dark:border-slate-700/60 flex items-center justify-between flex-wrap gap-2">
+              <h3 className="font-extrabold text-slate-800 dark:text-white text-base flex items-center gap-2.5 uppercase tracking-wide">
+                <History className="w-5 h-5 text-blue-600 dark:text-blue-400" /> REGISTRO
               </h3>
 
               <div className="flex items-center gap-2">
@@ -510,6 +514,7 @@ export const BilleteraView: React.FC = () => {
                 movements.slice(0, visibleMovementsCount).map(mov => {
                   const isIncome = mov.type === 'income';
                   const isTransfer = mov.type === 'transfer';
+                  const MovementIcon = getIconComponent(mov.icon || (isIncome ? 'banknote' : isTransfer ? 'layers' : 'shopping_bag'));
                   const formattedDate = new Date(mov.date).toLocaleDateString('es-CO', {
                     day: '2-digit',
                     month: 'short',
@@ -523,22 +528,8 @@ export const BilleteraView: React.FC = () => {
                       className="p-4 transition-colors flex items-center justify-between gap-3"
                     >
                       <div className="flex items-start gap-3 min-w-0 flex-1">
-                        <div
-                          className={`w-10 h-10 rounded-2xl flex items-center justify-center shadow-sm flex-shrink-0 mt-0.5 border ${
-                            isIncome
-                              ? 'bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/40'
-                              : isTransfer
-                              ? 'bg-blue-100 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800/40'
-                              : 'bg-rose-100 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-800/40'
-                          }`}
-                        >
-                          {isIncome ? (
-                            <ArrowDownLeft className="w-5 h-5" />
-                          ) : isTransfer ? (
-                            <ArrowLeftRight className="w-5 h-5" />
-                          ) : (
-                            <ArrowUpRight className="w-5 h-5" />
-                          )}
+                        <div className="w-10 h-10 rounded-2xl flex items-center justify-center shadow-sm flex-shrink-0 mt-0.5 border bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800/50">
+                          <MovementIcon className="w-5 h-5" />
                         </div>
 
                         <div className="min-w-0 flex-1">
@@ -684,17 +675,6 @@ export const BilleteraView: React.FC = () => {
               />
 
               <div className="flex items-center gap-2 pt-3">
-                {editingBilleteraObj && (
-                  <button
-                    type="button"
-                    onClick={handleDeleteBilleteraFromModal}
-                    className="p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/50 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/50 transition-colors flex items-center justify-center"
-                    title="Eliminar esta cuenta"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                )}
-
                 <button
                   type="button"
                   onClick={() => setShowAddBilleteraModal(false)}
@@ -736,7 +716,10 @@ export const BilleteraView: React.FC = () => {
             <div className="grid grid-cols-3 gap-1.5 mb-4">
               <button
                 type="button"
-                onClick={() => setMovementType('expense')}
+                onClick={() => {
+                  setMovementType('expense');
+                  setMovementIcon('shopping_bag');
+                }}
                 className={`py-2.5 px-1.5 rounded-2xl text-xs font-bold border transition-all flex items-center justify-center gap-1 ${
                   movementType === 'expense'
                     ? 'bg-rose-100 dark:bg-rose-950/60 border-rose-500 text-rose-800 dark:text-rose-300 shadow-sm ring-1 ring-rose-400'
@@ -749,7 +732,10 @@ export const BilleteraView: React.FC = () => {
 
               <button
                 type="button"
-                onClick={() => setMovementType('income')}
+                onClick={() => {
+                  setMovementType('income');
+                  setMovementIcon('banknote');
+                }}
                 className={`py-2.5 px-1.5 rounded-2xl text-xs font-bold border transition-all flex items-center justify-center gap-1 ${
                   movementType === 'income'
                     ? 'bg-emerald-100 dark:bg-emerald-950/60 border-emerald-500 text-emerald-800 dark:text-emerald-300 shadow-sm ring-1 ring-emerald-400'
@@ -762,7 +748,10 @@ export const BilleteraView: React.FC = () => {
 
               <button
                 type="button"
-                onClick={() => setMovementType('transfer')}
+                onClick={() => {
+                  setMovementType('transfer');
+                  setMovementIcon('layers');
+                }}
                 className={`py-2.5 px-1.5 rounded-2xl text-xs font-bold border transition-all flex items-center justify-center gap-1 ${
                   movementType === 'transfer'
                     ? 'bg-blue-100 dark:bg-blue-950/60 border-blue-500 text-blue-800 dark:text-blue-300 shadow-sm ring-1 ring-blue-400'
@@ -775,6 +764,19 @@ export const BilleteraView: React.FC = () => {
             </div>
 
             <form onSubmit={handleSaveMovement} className="space-y-4">
+              {/* Selector de Categoría / Ícono */}
+              <IconPickerTrigger
+                selectedIconId={movementIcon}
+                label="Categoría / Ícono"
+                onClick={() => {
+                  setIconPickerTarget({
+                    type: 'movement_form',
+                    currentIcon: movementIcon,
+                    title: 'Seleccionar Categoría'
+                  });
+                }}
+              />
+
               <div>
                 <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
                   Concepto
@@ -1107,7 +1109,11 @@ export const BilleteraView: React.FC = () => {
           title={iconPickerTarget.title}
           onSelectIcon={(newIcon) => {
             if (!iconPickerTarget) return;
-            if (iconPickerTarget.targetId) {
+            if (iconPickerTarget.type === 'movement_form') {
+              setMovementIcon(newIcon);
+            } else if (iconPickerTarget.type === 'billetera_form') {
+              setBilleteraIcon(newIcon);
+            } else if (iconPickerTarget.targetId) {
               updateBilleteraItem(iconPickerTarget.targetId, { icon: newIcon });
             }
             setIconPickerTarget(null);

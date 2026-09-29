@@ -2,12 +2,13 @@ import React, { useState } from 'react';
 import { useFinance } from '../../context/FinanceContext';
 import { formatCurrency, convertToBase } from '../../services/financeCalculations';
 import { PortfolioAccountItem } from '../../models/finance';
-import { getIconComponent, IconPickerModal, IconPickerTrigger } from '../../components/ui/IconPicker';
+import { IconPickerModal } from '../../components/ui/IconPicker';
 import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import { AmountCalculatorInput } from '../../components/ui/AmountCalculatorInput';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import {
-  TrendingUp as PieChartIcon,
+  Briefcase,
+  BarChart3,
   Edit2,
   Plus,
   Trash2,
@@ -43,6 +44,9 @@ export const PortafolioView: React.FC = () => {
     reorderPortfolioItems
   } = useFinance();
 
+  // Submenu tab state
+  const [activeSubTab, setActiveSubTab] = useState<'portafolio' | 'graficas'>('portafolio');
+
   // Edit states
   const [isEditingPortfolio, setIsEditingPortfolio] = useState(false);
   const [draggedPortfolioIdx, setDraggedPortfolioIdx] = useState<number | null>(null);
@@ -69,9 +73,6 @@ export const PortafolioView: React.FC = () => {
   const dolarRate = data.dolarRate || 3600;
   const port = summary.portafolio;
 
-  // Reorder state
-  const [isReorderingPortfolio, setIsReorderingPortfolio] = useState(false);
-
   // Active item for the 4x4 color palette popover
   const [colorPickerTarget, setColorPickerTarget] = useState<{ id: string; label: string; currentColor: string } | null>(null);
 
@@ -85,11 +86,6 @@ export const PortafolioView: React.FC = () => {
   const [itemBalance, setItemBalance] = useState('');
   const [itemIcon, setItemIcon] = useState('trending_up');
   const [itemColor, setItemColor] = useState('#2563eb');
-
-  // Uniform neutral blue icon container style
-  const getItemIconStyle = () => {
-    return 'bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/50 shadow-sm';
-  };
 
   // Open Create Modal
   const openCreateModal = () => {
@@ -141,24 +137,6 @@ export const PortafolioView: React.FC = () => {
     setEditingItemObj(null);
   };
 
-  // Delete Item from Modal
-  const handleDeleteFromModal = () => {
-    if (!editingItemObj) return;
-    setConfirmConfig({
-      isOpen: true,
-      title: 'Eliminar Activo',
-      message: `¿Estás seguro de eliminar "${editingItemObj.nombre}" del portafolio?`,
-      confirmText: 'Sí, eliminar',
-      cancelText: 'Cancelar',
-      variant: 'danger',
-      onConfirm: () => {
-        deletePortfolioItem(editingItemObj.id);
-        setShowAddModal(false);
-        setEditingItemObj(null);
-      }
-    });
-  };
-
   // Handle selecting a color from the 4x4 grid
   const handleSelectColor = (colorHex: string) => {
     if (colorPickerTarget) {
@@ -168,221 +146,265 @@ export const PortafolioView: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 pb-2 animate-fadeIn">
-      {/* Recuadro Portafolio */}
-      <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
-        <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-          <h3 className="font-bold text-slate-800 dark:text-white text-sm flex items-center gap-2 uppercase tracking-wide">
-            <PieChartIcon className="w-4 h-4 text-blue-600 dark:text-blue-400" /> PORTAFOLIO
-          </h3>
+    <div className="space-y-4 pb-2 animate-fadeIn">
+      {/* Submenú Superior Fijo (Sticky) */}
+      <div className="sticky top-0 z-30 bg-slate-50 dark:bg-slate-900 pt-1 pb-2.5 -mx-3.5 px-3.5 border-b border-slate-200/80 dark:border-slate-800/80 mb-2 flex items-center gap-2">
+        <button
+          onClick={() => setActiveSubTab('portafolio')}
+          className={`flex-1 py-2 px-3 rounded-2xl text-xs font-bold border transition-all flex items-center justify-center gap-1.5 shadow-sm ${
+            activeSubTab === 'portafolio'
+              ? 'bg-blue-600 text-white border-blue-600'
+              : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-750'
+          }`}
+        >
+          <Briefcase className="w-3.5 h-3.5" />
+          <span>Portafolio</span>
+        </button>
+        <button
+          onClick={() => setActiveSubTab('graficas')}
+          className={`flex-1 py-2 px-3 rounded-2xl text-xs font-bold border transition-all flex items-center justify-center gap-1.5 shadow-sm ${
+            activeSubTab === 'graficas'
+              ? 'bg-blue-600 text-white border-blue-600'
+              : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-750'
+          }`}
+        >
+          <BarChart3 className="w-3.5 h-3.5" />
+          <span>Gráficas</span>
+        </button>
+      </div>
 
-          {/* Botones de acción: Editar y Agregar (+) */}
-          <div className="flex items-center gap-2">
-            {(data.portfolioItems || []).length > 0 && (
-              <button
-                onClick={() => setIsEditingPortfolio(!isEditingPortfolio)}
-                className={`p-2 rounded-xl text-xs font-semibold border transition-all flex items-center justify-center shadow-sm ${
-                  isEditingPortfolio
-                    ? 'bg-blue-600 text-white border-blue-600'
-                    : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-300/80 dark:border-transparent'
-                }`}
-                title={isEditingPortfolio ? 'Listo' : 'Editar Portafolio'}
-              >
-                {isEditingPortfolio ? <Check className="w-4 h-4" /> : <Edit2 className="w-4 h-4" />}
-              </button>
-            )}
+      {/* Pestaña: Portafolio */}
+      {activeSubTab === 'portafolio' && (
+        <div className="space-y-4 animate-fadeIn">
+          {/* Recuadro Portafolio */}
+          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
+            <div className="p-4 bg-slate-100 dark:bg-slate-800/70 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/50 flex items-center justify-center shadow-xs flex-shrink-0">
+                  <Briefcase className="w-4 h-4" />
+                </div>
+                <span className="font-extrabold text-slate-800 dark:text-white text-base tracking-wide uppercase">
+                  PORTAFOLIO
+                </span>
+              </div>
 
-            <button
-              onClick={openCreateModal}
-              className="p-2 rounded-xl text-xs font-semibold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800/40 hover:bg-blue-200 transition-all flex items-center justify-center shadow-sm"
-              title="Agregar Activo"
-            >
-              <Plus className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
+              {/* Botones de acción: Editar y Agregar (+) */}
+              <div className="flex items-center gap-2">
+                {(data.portfolioItems || []).length > 0 && (
+                  <button
+                    onClick={() => setIsEditingPortfolio(!isEditingPortfolio)}
+                    className={`p-2 rounded-xl text-xs font-semibold border transition-all flex items-center justify-center shadow-sm ${
+                      isEditingPortfolio
+                        ? 'bg-blue-600 text-white border-blue-600'
+                        : 'bg-white dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-300/80 dark:border-transparent'
+                    }`}
+                    title={isEditingPortfolio ? 'Listo' : 'Editar Portafolio'}
+                  >
+                    {isEditingPortfolio ? <Check className="w-4 h-4" /> : <Edit2 className="w-4 h-4" />}
+                  </button>
+                )}
 
-        <div className="divide-y divide-slate-200 dark:divide-slate-800">
-          {(!data.portfolioItems || data.portfolioItems.length === 0) ? (
-            <div className="p-8 text-center text-slate-400 dark:text-slate-500 text-xs">
-              No tienes activos en tu portafolio. Haz clic en <strong>+</strong> para registrar uno.
-            </div>
-          ) : (
-            data.portfolioItems.map((item, idx) => {
-              const itemMoneda = item.moneda || 'COP';
-              const isDiff = itemMoneda !== baseCurrency;
-              const equivalentInBase = convertToBase(item.saldo, itemMoneda, baseCurrency, dolarRate);
-
-              return (
-                <div
-                  key={item.id}
-                  draggable={isEditingPortfolio}
-                  onDragStart={(e) => {
-                    setDraggedPortfolioIdx(idx);
-                    e.dataTransfer.effectAllowed = 'move';
-                  }}
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    e.dataTransfer.dropEffect = 'move';
-                  }}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    if (draggedPortfolioIdx !== null && draggedPortfolioIdx !== idx) {
-                      reorderPortfolioItems(draggedPortfolioIdx, idx);
-                    }
-                    setDraggedPortfolioIdx(null);
-                  }}
-                  onDragEnd={() => setDraggedPortfolioIdx(null)}
-                  className={`p-4 bg-white dark:bg-slate-900 transition-all flex items-center justify-between ${
-                    isEditingPortfolio ? 'cursor-move select-none' : ''
-                  }`}
+                <button
+                  onClick={openCreateModal}
+                  className="p-2 rounded-xl text-xs font-semibold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800/40 hover:bg-blue-200 transition-all flex items-center justify-center shadow-sm"
+                  title="Agregar Activo"
                 >
-                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                    {isEditingPortfolio && (
-                      <div className="text-slate-400 dark:text-slate-500 cursor-grab active:cursor-grabbing p-1 flex-shrink-0">
-                        <GripVertical className="w-4 h-4" />
+                  <Plus className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            <div className="divide-y divide-slate-200 dark:divide-slate-800">
+              {(!data.portfolioItems || data.portfolioItems.length === 0) ? (
+                <div className="p-8 text-center text-slate-400 dark:text-slate-500 text-xs">
+                  No tienes activos en tu portafolio. Haz clic en <strong>+</strong> para registrar uno.
+                </div>
+              ) : (
+                data.portfolioItems.map((item, idx) => {
+                  const itemMoneda = item.moneda || 'COP';
+                  const isDiff = itemMoneda !== baseCurrency;
+                  const equivalentInBase = convertToBase(item.saldo, itemMoneda, baseCurrency, dolarRate);
+
+                  return (
+                    <div
+                      key={item.id}
+                      draggable={isEditingPortfolio}
+                      onDragStart={(e) => {
+                        setDraggedPortfolioIdx(idx);
+                        e.dataTransfer.effectAllowed = 'move';
+                      }}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        e.dataTransfer.dropEffect = 'move';
+                      }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        if (draggedPortfolioIdx !== null && draggedPortfolioIdx !== idx) {
+                          reorderPortfolioItems(draggedPortfolioIdx, idx);
+                        }
+                        setDraggedPortfolioIdx(null);
+                      }}
+                      onDragEnd={() => setDraggedPortfolioIdx(null)}
+                      className={`p-4 bg-white dark:bg-slate-900 transition-all flex items-center justify-between ${
+                        isEditingPortfolio ? 'cursor-move select-none' : ''
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                        {isEditingPortfolio && (
+                          <div className="text-slate-400 dark:text-slate-500 cursor-grab active:cursor-grabbing p-1 flex-shrink-0">
+                            <GripVertical className="w-4 h-4" />
+                          </div>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <h4 className="font-bold text-slate-800 dark:text-white text-sm truncate">{item.nombre}</h4>
+                            {isDiff && (
+                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300 flex-shrink-0">
+                                {itemMoneda}
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        <h4 className="font-bold text-slate-800 dark:text-white text-sm truncate">{item.nombre}</h4>
-                        {isDiff && (
-                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300 flex-shrink-0">
-                            {itemMoneda}
+
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <div className="text-right">
+                          <span className="font-mono font-bold text-sm text-slate-800 dark:text-white block">
+                            {formatCurrency(item.saldo, itemMoneda)}
                           </span>
+                          {isDiff && (
+                            <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 block">
+                              {formatCurrency(equivalentInBase, baseCurrency)}
+                            </span>
+                          )}
+                        </div>
+
+                        {isEditingPortfolio ? (
+                          <button
+                            onClick={() => {
+                              setConfirmConfig({
+                                isOpen: true,
+                                title: 'Eliminar Activo',
+                                message: `¿Estás seguro de eliminar "${item.nombre}" del portafolio?`,
+                                confirmText: 'Sí, eliminar',
+                                cancelText: 'Cancelar',
+                                variant: 'danger',
+                                onConfirm: () => deletePortfolioItem(item.id)
+                              });
+                            }}
+                            className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-rose-100 dark:hover:bg-rose-950/50 text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 border border-slate-300/80 dark:border-transparent transition-colors"
+                            title="Eliminar activo"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => openEditModal(item)}
+                            className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-300/80 dark:border-transparent transition-colors"
+                            title="Editar activo y monto"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </button>
                         )}
                       </div>
                     </div>
-                  </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <div className="text-right">
-                      <span className="font-mono font-bold text-sm text-slate-800 dark:text-white block">
-                        {formatCurrency(item.saldo, itemMoneda)}
+      {/* Pestaña: Gráficas (Donut y Distribución de Activos) */}
+      {activeSubTab === 'graficas' && (
+        <div className="space-y-4 animate-fadeIn">
+          {port.items.length === 0 ? (
+            <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 border border-slate-300 dark:border-slate-800 text-center text-slate-400 dark:text-slate-500 text-xs">
+              No hay datos para mostrar gráficas. Agrega activos en la pestaña Portafolio.
+            </div>
+          ) : (
+            <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-300 dark:border-slate-800 shadow-sm transition-colors space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">
+                  Distribución de Activos
+                </span>
+              </div>
+
+              {/* Gráfica Donut */}
+              <div className="h-52 flex items-center justify-center">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={port.items}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={55}
+                      outerRadius={85}
+                      paddingAngle={3}
+                      dataKey="valorCOP"
+                      nameKey="label"
+                    >
+                      {port.items.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} stroke="#ffffff" strokeWidth={1.5} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      formatter={(value: any, name: any) => [`${formatCurrency(Number(value), 'COP')}`, `${name}`]}
+                      contentStyle={{
+                        backgroundColor: '#0f172a',
+                        borderColor: '#334155',
+                        borderRadius: '16px',
+                        padding: '10px 14px',
+                        color: '#ffffff',
+                        fontWeight: 'bold',
+                        boxShadow: '0 12px 30px -4px rgba(0, 0, 0, 0.4)'
+                      }}
+                      itemStyle={{ color: '#60a5fa', fontSize: '13px', fontWeight: 'bold' }}
+                      labelStyle={{ color: '#f8fafc', fontSize: '13px', fontWeight: 'bold' }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Lista de Leyenda de Activos */}
+              <div className="space-y-2 pt-1">
+                {port.items.map((item, i) => (
+                  <div
+                    key={item.id || i}
+                    className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 transition-colors flex items-center justify-between gap-3"
+                  >
+                    {/* Lado Izquierdo: Botón de Color + Nombre */}
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <button
+                        type="button"
+                        onClick={() => setColorPickerTarget({ id: item.id, label: item.label, currentColor: item.color })}
+                        title="Click para cambiar color"
+                        className="w-5 h-5 rounded-full shadow-sm ring-2 ring-white dark:ring-slate-800 hover:scale-110 active:scale-95 transition-transform flex-shrink-0 cursor-pointer"
+                        style={{ backgroundColor: item.color }}
+                      />
+                      <span className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                        {item.label}
                       </span>
-                      {isDiff && (
-                        <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 block">
-                          {formatCurrency(equivalentInBase, baseCurrency)}
-                        </span>
-                      )}
                     </div>
 
-                    {isEditingPortfolio ? (
-                      <button
-                        onClick={() => {
-                          setConfirmConfig({
-                            isOpen: true,
-                            title: 'Eliminar Activo',
-                            message: `¿Estás seguro de eliminar "${item.nombre}" del portafolio?`,
-                            confirmText: 'Sí, eliminar',
-                            cancelText: 'Cancelar',
-                            variant: 'danger',
-                            onConfirm: () => deletePortfolioItem(item.id)
-                          });
-                        }}
-                        className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-rose-100 dark:hover:bg-rose-950/50 text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 border border-slate-300/80 dark:border-transparent transition-colors"
-                        title="Eliminar activo"
+                    {/* Lado Derecho: Valor en COP + Porcentaje */}
+                    <div className="flex items-center gap-2.5 flex-shrink-0">
+                      <span className="text-xs font-mono font-bold text-slate-900 dark:text-white">
+                        {formatCurrency(item.valorCOP, 'COP')}
+                      </span>
+                      <span
+                        className="font-bold text-[11px] font-mono px-2 py-0.5 rounded-lg text-white whitespace-nowrap shadow-xs min-w-[46px] text-center"
+                        style={{ backgroundColor: item.color }}
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => openEditModal(item)}
-                        className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-300/80 dark:border-transparent transition-colors"
-                        title="Editar activo y monto"
-                      >
-                        <Edit2 className="w-3.5 h-3.5" />
-                      </button>
-                    )}
+                        {item.percentage.toFixed(1)}%
+                      </span>
+                    </div>
                   </div>
-                </div>
-              );
-            })
-          )}
-        </div>
-      </div>
-
-      {/* Gráfico Donut y Distribución de Activos a ancho completo */}
-      {port.items.length > 0 && (
-        <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-300 dark:border-slate-800 shadow-sm transition-colors space-y-4">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">
-              Distribución de Activos
-            </span>
-          </div>
-
-          {/* Gráfica Donut */}
-          <div className="h-52 flex items-center justify-center">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={port.items}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={55}
-                  outerRadius={85}
-                  paddingAngle={3}
-                  dataKey="valorCOP"
-                  nameKey="label"
-                >
-                  {port.items.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} stroke="#ffffff" strokeWidth={1.5} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  formatter={(value: any, name: any) => [`${formatCurrency(Number(value), 'COP')}`, `${name}`]}
-                  contentStyle={{
-                    backgroundColor: '#0f172a',
-                    borderColor: '#334155',
-                    borderRadius: '16px',
-                    padding: '10px 14px',
-                    color: '#ffffff',
-                    fontWeight: 'bold',
-                    boxShadow: '0 12px 30px -4px rgba(0, 0, 0, 0.4)'
-                  }}
-                  itemStyle={{ color: '#60a5fa', fontSize: '13px', fontWeight: 'bold' }}
-                  labelStyle={{ color: '#f8fafc', fontSize: '13px', fontWeight: 'bold' }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-
-          {/* Lista de Leyenda de Activos a ancho completo */}
-          <div className="space-y-2 pt-1">
-            {port.items.map((item, i) => (
-              <div
-                key={item.id || i}
-                className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 transition-colors flex items-center justify-between gap-3"
-              >
-                {/* Lado Izquierdo: Botón de Color + Nombre */}
-                <div className="flex items-center gap-3 min-w-0 flex-1">
-                  <button
-                    type="button"
-                    onClick={() => setColorPickerTarget({ id: item.id, label: item.label, currentColor: item.color })}
-                    title="Click para cambiar color"
-                    className="w-5 h-5 rounded-full shadow-sm ring-2 ring-white dark:ring-slate-800 hover:scale-110 active:scale-95 transition-transform flex-shrink-0 cursor-pointer"
-                    style={{ backgroundColor: item.color }}
-                  />
-                  <span className="text-xs font-bold text-slate-900 dark:text-white truncate">
-                    {item.label}
-                  </span>
-                </div>
-
-                {/* Lado Derecho: Valor en COP + Porcentaje */}
-                <div className="flex items-center gap-2.5 flex-shrink-0">
-                  <span className="text-xs font-mono font-bold text-slate-900 dark:text-white">
-                    {formatCurrency(item.valorCOP, 'COP')}
-                  </span>
-                  <span
-                    className="font-bold text-[11px] font-mono px-2 py-0.5 rounded-lg text-white whitespace-nowrap shadow-xs min-w-[46px] text-center"
-                    style={{ backgroundColor: item.color }}
-                  >
-                    {item.percentage.toFixed(1)}%
-                  </span>
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -525,17 +547,6 @@ export const PortafolioView: React.FC = () => {
               />
 
               <div className="flex items-center gap-2 pt-3">
-                {editingItemObj && (
-                  <button
-                    type="button"
-                    onClick={handleDeleteFromModal}
-                    className="p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/50 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/50 transition-colors flex items-center justify-center"
-                    title="Eliminar este activo"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                )}
-
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}

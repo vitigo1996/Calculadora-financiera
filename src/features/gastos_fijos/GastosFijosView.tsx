@@ -224,9 +224,9 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
 
       {/* SECCIÓN 1: VIVIENDA */}
       <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
-        <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-          <h3 className="font-bold text-slate-800 dark:text-white text-sm flex items-center gap-2 uppercase tracking-wide">
-            <Home className="w-4 h-4 text-blue-600 dark:text-blue-400" /> VIVIENDA
+        <div className="p-4 bg-slate-100 dark:bg-slate-800/70 border-b border-slate-200 dark:border-slate-700/60 flex items-center justify-between">
+          <h3 className="font-extrabold text-slate-800 dark:text-white text-base flex items-center gap-2.5 uppercase tracking-wide">
+            <Home className="w-5 h-5 text-blue-600 dark:text-blue-400" /> VIVIENDA
           </h3>
 
           {/* Botones de acción: Editar y Agregar (+) */}
@@ -393,9 +393,9 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
 
       {/* SECCIÓN 2: OBLIGACIONES */}
       <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
-        <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-          <h3 className="font-bold text-slate-800 dark:text-white text-sm flex items-center gap-2 uppercase tracking-wide">
-            <Layers className="w-4 h-4 text-blue-600 dark:text-blue-400" /> OBLIGACIONES
+        <div className="p-4 bg-slate-100 dark:bg-slate-800/70 border-b border-slate-200 dark:border-slate-700/60 flex items-center justify-between">
+          <h3 className="font-extrabold text-slate-800 dark:text-white text-base flex items-center gap-2.5 uppercase tracking-wide">
+            <Layers className="w-5 h-5 text-blue-600 dark:text-blue-400" /> OBLIGACIONES
           </h3>
 
           {/* Botones de acción: Editar y Agregar (+) */}
@@ -635,17 +635,6 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
               </div>
 
               <div className="flex items-center gap-2 pt-3">
-                {editingHousingObj && (
-                  <button
-                    type="button"
-                    onClick={handleDeleteHousing}
-                    className="p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/50 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/50 transition-colors flex items-center justify-center"
-                    title="Eliminar este gasto"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                )}
-
                 <button
                   type="button"
                   onClick={() => setShowHousingModal(false)}
@@ -738,17 +727,6 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
               </div>
 
               <div className="flex items-center gap-2 pt-3">
-                {editingObligationObj && (
-                  <button
-                    type="button"
-                    onClick={handleDeleteObligation}
-                    className="p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/50 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/50 transition-colors flex items-center justify-center"
-                    title="Eliminar esta obligación"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                )}
-
                 <button
                   type="button"
                   onClick={() => setShowObligationModal(false)}

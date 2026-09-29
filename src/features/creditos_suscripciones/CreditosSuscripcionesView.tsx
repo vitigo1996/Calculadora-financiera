@@ -6,6 +6,7 @@ import {
   calculateCardPaymentDue
 } from '../../services/financeCalculations';
 import { CreditCardItem, PaymentPeriod } from '../../models/finance';
+import { getIconComponent, IconPickerModal, IconPickerTrigger } from '../../components/ui/IconPicker';
 import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import { AmountCalculatorInput } from '../../components/ui/AmountCalculatorInput';
 import {
@@ -58,6 +59,13 @@ export const CreditosSuscripcionesView: React.FC = () => {
     onConfirm: () => void;
   } | null>(null);
 
+  // Icon Picker Modal State
+  const [iconPickerTarget, setIconPickerTarget] = useState<{
+    targetId?: string;
+    currentIcon: string;
+    title: string;
+  } | null>(null);
+
   // Modal: Add / Edit Credit Card
   const [showCardModal, setShowCardModal] = useState(false);
   const [editingCardObj, setEditingCardObj] = useState<CreditCardItem | null>(null);
@@ -67,9 +75,10 @@ export const CreditosSuscripcionesView: React.FC = () => {
 
   // Modal: Add / Edit Purchase
   const [showAddPurchaseModal, setShowAddPurchaseModal] = useState(false);
-  const [editingPurchase, setEditingPurchase] = useState<{ id: string; concept: string; amount: number; moneda?: 'COP' | 'USD' } | null>(null);
+  const [editingPurchase, setEditingPurchase] = useState<{ id: string; concept: string; amount: number; moneda?: 'COP' | 'USD'; icon?: string } | null>(null);
   const [purchaseConcept, setPurchaseConcept] = useState('');
   const [purchaseAmount, setPurchaseAmount] = useState('');
+  const [purchaseIcon, setPurchaseIcon] = useState('shopping_bag');
 
   // Selected card reference
   const selectedCard = data.creditCards.find(c => c.id === selectedCardId) || data.creditCards[0];
@@ -144,6 +153,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
     setEditingPurchase(null);
     setPurchaseConcept('');
     setPurchaseAmount('');
+    setPurchaseIcon('shopping_bag');
     setShowAddPurchaseModal(true);
   };
 
@@ -158,13 +168,15 @@ export const CreditosSuscripcionesView: React.FC = () => {
       updateCardPurchase(selectedCard.id, editingPurchase.id, {
         concept: purchaseConcept.trim(),
         amount,
-        moneda: editingPurchase.moneda || selectedCard.moneda || 'COP'
+        moneda: editingPurchase.moneda || selectedCard.moneda || 'COP',
+        icon: purchaseIcon
       });
     } else {
       addCardPurchase(selectedCard.id, {
         concept: purchaseConcept.trim(),
         amount,
-        moneda: selectedCard.moneda || 'COP'
+        moneda: selectedCard.moneda || 'COP',
+        icon: purchaseIcon
       });
     }
 
@@ -191,10 +203,10 @@ export const CreditosSuscripcionesView: React.FC = () => {
 
   return (
     <div className="space-y-6 pb-24 animate-fadeIn">
-      {/* Header Principal de Tarjetas Alineado */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-sm font-bold text-slate-800 dark:text-white flex items-center gap-2 uppercase tracking-wide">
-          <CreditCard className="w-4 h-4 text-blue-600 dark:text-blue-400" /> TARJETAS
+      {/* Header Principal de Tarjetas */}
+      <div className="p-4 bg-slate-100 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700/60 rounded-3xl shadow-sm flex items-center justify-between">
+        <h2 className="text-base font-extrabold text-slate-800 dark:text-white flex items-center gap-2.5 uppercase tracking-wide">
+          <CreditCard className="w-5 h-5 text-blue-600 dark:text-blue-400" /> TARJETAS
         </h2>
 
         <div className="flex items-center gap-2">
@@ -204,7 +216,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
               className={`p-2 rounded-xl text-xs font-semibold border transition-all flex items-center justify-center shadow-sm ${
                 isEditingCards
                   ? 'bg-blue-600 text-white border-blue-600'
-                  : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-300/80 dark:border-transparent'
+                  : 'bg-white dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-300/80 dark:border-transparent'
               }`}
               title={isEditingCards ? 'Listo' : 'Editar Tarjetas'}
             >
@@ -377,11 +389,11 @@ export const CreditosSuscripcionesView: React.FC = () => {
         {selectedCard && (
           <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
             {/* Encabezado del Detalle */}
-            <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between flex-wrap gap-2">
+            <div className="p-4 bg-slate-100 dark:bg-slate-800/70 border-b border-slate-200 dark:border-slate-700/60 flex items-center justify-between flex-wrap gap-2">
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-bold text-slate-800 dark:text-white flex items-center gap-2 uppercase tracking-wide">
-                    <CreditCard className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                  <h3 className="text-base font-extrabold text-slate-800 dark:text-white flex items-center gap-2.5 uppercase tracking-wide">
+                    <CreditCard className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                     COMPRAS CON {selectedCard.name.toUpperCase()}
                   </h3>
                 </div>
@@ -391,7 +403,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
                 </p>
               </div>
 
-              {/* Botones de acción: Corte, Limpiar, Editar, Agregar (+) */}
+              {/* Botones de acción: Corte, Editar, Agregar (+) */}
               <div className="flex items-center gap-2 flex-wrap">
                 {/* 1. Corte (Solo icono) */}
                 {selectedCard.billingCutoffAmount !== undefined ? (
@@ -405,50 +417,21 @@ export const CreditosSuscripcionesView: React.FC = () => {
                 ) : (
                   <button
                     onClick={() => handleDoCutoff(selectedCard)}
-                    className="p-2 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300/80 dark:border-transparent transition-all flex items-center justify-center shadow-sm"
+                    className="p-2 rounded-xl text-xs font-semibold bg-white dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300/80 dark:border-transparent transition-all flex items-center justify-center shadow-sm"
                     title="Hacer corte de facturación"
                   >
                     <Scissors className="w-4 h-4" />
                   </button>
                 )}
 
-                {/* 2. Limpiar registro */}
-                {(selectedCard.purchases || []).filter(p => !p.hidden).length > 0 && (
-                  <button
-                    onClick={() => {
-                      setConfirmConfig({
-                        isOpen: true,
-                        title: 'Limpiar Compras de Tarjeta',
-                        message: '¿Estás seguro de limpiar los registros de compras pasadas?',
-                        confirmText: 'Sí, limpiar',
-                        cancelText: 'Cancelar',
-                        variant: 'warning',
-                        onConfirm: () => clearCardPurchasesVisual(selectedCard.id)
-                      });
-                    }}
-                    className="p-2 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300/80 dark:border-transparent transition-all flex items-center justify-center shadow-sm"
-                    title="Limpiar Registro de Compras"
-                  >
-                    <svg className="w-4 h-4 text-slate-700 dark:text-slate-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M12 2v9" />
-                      <path d="M8.5 13.5C8.5 12 9.8 11 12 11s3.5 1 3.5 2.5" />
-                      <path d="M7 13.5h10" />
-                      <path d="M7 13.5c-.5 3-1.8 5.5-2.5 7.5a1 1 0 0 0 1 1h13a1 1 0 0 0 1-1c-.7-2-2-4.5-2.5-7.5" />
-                      <path d="M9.5 17.5 9 22" />
-                      <path d="M12 16.5v5.5" />
-                      <path d="M14.5 17.5 15 22" />
-                    </svg>
-                  </button>
-                )}
-
-                {/* 3. Botón Editar Compras */}
+                {/* 2. Botón Editar Compras */}
                 {(selectedCard.purchases || []).filter(p => !p.hidden).length > 0 && (
                   <button
                     onClick={() => setIsEditingPurchases(!isEditingPurchases)}
                     className={`p-2 rounded-xl text-xs font-semibold border transition-all flex items-center justify-center shadow-sm ${
                       isEditingPurchases
                         ? 'bg-blue-600 text-white border-blue-600'
-                        : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-300/80 dark:border-transparent'
+                        : 'bg-white dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-300/80 dark:border-transparent'
                     }`}
                     title={isEditingPurchases ? 'Listo' : 'Editar Compras'}
                   >
@@ -456,7 +439,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
                   </button>
                 )}
 
-                {/* 4. Agregar Compra (+) */}
+                {/* 3. Agregar Compra (+) */}
                 <button
                   onClick={openAddPurchase}
                   className="p-2 rounded-xl text-xs font-semibold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800/40 hover:bg-blue-200 transition-all flex items-center justify-center shadow-sm"
@@ -479,7 +462,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
               </div>
             )}
 
-            {/* Lista de Compras con diseño grande idéntico a Billetera */}
+            {/* Lista de Compras con diseño idéntico a Billetera con ícono de categoría */}
             <div className="divide-y divide-slate-200 dark:divide-slate-800">
               {(() => {
                 const visiblePurchases = (selectedCard.purchases || []).filter(p => !p.hidden);
@@ -491,6 +474,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
                   );
                 }
                 return visiblePurchases.slice(0, visiblePurchasesCount).map((p, pIdx) => {
+                  const PurchaseIcon = getIconComponent(p.icon || 'shopping_bag');
                   const formattedDate = p.date ? (() => {
                     const d = new Date(p.date);
                     return isNaN(d.getTime())
@@ -533,6 +517,9 @@ export const CreditosSuscripcionesView: React.FC = () => {
                             <GripVertical className="w-4 h-4" />
                           </div>
                         )}
+                        <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/50 shadow-sm flex-shrink-0 mt-0.5">
+                          <PurchaseIcon className="w-5 h-5" />
+                        </div>
                         <div className="min-w-0 flex-1">
                           <h4 className="font-bold text-slate-800 dark:text-white text-sm truncate">{p.concept}</h4>
 
@@ -583,6 +570,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
                               setEditingPurchase(p);
                               setPurchaseConcept(p.concept);
                               setPurchaseAmount(p.amount.toString());
+                              setPurchaseIcon(p.icon || 'shopping_bag');
                               setShowAddPurchaseModal(true);
                             }}
                             className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-300/80 dark:border-transparent transition-colors"
@@ -692,17 +680,6 @@ export const CreditosSuscripcionesView: React.FC = () => {
               </div>
 
               <div className="flex items-center gap-2 pt-3">
-                {editingCardObj && (
-                  <button
-                    type="button"
-                    onClick={handleDeleteCard}
-                    className="p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/50 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/50 transition-colors flex items-center justify-center"
-                    title="Eliminar esta tarjeta"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                )}
-
                 <button
                   type="button"
                   onClick={() => setShowCardModal(false)}
@@ -740,6 +717,18 @@ export const CreditosSuscripcionesView: React.FC = () => {
             </div>
 
             <form onSubmit={handleAddPurchase} className="space-y-4">
+              {/* Selector de Categoría / Ícono */}
+              <IconPickerTrigger
+                selectedIconId={purchaseIcon}
+                label="Categoría / Ícono"
+                onClick={() => {
+                  setIconPickerTarget({
+                    currentIcon: purchaseIcon,
+                    title: 'Seleccionar Categoría de Compra'
+                  });
+                }}
+              />
+
               <div>
                 <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
                   Concepto de la Compra
@@ -784,6 +773,20 @@ export const CreditosSuscripcionesView: React.FC = () => {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Pop-up Modal de Selección de Ícono */}
+      {iconPickerTarget && (
+        <IconPickerModal
+          isOpen={true}
+          onClose={() => setIconPickerTarget(null)}
+          selectedIconId={iconPickerTarget.currentIcon}
+          title={iconPickerTarget.title}
+          onSelectIcon={(newIcon) => {
+            setPurchaseIcon(newIcon);
+            setIconPickerTarget(null);
+          }}
+        />
       )}
 
       {/* Confirmation Modal */}

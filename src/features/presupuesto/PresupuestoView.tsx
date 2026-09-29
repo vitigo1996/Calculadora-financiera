@@ -61,7 +61,7 @@ export const PresupuestoView: React.FC = () => {
   return (
     <div className="space-y-6 pb-2 animate-fadeIn">
       {/* Menú Superior de 3 opciones: Presupuesto | Gastos | Deudas */}
-      <div className="sticky top-0 z-30 bg-slate-50/95 dark:bg-slate-900/95 backdrop-blur-md pt-2 pb-2 -mx-3.5 px-3.5 flex items-center justify-center">
+      <div className="sticky top-0 z-30 bg-slate-50 dark:bg-slate-900 pt-1 pb-2.5 -mx-3.5 px-3.5 flex items-center justify-center border-b border-slate-200/80 dark:border-slate-800/80 shadow-xs">
         <div className="bg-slate-200/80 dark:bg-slate-800 p-1 rounded-2xl flex items-center gap-1 shadow-inner border border-slate-300/80 dark:border-slate-700/60 w-full sm:w-auto">
           <button
             type="button"
@@ -111,7 +111,7 @@ export const PresupuestoView: React.FC = () => {
               {/* 1. Deducciones de ley */}
               <div className="p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/40 flex items-center justify-center font-bold text-xs">
+                  <div className="w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/50 flex items-center justify-center font-bold text-xs shadow-xs">
                     <ShieldCheck className="w-4 h-4" />
                   </div>
                   <span className="font-bold text-slate-900 dark:text-white">Deducciones de ley</span>
@@ -124,7 +124,7 @@ export const PresupuestoView: React.FC = () => {
               {/* 2. Vivienda */}
               <div className="p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/40 flex items-center justify-center font-bold text-xs">
+                  <div className="w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/50 flex items-center justify-center font-bold text-xs shadow-xs">
                     <Home className="w-4 h-4" />
                   </div>
                   <span className="font-bold text-slate-900 dark:text-white">Vivienda</span>
@@ -137,7 +137,7 @@ export const PresupuestoView: React.FC = () => {
               {/* 3. Obligaciones */}
               <div className="p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/40 flex items-center justify-center font-bold text-xs">
+                  <div className="w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/50 flex items-center justify-center font-bold text-xs shadow-xs">
                     <Layers className="w-4 h-4" />
                   </div>
                   <span className="font-bold text-slate-900 dark:text-white">Obligaciones</span>
@@ -150,7 +150,7 @@ export const PresupuestoView: React.FC = () => {
               {/* 4. Tarjetas */}
               <div className="p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/40 flex items-center justify-center font-bold text-xs">
+                  <div className="w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/50 flex items-center justify-center font-bold text-xs shadow-xs">
                     <CreditCard className="w-4 h-4" />
                   </div>
                   <span className="font-bold text-slate-900 dark:text-white">Tarjetas</span>
@@ -162,58 +162,52 @@ export const PresupuestoView: React.FC = () => {
             </div>
           </div>
 
-          {/* Recuadros: Mitad de Mes, Fin de Mes, y Malla 2x1 (Gastos del Mes | Libre) */}
-          <div className="space-y-3">
-            {/* Mitad de Mes (1ª Quincena) */}
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm transition-colors overflow-hidden">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-semibold text-blue-700 dark:text-blue-400">Mitad de Mes</span>
-                <button
-                  type="button"
-                  onClick={() => setFortnightDetail('1st')}
-                  className="p-1 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors"
-                  title="Ver detalle de gastos de mitad de mes"
-                >
-                  <Eye className="w-3.5 h-3.5" />
-                </button>
-              </div>
-              <div className="text-base font-bold text-blue-700 dark:text-blue-400 font-mono tracking-tight">
-                {formatCurrency(pres.m9_mitadDeMes)}
-              </div>
-            </div>
-
-            {/* Fin de Mes (2ª Quincena) */}
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm transition-colors overflow-hidden">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-semibold text-blue-700 dark:text-blue-400">Fin de Mes</span>
-                <button
-                  type="button"
-                  onClick={() => setFortnightDetail('2nd')}
-                  className="p-1 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors"
-                  title="Ver detalle de gastos de fin de mes"
-                >
-                  <Eye className="w-3.5 h-3.5" />
-                </button>
-              </div>
-              <div className="text-base font-bold text-blue-700 dark:text-blue-400 font-mono tracking-tight">
-                {formatCurrency(pres.m10_finDeMes)}
-              </div>
-            </div>
-
-            {/* Malla 2x1: Gastos del Mes (Columna 1) | Libre (Columna 2) */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm transition-colors overflow-hidden">
-                <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">Gastos del mes</span>
-                <div className="text-base font-bold text-slate-900 dark:text-white font-mono tracking-tight">
-                  {formatCurrency(pres.m7_totalGastos)}
+          {/* Malla 2x2: Columna 1 con Gastos Mitad de Mes y Fin de Mes | Columna 2 con Libre ocupando toda la altura */}
+          <div className="grid grid-cols-2 gap-3 items-stretch">
+            {/* Columna 1: Mitad de Mes y Fin de Mes uno encima de otro */}
+            <div className="flex flex-col gap-3">
+              {/* Mitad de Mes */}
+              <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm transition-colors flex flex-col justify-between">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-semibold text-blue-700 dark:text-blue-400">Mitad de Mes</span>
+                  <button
+                    type="button"
+                    onClick={() => setFortnightDetail('1st')}
+                    className="p-1 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors"
+                    title="Ver detalle de gastos de mitad de mes"
+                  >
+                    <Eye className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <div className="text-base font-bold text-blue-700 dark:text-blue-400 font-mono tracking-tight">
+                  {formatCurrency(pres.m9_mitadDeMes)}
                 </div>
               </div>
 
-              <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm transition-colors overflow-hidden">
-                <span className="text-xs font-bold text-slate-900 dark:text-white block mb-1">Libre</span>
-                <div className="text-base font-black text-slate-900 dark:text-white font-mono tracking-tight">
-                  {formatCurrency(pres.m11_disponible)}
+              {/* Fin de Mes */}
+              <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm transition-colors flex flex-col justify-between">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-semibold text-blue-700 dark:text-blue-400">Fin de Mes</span>
+                  <button
+                    type="button"
+                    onClick={() => setFortnightDetail('2nd')}
+                    className="p-1 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors"
+                    title="Ver detalle de gastos de fin de mes"
+                  >
+                    <Eye className="w-3.5 h-3.5" />
+                  </button>
                 </div>
+                <div className="text-base font-bold text-blue-700 dark:text-blue-400 font-mono tracking-tight">
+                  {formatCurrency(pres.m10_finDeMes)}
+                </div>
+              </div>
+            </div>
+
+            {/* Columna 2: Libre (del tamaño de los dos recuadros juntos) */}
+            <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm transition-colors flex flex-col justify-center items-center text-center">
+              <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">Libre</span>
+              <div className="text-xl font-black text-slate-900 dark:text-white font-mono tracking-tight">
+                {formatCurrency(pres.m11_disponible)}
               </div>
             </div>
           </div>

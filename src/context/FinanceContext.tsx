@@ -34,7 +34,7 @@ interface FinanceContextType {
   deleteBilleteraItem: (id: string) => void;
   moveBilleteraItem: (index: number, direction: 'up' | 'down') => void;
   reorderBilleteraItems: (fromIndex: number, toIndex: number) => void;
-  addExpenseMovement: (movement: { type?: 'expense' | 'income' | 'transfer'; name: string; amount: number; moneda: 'COP' | 'USD'; sourceAccountId: string; destinationType?: 'none' | 'card' | 'obligation' | 'account' | 'deuda' | 'portfolio'; destinationId?: string; destinationName?: string }) => void;
+  addExpenseMovement: (movement: { type?: 'expense' | 'income' | 'transfer'; name: string; amount: number; moneda: 'COP' | 'USD'; sourceAccountId: string; destinationType?: 'none' | 'card' | 'obligation' | 'account' | 'deuda' | 'portfolio'; destinationId?: string; destinationName?: string; icon?: string }) => void;
   deleteExpenseMovement: (id: string) => void;
   clearExpenseMovements: () => void;
   addDeudaItem: (item: { nombre: string; monto?: number; moneda: 'COP' | 'USD'; tipo: 'por_cobrar' | 'por_pagar'; icon?: string }) => void;
@@ -57,8 +57,8 @@ interface FinanceContextType {
   cancelCardCutoff: (cardId: string) => void;
   clearCardPurchases: (cardId: string) => void;
   clearCardPurchasesVisual: (cardId: string) => void;
-  addCardPurchase: (cardId: string, purchase: { concept: string; amount: number; moneda?: 'COP' | 'USD' }) => void;
-  updateCardPurchase: (cardId: string, purchaseId: string, updated: { concept: string; amount: number; moneda?: 'COP' | 'USD' }) => void;
+  addCardPurchase: (cardId: string, purchase: { concept: string; amount: number; moneda?: 'COP' | 'USD'; icon?: string }) => void;
+  updateCardPurchase: (cardId: string, purchaseId: string, updated: { concept: string; amount: number; moneda?: 'COP' | 'USD'; icon?: string }) => void;
   cancelCardPurchase: (cardId: string, purchaseId: string) => void;
   deleteCardPurchaseRecord: (cardId: string, purchaseId: string) => void;
   deleteCardPurchase: (cardId: string, purchaseId: string) => void;
@@ -220,6 +220,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     destinationType?: 'none' | 'card' | 'obligation' | 'account' | 'deuda' | 'portfolio';
     destinationId?: string;
     destinationName?: string;
+    icon?: string;
   }) => {
     setData(prev => {
       const type = movement.type || 'expense';
@@ -276,6 +277,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         name: movement.name.trim(),
         amount: movement.amount,
         moneda: movement.moneda || sourceMoneda,
+        icon: movement.icon,
         sourceAccountId: movement.sourceAccountId,
         sourceAccountName,
         destinationType: isIncome
@@ -651,7 +653,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   // Add Card Purchase (inserted at TOP)
-  const addCardPurchase = (cardId: string, purchase: { concept: string; amount: number; moneda?: 'COP' | 'USD' }) => {
+  const addCardPurchase = (cardId: string, purchase: { concept: string; amount: number; moneda?: 'COP' | 'USD'; icon?: string }) => {
     const targetCard = data.creditCards.find(c => c.id === cardId);
     const hasActiveCutoff = targetCard?.billingCutoffAmount !== undefined;
 
@@ -660,6 +662,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       ...purchase,
       moneda: purchase.moneda || targetCard?.moneda || 'COP',
       date: new Date().toISOString(),
+      icon: purchase.icon,
       isAfterCutoff: hasActiveCutoff
     };
 
@@ -675,7 +678,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const updateCardPurchase = (
     cardId: string,
     purchaseId: string,
-    updated: { concept: string; amount: number; moneda?: 'COP' | 'USD' }
+    updated: { concept: string; amount: number; moneda?: 'COP' | 'USD'; icon?: string }
   ) => {
     setData(prev => ({
       ...prev,
@@ -684,7 +687,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
           const oldPurchase = (c.purchases || []).find(p => p.id === purchaseId);
           const updatedPurchases = (c.purchases || []).map(p =>
             p.id === purchaseId
-              ? { ...p, concept: updated.concept.trim(), amount: updated.amount, moneda: updated.moneda || p.moneda }
+              ? { ...p, concept: updated.concept.trim(), amount: updated.amount, moneda: updated.moneda || p.moneda, icon: updated.icon !== undefined ? updated.icon : p.icon }
               : p
           );
           let newCutoff = c.billingCutoffAmount;

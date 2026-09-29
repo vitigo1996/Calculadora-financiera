@@ -223,9 +223,9 @@ export const DeudasView: React.FC = () => {
     <div className="space-y-6 animate-fadeIn">
       {/* SECCIÓN 1: DEUDAS */}
       <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
-        <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-          <h3 className="font-bold text-slate-800 dark:text-white text-sm flex items-center gap-2 uppercase tracking-wide">
-            <ArrowLeftRight className="w-4 h-4 text-blue-600 dark:text-blue-400" /> DEUDAS
+        <div className="p-4 bg-slate-100 dark:bg-slate-800/70 border-b border-slate-200 dark:border-slate-700/60 flex items-center justify-between">
+          <h3 className="font-extrabold text-slate-800 dark:text-white text-base flex items-center gap-2.5 uppercase tracking-wide">
+            <ArrowLeftRight className="w-5 h-5 text-blue-600 dark:text-blue-400" /> DEUDAS
           </h3>
 
           {/* Botones de acción: Editar y Agregar (+) */}
@@ -359,9 +359,9 @@ export const DeudasView: React.FC = () => {
 
       {/* SECCIÓN 2: SUSCRIPCIONES */}
       <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
-        <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-          <h3 className="font-bold text-slate-800 dark:text-white text-sm flex items-center gap-2 uppercase tracking-wide">
-            <Calendar className="w-4 h-4 text-blue-600 dark:text-blue-400" /> SUSCRIPCIONES
+        <div className="p-4 bg-slate-100 dark:bg-slate-800/70 border-b border-slate-200 dark:border-slate-700/60 flex items-center justify-between">
+          <h3 className="font-extrabold text-slate-800 dark:text-white text-base flex items-center gap-2.5 uppercase tracking-wide">
+            <Calendar className="w-5 h-5 text-blue-600 dark:text-blue-400" /> SUSCRIPCIONES
           </h3>
 
           {/* Botones de acción: Editar y Agregar (+) */}
@@ -552,17 +552,6 @@ export const DeudasView: React.FC = () => {
               />
 
               <div className="flex items-center gap-2 pt-3">
-                {editingDeudaObj && (
-                  <button
-                    type="button"
-                    onClick={handleDeleteDeudaFromModal}
-                    className="p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/50 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/50 transition-colors flex items-center justify-center"
-                    title="Eliminar esta deuda"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                )}
-
                 <button
                   type="button"
                   onClick={() => setShowAddDeudaModal(false)}
@@ -671,17 +660,6 @@ export const DeudasView: React.FC = () => {
               </div>
 
               <div className="flex items-center gap-2 pt-3">
-                {editingSubObj && (
-                  <button
-                    type="button"
-                    onClick={handleDeleteSub}
-                    className="p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/50 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/50 transition-colors flex items-center justify-center"
-                    title="Eliminar esta suscripción"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                )}
-
                 <button
                   type="button"
                   onClick={() => setShowSubModal(false)}
