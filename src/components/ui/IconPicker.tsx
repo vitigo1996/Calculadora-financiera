@@ -2,37 +2,45 @@ import React from 'react';
 import {
   Wallet,
   Building2,
-  Coins,
-  TrendingUp,
-  PiggyBank,
   CreditCard,
-  Landmark,
-  CircleDollarSign,
-  DollarSign,
   Banknote,
-  Vault,
+  PiggyBank,
+  TrendingUp,
   LineChart,
-  CandlestickChart,
-  Briefcase,
-  Globe,
   Bitcoin,
-  Gem,
-  Sparkles,
-  Layers,
   ShieldCheck,
-  ShoppingBag,
   ShoppingCart,
+  Utensils,
   Coffee,
-  Car,
+  Pizza,
+  Wine,
   Home,
+  Zap,
+  Droplet,
+  Wifi,
+  Hammer,
+  Car,
+  Fuel,
+  Bus,
   Plane,
-  Receipt,
+  Navigation,
+  PartyPopper,
+  Gamepad2,
+  Film,
+  Tv,
+  Music,
+  Ticket,
+  ShoppingBag,
+  Dumbbell,
+  HeartPulse,
+  Sparkles,
+  Gift,
+  GraduationCap,
+  PawPrint,
   ShieldAlert,
-  FileText,
-  AlertCircle,
   Scale,
-  Smartphone,
-  Key,
+  AlertCircle,
+  Briefcase,
   X,
   ChevronRight
 } from 'lucide-react';
@@ -50,72 +58,91 @@ export interface IconCategory {
 
 export const ICON_CATEGORIES: IconCategory[] = [
   {
-    title: 'Bancos & Cuentas',
+    title: 'Finanzas & Dinero',
     items: [
       { id: 'wallet', label: 'Billetera', icon: Wallet },
       { id: 'building', label: 'Banco', icon: Building2 },
-      { id: 'smartphone', label: 'Neobanco', icon: Smartphone },
-      { id: 'landmark', label: 'Institución', icon: Landmark },
-      { id: 'vault', label: 'Bóveda', icon: Vault },
       { id: 'credit_card', label: 'Tarjeta', icon: CreditCard },
-    ]
-  },
-  {
-    title: 'Inversiones & Trading',
-    items: [
-      { id: 'trending_up', label: 'ETF / Renta', icon: TrendingUp },
-      { id: 'line_chart', label: 'Acciones', icon: LineChart },
-      { id: 'candlestick', label: 'Trading', icon: CandlestickChart },
-      { id: 'briefcase', label: 'Portafolio', icon: Briefcase },
-      { id: 'globe', label: 'Global', icon: Globe },
-      { id: 'gem', label: 'Patrimonio', icon: Gem },
-    ]
-  },
-  {
-    title: 'Cripto & Divisas',
-    items: [
-      { id: 'coins', label: 'Monedas / USDt', icon: Coins },
-      { id: 'bitcoin', label: 'Cripto', icon: Bitcoin },
-      { id: 'dollar_sign', label: 'Dólares', icon: DollarSign },
-      { id: 'circle_dollar', label: 'Divisas', icon: CircleDollarSign },
-      { id: 'sparkles', label: 'Digital', icon: Sparkles },
-      { id: 'layers', label: 'Fondos', icon: Layers },
-    ]
-  },
-  {
-    title: 'Efectivo & Ahorro',
-    items: [
       { id: 'banknote', label: 'Efectivo', icon: Banknote },
-      { id: 'piggy_bank', label: 'Alcancía', icon: PiggyBank },
+      { id: 'ahorro', label: 'Ahorro', icon: PiggyBank },
+      { id: 'inversion', label: 'Inversión', icon: TrendingUp },
+      { id: 'etf', label: 'ETF', icon: LineChart },
+      { id: 'bitcoin', label: 'Cripto', icon: Bitcoin },
       { id: 'shield_check', label: 'Emergencia', icon: ShieldCheck },
-      { id: 'key', label: 'Seguridad', icon: Key },
     ]
   },
   {
-    title: 'Bienes & Hogar',
+    title: 'Alimentación & Salidas',
+    items: [
+      { id: 'shopping_cart', label: 'Mercado', icon: ShoppingCart },
+      { id: 'utensils', label: 'Restaurante', icon: Utensils },
+      { id: 'coffee', label: 'Café & Snacks', icon: Coffee },
+      { id: 'pizza', label: 'Comida Rápida', icon: Pizza },
+      { id: 'wine', label: 'Bar & Licores', icon: Wine },
+    ]
+  },
+  {
+    title: 'Hogar & Servicios',
+    items: [
+      { id: 'home', label: 'Vivienda', icon: Home },
+      { id: 'zap', label: 'Energía / Luz', icon: Zap },
+      { id: 'droplet', label: 'Agua', icon: Droplet },
+      { id: 'wifi', label: 'Internet', icon: Wifi },
+      { id: 'hammer', label: 'Mantenimiento', icon: Hammer },
+    ]
+  },
+  {
+    title: 'Transporte & Viajes',
     items: [
       { id: 'car', label: 'Vehículo', icon: Car },
-      { id: 'home', label: 'Vivienda', icon: Home },
+      { id: 'fuel', label: 'Gasolina', icon: Fuel },
+      { id: 'bus', label: 'Transporte', icon: Bus },
+      { id: 'navigation', label: 'Taxi / Apps', icon: Navigation },
       { id: 'plane', label: 'Viajes', icon: Plane },
-      { id: 'shopping_bag', label: 'Compras', icon: ShoppingBag },
-      { id: 'shopping_cart', label: 'Mercado', icon: ShoppingCart },
-      { id: 'coffee', label: 'Gastos', icon: Coffee },
     ]
   },
   {
-    title: 'Deudas & Obligaciones',
+    title: 'Entretenimiento & Ocio',
+    items: [
+      { id: 'diversion', label: 'Diversión', icon: PartyPopper },
+      { id: 'juegos', label: 'Juegos', icon: Gamepad2 },
+      { id: 'film', label: 'Cine & Streaming', icon: Film },
+      { id: 'tv', label: 'Suscripciones', icon: Tv },
+      { id: 'music', label: 'Música', icon: Music },
+      { id: 'ticket', label: 'Eventos', icon: Ticket },
+    ]
+  },
+  {
+    title: 'Estilo de Vida & Bienestar',
+    items: [
+      { id: 'shopping_bag', label: 'Compras & Ropa', icon: ShoppingBag },
+      { id: 'regalo', label: 'Regalo', icon: Gift },
+      { id: 'dumbbell', label: 'Gimnasio / Deporte', icon: Dumbbell },
+      { id: 'heart_pulse', label: 'Salud', icon: HeartPulse },
+      { id: 'sparkles', label: 'Cuidado Personal', icon: Sparkles },
+      { id: 'graduation_cap', label: 'Educación', icon: GraduationCap },
+      { id: 'paw_print', label: 'Mascotas', icon: PawPrint },
+    ]
+  },
+  {
+    title: 'Obligaciones & Deudas',
     items: [
       { id: 'shield_alert', label: 'Deuda', icon: ShieldAlert },
-      { id: 'file_text', label: 'Factura', icon: FileText },
-      { id: 'receipt', label: 'Recibo', icon: Receipt },
       { id: 'scale', label: 'Impuestos', icon: Scale },
-      { id: 'alert_circle', label: 'Multa', icon: AlertCircle },
+      { id: 'alert_circle', label: 'Multas / Otros', icon: AlertCircle },
+      { id: 'briefcase', label: 'Trabajo / Nómina', icon: Briefcase },
     ]
   }
 ];
 
 export function getIconComponent(iconId?: string): React.ComponentType<{ className?: string }> {
   if (!iconId) return Wallet;
+  // Compatibility map for old ids if present
+  if (iconId === 'piggy_bank') return PiggyBank;
+  if (iconId === 'line_chart' || iconId === 'candlestick') return TrendingUp;
+  if (iconId === 'coins' || iconId === 'circle_dollar' || iconId === 'dollar_sign') return Banknote;
+  if (iconId === 'file_text' || iconId === 'receipt') return ShieldAlert;
+
   for (const cat of ICON_CATEGORIES) {
     const found = cat.items.find(i => i.id === iconId);
     if (found) return found.icon;
@@ -139,10 +166,10 @@ interface IconPickerProps {
 
 export const IconPicker: React.FC<IconPickerProps> = ({ selectedIconId = 'wallet', onSelectIcon }) => {
   return (
-    <div className="space-y-3 max-h-[60vh] overflow-y-auto p-1 pr-2">
+    <div className="space-y-4 max-h-[60vh] overflow-y-auto p-1 pr-2 scrollbar-thin">
       {ICON_CATEGORIES.map((cat, idx) => (
-        <div key={idx} className="space-y-1.5">
-          <h5 className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 sticky top-0 bg-white/95 dark:bg-slate-900/95 py-1 z-10 backdrop-blur-sm">
+        <div key={idx} className="space-y-2">
+          <h5 className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400 sticky top-0 bg-white/95 dark:bg-slate-900/95 py-1 z-10 backdrop-blur-sm">
             {cat.title}
           </h5>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -160,7 +187,7 @@ export const IconPicker: React.FC<IconPickerProps> = ({ selectedIconId = 'wallet
                       : 'bg-slate-50 dark:bg-slate-950/80 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 hover:border-blue-400 hover:bg-blue-50/50 dark:hover:bg-slate-800'
                   }`}
                 >
-                  <div className={`p-1.5 rounded-xl ${isSelected ? 'bg-white/20' : 'bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800'}`}>
+                  <div className={`p-1.5 rounded-xl ${isSelected ? 'bg-white/20 text-white' : 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 border border-slate-200/80 dark:border-slate-800'}`}>
                     <Icon className="w-4 h-4 flex-shrink-0" />
                   </div>
                   <span className="text-xs font-semibold truncate">{item.label}</span>
@@ -187,7 +214,7 @@ export const IconPickerModal: React.FC<IconPickerModalProps> = ({
   onClose,
   selectedIconId = 'wallet',
   onSelectIcon,
-  title = 'Seleccionar Ícono'
+  title = 'Seleccionar Categoría'
 }) => {
   if (!isOpen) return null;
 
@@ -248,15 +275,12 @@ export const IconPickerTrigger: React.FC<IconPickerTriggerProps> = ({
         className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 hover:border-blue-500 rounded-2xl p-2.5 flex items-center justify-between transition-all group"
       >
         <div className="flex items-center gap-2.5">
-          <div className="p-2 rounded-xl bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/50 shadow-sm group-hover:scale-105 transition-transform">
+          <div className="p-1.5 rounded-xl bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800/50">
             <IconComponent className="w-4 h-4" />
           </div>
-          <div className="text-left">
-            <span className="text-xs font-bold text-slate-800 dark:text-white block">{iconLabel}</span>
-            <span className="text-[10px] text-slate-500 dark:text-slate-400">Toca para cambiar ícono</span>
-          </div>
+          <span className="text-xs font-semibold text-slate-800 dark:text-white">{iconLabel}</span>
         </div>
-        <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all" />
+        <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-blue-500 transition-colors" />
       </button>
     </div>
   );

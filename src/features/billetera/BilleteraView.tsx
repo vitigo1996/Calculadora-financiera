@@ -438,34 +438,6 @@ export const BilleteraView: React.FC = () => {
               <div className="flex items-center gap-2">
                 {movements.length > 0 && (
                   <button
-                    onClick={() => {
-                      setConfirmConfig({
-                        isOpen: true,
-                        title: 'Limpiar Registro',
-                        message: '¿Estás seguro de limpiar todo el registro de movimientos?',
-                        confirmText: 'Sí, limpiar',
-                        cancelText: 'Cancelar',
-                        variant: 'warning',
-                        onConfirm: () => clearExpenseMovements()
-                      });
-                    }}
-                    className="p-2 rounded-xl text-xs font-semibold bg-white dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300/80 dark:border-transparent transition-all flex items-center justify-center shadow-sm"
-                    title="Limpiar Registro"
-                  >
-                    <svg className="w-4 h-4 text-slate-700 dark:text-slate-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M12 2v9" />
-                      <path d="M8.5 13.5C8.5 12 9.8 11 12 11s3.5 1 3.5 2.5" />
-                      <path d="M7 13.5h10" />
-                      <path d="M7 13.5c-.5 3-1.8 5.5-2.5 7.5a1 1 0 0 0 1 1h13a1 1 0 0 0 1-1c-.7-2-2-4.5-2.5-7.5" />
-                      <path d="M9.5 17.5 9 22" />
-                      <path d="M12 16.5v5.5" />
-                      <path d="M14.5 17.5 15 22" />
-                    </svg>
-                  </button>
-                )}
-
-                {movements.length > 0 && (
-                  <button
                     onClick={() => setIsEditingMovements(!isEditingMovements)}
                     className={`p-2 rounded-xl text-xs font-semibold border transition-all flex items-center justify-center shadow-sm ${
                       isEditingMovements
