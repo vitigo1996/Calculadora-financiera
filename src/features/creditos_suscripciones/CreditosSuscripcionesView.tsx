@@ -334,10 +334,10 @@ export const CreditosSuscripcionesView: React.FC = () => {
               </div>
               <div>
                 <h3 className="text-base font-extrabold text-slate-800 dark:text-white uppercase tracking-wide">
-                  COMPRAS CON {selectedCard.name.toUpperCase()}
+                  {selectedCard.name.toUpperCase()}
                 </h3>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
-                  {selectedCard.period === '1st_fortnight' ? 'Pago en 1ª Quincena' : 'Pago en 2ª Quincena'}
+                  {selectedCard.period === '1st_fortnight' ? 'Pagar en 1ª Quincena' : 'Pagar en 2ª Quincena'}
                 </p>
               </div>
             </div>

@@ -8,7 +8,8 @@ import { AmountCalculatorInput } from '../../components/ui/AmountCalculatorInput
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import {
   Briefcase,
-  BarChart3,
+  PieChart as PieChartIcon,
+  Wallet,
   Edit2,
   Plus,
   Trash2,
@@ -44,8 +45,8 @@ export const PortafolioView: React.FC = () => {
     reorderPortfolioItems
   } = useFinance();
 
-  // Submenu tab state
-  const [activeSubTab, setActiveSubTab] = useState<'portafolio' | 'graficas'>('portafolio');
+  // Submenu tab state: 'portafolio' | 'distribucion'
+  const [activeSubTab, setActiveSubTab] = useState<'portafolio' | 'distribucion'>('portafolio');
 
   // Edit states
   const [isEditingPortfolio, setIsEditingPortfolio] = useState(false);
@@ -145,9 +146,16 @@ export const PortafolioView: React.FC = () => {
     }
   };
 
+  // Cálculo para la gráfica de barras de Disponible (Billeteras)
+  const billeteraList = data.billeteraItems || [];
+  const totalDisponibleCOP = billeteraList.reduce(
+    (sum, b) => sum + convertToBase(b.saldo || 0, b.moneda || 'COP', 'COP', dolarRate),
+    0
+  );
+
   return (
-    <div className="space-y-4 pb-2 animate-fadeIn">
-      {/* Submenú Superior Fijo (Sticky) */}
+    <div className="space-y-6 pb-2 animate-fadeIn">
+      {/* Submenú Superior Fijo (Sticky) idéntico a Presupuesto y Billetera */}
       <div className="sticky top-0 z-30 bg-slate-50 dark:bg-slate-900 pt-1 pb-2.5 -mx-3.5 px-3.5 flex items-center justify-center border-b border-slate-200/80 dark:border-slate-800/80 shadow-xs">
         <div className="bg-slate-200/80 dark:bg-slate-800 p-1 rounded-2xl flex items-center gap-1 shadow-inner border border-slate-300/80 dark:border-slate-700/60 w-full sm:w-auto">
           <button
@@ -163,21 +171,21 @@ export const PortafolioView: React.FC = () => {
           </button>
           <button
             type="button"
-            onClick={() => setActiveSubTab('graficas')}
+            onClick={() => setActiveSubTab('distribucion')}
             className={`flex-1 sm:px-8 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
-              activeSubTab === 'graficas'
+              activeSubTab === 'distribucion'
                 ? 'bg-blue-600 text-white shadow-sm'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
-            <BarChart3 className="w-4 h-4" /> Gráficas
+            <PieChartIcon className="w-4 h-4" /> Distribución
           </button>
         </div>
       </div>
 
-      {/* Pestaña: Portafolio */}
+      {/* Pestaña 1: Portafolio */}
       {activeSubTab === 'portafolio' && (
-        <div className="space-y-4 animate-fadeIn">
+        <div className="space-y-6 animate-fadeIn">
           {/* Recuadro Portafolio */}
           <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
             <div className="p-4 bg-slate-100 dark:bg-slate-800/70 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
@@ -318,18 +326,84 @@ export const PortafolioView: React.FC = () => {
         </div>
       )}
 
-      {/* Pestaña: Gráficas (Donut y Distribución de Activos) */}
-      {activeSubTab === 'graficas' && (
-        <div className="space-y-4 animate-fadeIn">
+      {/* Pestaña 2: Distribución (Gráfica de Barras Disponible + Gráfica de Anillo Activos) */}
+      {activeSubTab === 'distribucion' && (
+        <div className="space-y-6 animate-fadeIn">
+          {/* 1. Gráfica de Barras Horizontales: DISPONIBLE (Billeteras) */}
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-300 dark:border-slate-800 shadow-sm transition-colors space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+              <span className="text-xs font-extrabold uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
+                <Wallet className="w-4 h-4 text-blue-600 dark:text-blue-400" /> Disponible
+              </span>
+              <span className="text-xs font-mono font-bold text-slate-800 dark:text-white">
+                Total: {formatCurrency(totalDisponibleCOP, 'COP')}
+              </span>
+            </div>
+
+            {billeteraList.length === 0 ? (
+              <div className="p-6 text-center text-slate-400 dark:text-slate-500 text-xs">
+                No tienes cuentas de billetera registradas.
+              </div>
+            ) : (
+              <div className="space-y-4 pt-1">
+                {billeteraList.map((item, idx) => {
+                  const valCOP = convertToBase(item.saldo || 0, item.moneda || 'COP', 'COP', dolarRate);
+                  const percentage = totalDisponibleCOP > 0 ? (valCOP / totalDisponibleCOP) * 100 : 0;
+                  const barColor = PRESET_COLORS_4X4[idx % PRESET_COLORS_4X4.length];
+
+                  return (
+                    <div key={item.id} className="space-y-1.5">
+                      {/* Fila Superior: Nombre y Porcentaje */}
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="font-bold text-slate-800 dark:text-white truncate max-w-[70%]">
+                          {item.nombre}
+                        </span>
+                        <span
+                          className="font-bold text-[11px] font-mono px-2 py-0.5 rounded-lg text-white whitespace-nowrap shadow-xs min-w-[46px] text-center"
+                          style={{ backgroundColor: barColor }}
+                        >
+                          {percentage.toFixed(1)}%
+                        </span>
+                      </div>
+
+                      {/* Barra Horizontal Proporcional */}
+                      <div className="h-3.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden p-0.5">
+                        <div
+                          className="h-full rounded-full transition-all duration-500 shadow-xs"
+                          style={{
+                            width: `${Math.max(percentage, 2)}%`,
+                            backgroundColor: barColor
+                          }}
+                        />
+                      </div>
+
+                      {/* Texto pequeño debajo de la barra horizontal con el valor */}
+                      <div className="flex justify-between items-center text-[11px] text-slate-500 dark:text-slate-400 font-mono">
+                        <span>{formatCurrency(item.saldo, item.moneda || 'COP')}</span>
+                        {item.moneda === 'USD' && (
+                          <span className="text-[10px]">≈ {formatCurrency(valCOP, 'COP')}</span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* 2. Gráfica de Anillo: ACTIVOS (Portafolio) */}
           {port.items.length === 0 ? (
             <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 border border-slate-300 dark:border-slate-800 text-center text-slate-400 dark:text-slate-500 text-xs">
-              No hay datos para mostrar gráficas. Agrega activos en la pestaña Portafolio.
+              No hay datos para mostrar activos. Agrega activos en la pestaña Portafolio.
             </div>
           ) : (
             <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-300 dark:border-slate-800 shadow-sm transition-colors space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">
-                  Distribución de Activos
+              <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+                <span className="text-xs font-extrabold uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
+                  <PieChartIcon className="w-4 h-4 text-blue-600 dark:text-blue-400" /> Activos
+                </span>
+                <span className="text-xs font-mono font-bold text-slate-800 dark:text-white">
+                  Total: {formatCurrency(port.totalPortafolio, 'COP')}
                 </span>
               </div>
 

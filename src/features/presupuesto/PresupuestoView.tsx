@@ -110,10 +110,8 @@ export const PresupuestoView: React.FC = () => {
             <div className="divide-y divide-slate-200 dark:divide-slate-800 text-sm">
               {/* 1. Deducciones de ley */}
               <div className="p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/50 flex items-center justify-center font-bold text-xs shadow-xs">
-                    <ShieldCheck className="w-4 h-4" />
-                  </div>
+                <div className="flex items-center gap-2.5">
+                  <ShieldCheck className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0" />
                   <span className="font-bold text-slate-900 dark:text-white">Deducciones de ley</span>
                 </div>
                 <span className="font-bold text-blue-700 dark:text-blue-400 font-mono">
@@ -123,10 +121,8 @@ export const PresupuestoView: React.FC = () => {
 
               {/* 2. Vivienda */}
               <div className="p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/50 flex items-center justify-center font-bold text-xs shadow-xs">
-                    <Home className="w-4 h-4" />
-                  </div>
+                <div className="flex items-center gap-2.5">
+                  <Home className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0" />
                   <span className="font-bold text-slate-900 dark:text-white">Vivienda</span>
                 </div>
                 <span className="font-bold text-blue-700 dark:text-blue-400 font-mono">
@@ -136,10 +132,8 @@ export const PresupuestoView: React.FC = () => {
 
               {/* 3. Obligaciones */}
               <div className="p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/50 flex items-center justify-center font-bold text-xs shadow-xs">
-                    <Layers className="w-4 h-4" />
-                  </div>
+                <div className="flex items-center gap-2.5">
+                  <Layers className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0" />
                   <span className="font-bold text-slate-900 dark:text-white">Obligaciones</span>
                 </div>
                 <span className="font-bold text-blue-700 dark:text-blue-400 font-mono">
@@ -149,10 +143,8 @@ export const PresupuestoView: React.FC = () => {
 
               {/* 4. Tarjetas */}
               <div className="p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/50 flex items-center justify-center font-bold text-xs shadow-xs">
-                    <CreditCard className="w-4 h-4" />
-                  </div>
+                <div className="flex items-center gap-2.5">
+                  <CreditCard className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0" />
                   <span className="font-bold text-slate-900 dark:text-white">Tarjetas</span>
                 </div>
                 <span className="font-bold text-blue-700 dark:text-blue-400 font-mono">
