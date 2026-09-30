@@ -35,7 +35,9 @@ interface FinanceContextType {
   moveBilleteraItem: (index: number, direction: 'up' | 'down') => void;
   reorderBilleteraItems: (fromIndex: number, toIndex: number) => void;
   addExpenseMovement: (movement: { type?: 'expense' | 'income' | 'transfer'; name: string; amount: number; moneda: 'COP' | 'USD'; sourceAccountId: string; destinationType?: 'none' | 'card' | 'obligation' | 'account' | 'deuda' | 'portfolio'; destinationId?: string; destinationName?: string; icon?: string }) => void;
+  updateExpenseMovement: (id: string, updated: Partial<ExpenseMovement>) => void;
   deleteExpenseMovement: (id: string) => void;
+  reorderExpenseMovements: (fromIndex: number, toIndex: number) => void;
   clearExpenseMovements: () => void;
   addDeudaItem: (item: { nombre: string; monto?: number; moneda: 'COP' | 'USD'; tipo: 'por_cobrar' | 'por_pagar'; icon?: string }) => void;
   updateDeudaItem: (id: string, updated: Partial<DeudaItem>) => void;
@@ -420,11 +422,33 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     });
   };
 
+  const updateExpenseMovement = (id: string, updated: Partial<ExpenseMovement>) => {
+    setData(prev => ({
+      ...prev,
+      expenseMovements: (prev.expenseMovements || []).map(m =>
+        m.id === id ? { ...m, ...updated } : m
+      )
+    }));
+  };
+
   const deleteExpenseMovement = (id: string) => {
     setData(prev => ({
       ...prev,
       expenseMovements: (prev.expenseMovements || []).filter(m => m.id !== id)
     }));
+  };
+
+  const reorderExpenseMovements = (fromIndex: number, toIndex: number) => {
+    setData(prev => {
+      const list = [...(prev.expenseMovements || [])];
+      if (fromIndex < 0 || fromIndex >= list.length || toIndex < 0 || toIndex >= list.length) return prev;
+      const [moved] = list.splice(fromIndex, 1);
+      list.splice(toIndex, 0, moved);
+      return {
+        ...prev,
+        expenseMovements: list
+      };
+    });
   };
 
   const clearExpenseMovements = () => {
@@ -1057,7 +1081,9 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         moveBilleteraItem,
         reorderBilleteraItems,
         addExpenseMovement,
+        updateExpenseMovement,
         deleteExpenseMovement,
+        reorderExpenseMovements,
         clearExpenseMovements,
         addDeudaItem,
         updateDeudaItem,

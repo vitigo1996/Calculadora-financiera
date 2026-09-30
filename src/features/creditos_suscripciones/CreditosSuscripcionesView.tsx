@@ -6,19 +6,19 @@ import {
   calculateCardPaymentDue
 } from '../../services/financeCalculations';
 import { CreditCardItem, PaymentPeriod } from '../../models/finance';
-import { getIconComponent, IconPickerModal, IconPickerTrigger } from '../../components/ui/IconPicker';
+import { getIconComponent, IconPickerModal } from '../../components/ui/IconPicker';
 import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import { AmountCalculatorInput } from '../../components/ui/AmountCalculatorInput';
 import {
   CreditCard,
-  Plus,
   Edit2,
+  Plus,
   Trash2,
   X,
   Scissors,
   RotateCcw,
-  Calendar,
   Check,
+  Calendar,
   GripVertical
 } from 'lucide-react';
 
@@ -28,24 +28,21 @@ export const CreditosSuscripcionesView: React.FC = () => {
     addCreditCard,
     updateCreditCard,
     deleteCreditCard,
-    reorderCreditCards,
     performCardCutoff,
     cancelCardCutoff,
-    clearCardPurchases,
-    clearCardPurchasesVisual,
     addCardPurchase,
     updateCardPurchase,
-    cancelCardPurchase,
     deleteCardPurchaseRecord,
-    deleteCardPurchase,
     moveCardPurchase
   } = useFinance();
 
+  // Selection & Edit mode
   const [selectedCardId, setSelectedCardId] = useState<string>(data.creditCards[0]?.id || '');
   const [isEditingCards, setIsEditingCards] = useState(false);
   const [isEditingPurchases, setIsEditingPurchases] = useState(false);
-  const [draggedCardIdx, setDraggedCardIdx] = useState<number | null>(null);
   const [draggedPurchaseIdx, setDraggedPurchaseIdx] = useState<number | null>(null);
+
+  // Pagination for purchases (10 records at a time)
   const [visiblePurchasesCount, setVisiblePurchasesCount] = useState(10);
 
   // Confirmation modal state
@@ -73,12 +70,10 @@ export const CreditosSuscripcionesView: React.FC = () => {
   const [cardLimit, setCardLimit] = useState('');
   const [cardPeriod, setCardPeriod] = useState<PaymentPeriod>('1st_fortnight');
 
-  // Modal: Add / Edit Purchase
+  // Modal: Add Purchase
   const [showAddPurchaseModal, setShowAddPurchaseModal] = useState(false);
-  const [editingPurchase, setEditingPurchase] = useState<{ id: string; concept: string; amount: number; moneda?: 'COP' | 'USD'; icon?: string } | null>(null);
   const [purchaseConcept, setPurchaseConcept] = useState('');
   const [purchaseAmount, setPurchaseAmount] = useState('');
-  const [purchaseIcon, setPurchaseIcon] = useState('shopping_bag');
 
   // Selected card reference
   const selectedCard = data.creditCards.find(c => c.id === selectedCardId) || data.creditCards[0];
@@ -126,61 +121,27 @@ export const CreditosSuscripcionesView: React.FC = () => {
     setEditingCardObj(null);
   };
 
-  // Delete Card
-  const handleDeleteCard = () => {
-    if (!editingCardObj) return;
-    setConfirmConfig({
-      isOpen: true,
-      title: 'Eliminar Tarjeta',
-      message: `¿Estás seguro de eliminar la tarjeta "${editingCardObj.name}"?`,
-      confirmText: 'Sí, eliminar',
-      cancelText: 'Cancelar',
-      variant: 'danger',
-      onConfirm: () => {
-        deleteCreditCard(editingCardObj.id);
-        if (selectedCardId === editingCardObj.id) {
-          const remaining = data.creditCards.filter(c => c.id !== editingCardObj.id);
-          setSelectedCardId(remaining[0]?.id || '');
-        }
-        setShowCardModal(false);
-        setEditingCardObj(null);
-      }
-    });
-  };
-
   // Open Add Purchase Modal
   const openAddPurchase = () => {
-    setEditingPurchase(null);
     setPurchaseConcept('');
     setPurchaseAmount('');
-    setPurchaseIcon('shopping_bag');
     setShowAddPurchaseModal(true);
   };
 
-  // Save Purchase (Add or Edit)
+  // Save Purchase (Add)
   const handleAddPurchase = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedCard || !purchaseConcept.trim()) return;
     const amount = parseFloat(purchaseAmount) || 0;
     if (amount <= 0) return;
 
-    if (editingPurchase) {
-      updateCardPurchase(selectedCard.id, editingPurchase.id, {
-        concept: purchaseConcept.trim(),
-        amount,
-        moneda: editingPurchase.moneda || selectedCard.moneda || 'COP',
-        icon: purchaseIcon
-      });
-    } else {
-      addCardPurchase(selectedCard.id, {
-        concept: purchaseConcept.trim(),
-        amount,
-        moneda: selectedCard.moneda || 'COP',
-        icon: purchaseIcon
-      });
-    }
+    addCardPurchase(selectedCard.id, {
+      concept: purchaseConcept.trim(),
+      amount,
+      moneda: selectedCard.moneda || 'COP',
+      icon: 'shopping_bag'
+    });
 
-    setEditingPurchase(null);
     setPurchaseConcept('');
     setPurchaseAmount('');
     setShowAddPurchaseModal(false);
@@ -203,410 +164,384 @@ export const CreditosSuscripcionesView: React.FC = () => {
 
   return (
     <div className="space-y-6 pb-24 animate-fadeIn">
-      {/* Header Principal de Tarjetas */}
-      <div className="p-4 bg-slate-100 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700/60 rounded-3xl shadow-sm flex items-center justify-between">
-        <h2 className="text-base font-extrabold text-slate-800 dark:text-white flex items-center gap-2.5 uppercase tracking-wide">
-          <CreditCard className="w-5 h-5 text-blue-600 dark:text-blue-400" /> TARJETAS
-        </h2>
+      {/* SECCIÓN 1: TARJETAS */}
+      <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
+        <div className="p-4 bg-slate-100 dark:bg-slate-800/70 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/50 flex items-center justify-center shadow-xs flex-shrink-0">
+              <CreditCard className="w-4 h-4" />
+            </div>
+            <span className="font-extrabold text-slate-800 dark:text-white text-base tracking-wide uppercase">
+              TARJETAS
+            </span>
+          </div>
 
-        <div className="flex items-center gap-2">
-          {data.creditCards.length > 0 && (
+          <div className="flex items-center gap-2">
+            {data.creditCards.length > 0 && (
+              <button
+                onClick={() => setIsEditingCards(!isEditingCards)}
+                className={`p-2 rounded-xl text-xs font-semibold border transition-all flex items-center justify-center shadow-sm ${
+                  isEditingCards
+                    ? 'bg-blue-600 text-white border-blue-600'
+                    : 'bg-white dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-300/80 dark:border-transparent'
+                }`}
+                title={isEditingCards ? 'Listo' : 'Editar Tarjetas'}
+              >
+                {isEditingCards ? <Check className="w-4 h-4" /> : <Edit2 className="w-4 h-4" />}
+              </button>
+            )}
+
             <button
-              onClick={() => setIsEditingCards(!isEditingCards)}
-              className={`p-2 rounded-xl text-xs font-semibold border transition-all flex items-center justify-center shadow-sm ${
-                isEditingCards
-                  ? 'bg-blue-600 text-white border-blue-600'
-                  : 'bg-white dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-300/80 dark:border-transparent'
-              }`}
-              title={isEditingCards ? 'Listo' : 'Editar Tarjetas'}
+              onClick={openCreateCard}
+              className="p-2 rounded-xl text-xs font-semibold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800/40 hover:bg-blue-200 transition-all flex items-center justify-center shadow-sm"
+              title="Agregar Tarjeta"
             >
-              {isEditingCards ? <Check className="w-4 h-4" /> : <Edit2 className="w-4 h-4" />}
+              <Plus className="w-4 h-4" />
             </button>
-          )}
+          </div>
+        </div>
 
-          <button
-            onClick={openCreateCard}
-            className="p-2 rounded-xl text-xs font-semibold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800/40 hover:bg-blue-200 transition-all flex items-center justify-center shadow-sm"
-            title="Agregar Tarjeta"
-          >
-            <Plus className="w-4 h-4" />
-          </button>
+        {/* Carrusel / Lista Horizontal de Tarjetas */}
+        <div className="p-4">
+          {data.creditCards.length === 0 ? (
+            <div className="p-6 text-center text-slate-400 dark:text-slate-500 text-xs">
+              No tienes tarjetas agregadas. Haz clic en <strong>+</strong> para registrar una.
+            </div>
+          ) : (
+            <div className="flex items-stretch gap-4 overflow-x-auto pb-2 pt-1 scrollbar-thin snap-x">
+              {data.creditCards.map((cc) => {
+                const isSelected = (selectedCard?.id === cc.id);
+                const totalDeuda = calculateCardPurchasesTotal(cc);
+                const pagoDelMes = calculateCardPaymentDue(cc);
+                const cupoDisponible = cc.creditLimit - totalDeuda;
+                const hasCutoff = cc.billingCutoffAmount !== undefined;
+
+                return (
+                  <div
+                    key={cc.id}
+                    onClick={() => setSelectedCardId(cc.id)}
+                    className={`flex-shrink-0 w-72 rounded-3xl p-5 cursor-pointer transition-all border snap-start flex flex-col justify-between ${
+                      isSelected
+                        ? 'bg-slate-900 dark:bg-slate-950 border-blue-600 shadow-xl ring-2 ring-blue-500/20 text-white'
+                        : 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
+                    }`}
+                  >
+                    <div>
+                      {/* Cabecera Tarjeta: Nombre + Icono / Acciones */}
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <CreditCard className={`w-5 h-5 flex-shrink-0 ${isSelected ? 'text-blue-400' : 'text-slate-400'}`} />
+                          <h3 className={`font-bold text-base truncate ${isSelected ? 'text-white' : 'text-slate-800 dark:text-white'}`}>
+                            {cc.name}
+                          </h3>
+                        </div>
+
+                        {/* Botones de acción cuando se editan tarjetas */}
+                        {isEditingCards && (
+                          <div className="flex items-center gap-1.5 flex-shrink-0" onClick={e => e.stopPropagation()}>
+                            <button
+                              onClick={() => openEditCard(cc)}
+                              className="p-1.5 rounded-lg bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors"
+                              title="Editar cupo y nombre"
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                setConfirmConfig({
+                                  isOpen: true,
+                                  title: 'Eliminar Tarjeta',
+                                  message: `¿Estás seguro de eliminar la tarjeta "${cc.name}"?`,
+                                  confirmText: 'Sí, eliminar',
+                                  cancelText: 'Cancelar',
+                                  variant: 'danger',
+                                  onConfirm: () => {
+                                    deleteCreditCard(cc.id);
+                                    if (selectedCardId === cc.id) {
+                                      const remaining = data.creditCards.filter(c => c.id !== cc.id);
+                                      setSelectedCardId(remaining[0]?.id || '');
+                                    }
+                                  }
+                                });
+                              }}
+                              className="p-1.5 rounded-lg bg-rose-100 dark:bg-rose-950/60 hover:bg-rose-200 text-rose-600 dark:text-rose-400 transition-colors"
+                              title="Eliminar tarjeta"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Métricas Principales */}
+                      <div className="space-y-3">
+                        {/* Pago del Mes */}
+                        <div>
+                          <span className={`text-[11px] block font-semibold ${isSelected ? 'text-slate-300' : 'text-slate-500 dark:text-slate-400'}`}>
+                            Pago del Mes ({cc.period === '1st_fortnight' ? '1ª Q' : '2ª Q'})
+                          </span>
+                          <span className={`text-xl font-mono font-bold block ${isSelected ? 'text-white' : 'text-slate-900 dark:text-white'}`}>
+                            {formatCurrency(pagoDelMes)}
+                          </span>
+                        </div>
+
+                        {/* Deuda Total y Cupo */}
+                        <div className="grid grid-cols-2 gap-2 text-[11px]">
+                          <div className={`p-2.5 rounded-xl border ${isSelected ? 'bg-slate-800/60 border-slate-700' : 'bg-slate-100/70 dark:bg-slate-950/40 border-slate-200 dark:border-slate-800/60'}`}>
+                            <span className="text-slate-400 block text-[10px]">Deuda Total</span>
+                            <span className={`font-mono font-bold block ${isSelected ? 'text-slate-200' : 'text-slate-700 dark:text-slate-200'}`}>
+                              {formatCurrency(totalDeuda)}
+                            </span>
+                          </div>
+
+                          <div className={`p-2.5 rounded-xl border ${isSelected ? 'bg-slate-800/60 border-slate-700' : 'bg-slate-100/70 dark:bg-slate-950/40 border-slate-200 dark:border-slate-800/60'}`}>
+                            <span className="text-slate-400 block text-[10px]">Cupo Disp.</span>
+                            <span className="font-mono font-bold text-emerald-500 block">
+                              {formatCurrency(cupoDisponible)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Footer de Tarjeta con Badge de Corte */}
+                    <div className={`pt-3 mt-3 border-t flex items-center justify-between text-[10px] ${isSelected ? 'border-slate-800 text-slate-400' : 'border-slate-200 dark:border-slate-800 text-slate-400'}`}>
+                      <span className="font-medium">
+                        Cupo: {formatCurrency(cc.creditLimit)}
+                      </span>
+                      {hasCutoff && (
+                        <span className="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300 font-semibold border border-amber-300/60 dark:border-amber-800/40 flex items-center gap-1">
+                          <Scissors className="w-2.5 h-2.5" /> Corte Activo
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* SECCIÓN TARJETAS DE CRÉDITO: Diseño Horizontal Desplazable */}
-      <div className="space-y-4">
-        {data.creditCards.length === 0 ? (
-          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 p-8 text-center text-slate-400 dark:text-slate-500 text-xs">
-            No tienes tarjetas agregadas. Haz clic en <strong>+</strong> para registrar una.
-          </div>
-        ) : (
-          <div className="flex items-stretch gap-4 overflow-x-auto pb-3 pt-1 scrollbar-thin snap-x">
-            {data.creditCards.map((cc, idx) => {
-              const isSelected = (selectedCard?.id === cc.id);
-              const totalDeuda = calculateCardPurchasesTotal(cc);
-              const pagoDelMes = calculateCardPaymentDue(cc);
-              const cupoDisponible = cc.creditLimit - totalDeuda;
-              const hasCutoff = cc.billingCutoffAmount !== undefined;
-
-              return (
-                <div
-                  key={cc.id}
-                  draggable={isEditingCards}
-                  onDragStart={(e) => {
-                    setDraggedCardIdx(idx);
-                    e.dataTransfer.effectAllowed = 'move';
-                  }}
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    e.dataTransfer.dropEffect = 'move';
-                  }}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    if (draggedCardIdx !== null && draggedCardIdx !== idx) {
-                      reorderCreditCards(draggedCardIdx, idx);
-                    }
-                    setDraggedCardIdx(null);
-                  }}
-                  onDragEnd={() => setDraggedCardIdx(null)}
-                  onClick={() => {
-                    if (selectedCardId !== cc.id) {
-                      setSelectedCardId(cc.id);
-                      setVisiblePurchasesCount(10);
-                    }
-                  }}
-                  className={`w-[290px] sm:w-[320px] flex-shrink-0 snap-start p-5 rounded-3xl border transition-all cursor-pointer relative overflow-hidden flex flex-col justify-between ${
-                    isSelected
-                      ? 'bg-white dark:bg-slate-900 border-blue-500 shadow-md ring-2 ring-blue-500/20'
-                      : 'bg-white/80 dark:bg-slate-900/80 border-slate-300 dark:border-slate-800 shadow-sm'
-                  } ${isEditingCards ? 'cursor-move select-none' : ''}`}
-                >
-                  <div>
-                    {/* Header de la Tarjeta */}
-                    <div className="flex items-center justify-between gap-2 mb-3">
-                      <div className="flex items-center gap-2 min-w-0">
-                        {isEditingCards && (
-                          <div className="text-slate-400 dark:text-slate-500 cursor-grab active:cursor-grabbing p-1 flex-shrink-0">
-                            <GripVertical className="w-4 h-4" />
-                          </div>
-                        )}
-                        <div className="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-200 dark:border-blue-800/50 flex-shrink-0">
-                          <CreditCard className="w-4 h-4" />
-                        </div>
-                        <h3 className="font-bold text-slate-800 dark:text-white text-sm truncate">
-                          {cc.name}
-                        </h3>
-                      </div>
-
-                      <div className="flex items-center gap-1">
-                        {isEditingCards ? (
-                          <button
-                            onClick={e => {
-                              e.stopPropagation();
-                              setConfirmConfig({
-                                isOpen: true,
-                                title: 'Eliminar Tarjeta',
-                                message: `¿Estás seguro de eliminar la tarjeta "${cc.name}"?`,
-                                confirmText: 'Sí, eliminar',
-                                cancelText: 'Cancelar',
-                                variant: 'danger',
-                                onConfirm: () => {
-                                  deleteCreditCard(cc.id);
-                                  if (selectedCardId === cc.id) {
-                                    const remaining = data.creditCards.filter(c => c.id !== cc.id);
-                                    setSelectedCardId(remaining[0]?.id || '');
-                                  }
-                                }
-                              });
-                            }}
-                            className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-rose-100 dark:hover:bg-rose-950/50 text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 border border-slate-300/80 dark:border-transparent transition-colors"
-                            title="Eliminar tarjeta"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </button>
-                        ) : (
-                          <button
-                            onClick={e => {
-                              e.stopPropagation();
-                              openEditCard(cc);
-                            }}
-                            className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors"
-                            title="Editar tarjeta"
-                          >
-                            <Edit2 className="w-3 h-3" />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Métricas Principales */}
-                    <div className="space-y-2 text-xs">
-                      {/* Pago del Mes */}
-                      <div className="p-3 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80 rounded-2xl flex items-center justify-between">
-                        <span className="text-slate-500 dark:text-slate-400 font-medium">Pago del Mes</span>
-                        <span className="font-mono font-bold text-sm text-blue-600 dark:text-blue-400">
-                          {formatCurrency(pagoDelMes)}
-                        </span>
-                      </div>
-
-                      {/* Deuda Total y Cupo */}
-                      <div className="grid grid-cols-2 gap-2 text-[11px]">
-                        <div className="p-2.5 bg-slate-50/70 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800/60 rounded-xl">
-                          <span className="text-slate-400 block text-[10px]">Deuda Total</span>
-                          <span className="font-mono font-bold text-slate-700 dark:text-slate-200 block">
-                            {formatCurrency(totalDeuda)}
-                          </span>
-                        </div>
-
-                        <div className="p-2.5 bg-slate-50/70 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800/60 rounded-xl">
-                          <span className="text-slate-400 block text-[10px]">Cupo Disp.</span>
-                          <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400 block">
-                            {formatCurrency(cupoDisponible)}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Footer de Tarjeta con Badge de Corte */}
-                  <div className="pt-3 mt-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-[10px]">
-                    <span className="text-slate-400 font-medium">
-                      Cupo: {formatCurrency(cc.creditLimit)}
-                    </span>
-                    {hasCutoff && (
-                      <span className="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300 font-semibold border border-amber-300/60 dark:border-amber-800/40 flex items-center gap-1">
-                        <Scissors className="w-2.5 h-2.5" /> Corte Activo
-                      </span>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* DETALLE Y COMPRAS DE LA TARJETA SELECCIONADA */}
-        {selectedCard && (
-          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
-            {/* Encabezado del Detalle */}
-            <div className="p-4 bg-slate-100 dark:bg-slate-800/70 border-b border-slate-200 dark:border-slate-700/60 flex items-center justify-between flex-wrap gap-2">
+      {/* SECCIÓN 2: DETALLE Y COMPRAS DE LA TARJETA SELECCIONADA */}
+      {selectedCard && (
+        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
+          {/* Encabezado del Detalle */}
+          <div className="p-4 bg-slate-100 dark:bg-slate-800/70 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/50 flex items-center justify-center shadow-xs flex-shrink-0">
+                <CreditCard className="w-4 h-4" />
+              </div>
               <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="text-base font-extrabold text-slate-800 dark:text-white flex items-center gap-2.5 uppercase tracking-wide">
-                    <CreditCard className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                    COMPRAS CON {selectedCard.name.toUpperCase()}
-                  </h3>
-                </div>
-
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                <h3 className="text-base font-extrabold text-slate-800 dark:text-white uppercase tracking-wide">
+                  COMPRAS CON {selectedCard.name.toUpperCase()}
+                </h3>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
                   {selectedCard.period === '1st_fortnight' ? 'Pago en 1ª Quincena' : 'Pago en 2ª Quincena'}
                 </p>
               </div>
+            </div>
 
-              {/* Botones de acción: Corte, Editar, Agregar (+) */}
-              <div className="flex items-center gap-2 flex-wrap">
-                {/* 1. Corte (Solo icono) */}
-                {selectedCard.billingCutoffAmount !== undefined ? (
-                  <button
-                    onClick={() => cancelCardCutoff(selectedCard.id)}
-                    className="p-2 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-400 text-white transition-all flex items-center justify-center shadow-sm"
-                    title="Deshacer corte"
-                  >
-                    <RotateCcw className="w-4 h-4" />
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => handleDoCutoff(selectedCard)}
-                    className="p-2 rounded-xl text-xs font-semibold bg-white dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300/80 dark:border-transparent transition-all flex items-center justify-center shadow-sm"
-                    title="Hacer corte de facturación"
-                  >
-                    <Scissors className="w-4 h-4" />
-                  </button>
-                )}
-
-                {/* 2. Botón Editar Compras */}
-                {(selectedCard.purchases || []).filter(p => !p.hidden).length > 0 && (
-                  <button
-                    onClick={() => setIsEditingPurchases(!isEditingPurchases)}
-                    className={`p-2 rounded-xl text-xs font-semibold border transition-all flex items-center justify-center shadow-sm ${
-                      isEditingPurchases
-                        ? 'bg-blue-600 text-white border-blue-600'
-                        : 'bg-white dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-300/80 dark:border-transparent'
-                    }`}
-                    title={isEditingPurchases ? 'Listo' : 'Editar Compras'}
-                  >
-                    {isEditingPurchases ? <Check className="w-4 h-4" /> : <Edit2 className="w-4 h-4" />}
-                  </button>
-                )}
-
-                {/* 3. Agregar Compra (+) */}
+            {/* Botones de acción: Corte, Editar, Agregar (+) */}
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* 1. Corte */}
+              {selectedCard.billingCutoffAmount !== undefined ? (
                 <button
-                  onClick={openAddPurchase}
-                  className="p-2 rounded-xl text-xs font-semibold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800/40 hover:bg-blue-200 transition-all flex items-center justify-center shadow-sm"
-                  title="Agregar Compra"
+                  onClick={() => cancelCardCutoff(selectedCard.id)}
+                  className="p-2 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-400 text-white transition-all flex items-center justify-center shadow-sm"
+                  title="Deshacer corte"
                 >
-                  <Plus className="w-4 h-4" />
+                  <RotateCcw className="w-4 h-4" />
                 </button>
+              ) : (
+                <button
+                  onClick={() => handleDoCutoff(selectedCard)}
+                  className="p-2 rounded-xl text-xs font-semibold bg-white dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300/80 dark:border-transparent transition-all flex items-center justify-center shadow-sm"
+                  title="Hacer corte de facturación"
+                >
+                  <Scissors className="w-4 h-4" />
+                </button>
+              )}
+
+              {/* 2. Botón Editar Compras */}
+              {(selectedCard.purchases || []).filter(p => !p.hidden).length > 0 && (
+                <button
+                  onClick={() => setIsEditingPurchases(!isEditingPurchases)}
+                  className={`p-2 rounded-xl text-xs font-semibold border transition-all flex items-center justify-center shadow-sm ${
+                    isEditingPurchases
+                      ? 'bg-blue-600 text-white border-blue-600'
+                      : 'bg-white dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-300/80 dark:border-transparent'
+                  }`}
+                  title={isEditingPurchases ? 'Listo' : 'Editar Compras'}
+                >
+                  {isEditingPurchases ? <Check className="w-4 h-4" /> : <Edit2 className="w-4 h-4" />}
+                </button>
+              )}
+
+              {/* 3. Agregar Compra (+) */}
+              <button
+                onClick={openAddPurchase}
+                className="p-2 rounded-xl text-xs font-semibold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800/40 hover:bg-blue-200 transition-all flex items-center justify-center shadow-sm"
+                title="Agregar Compra"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* Aviso de Corte Activo */}
+          {selectedCard.billingCutoffAmount !== undefined && (
+            <div className="mx-5 my-4 p-3.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/40 rounded-2xl flex items-center justify-between text-xs text-amber-800 dark:text-amber-300">
+              <div className="flex items-center gap-2">
+                <Scissors className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                <span>
+                  Corte de facturación con valor de: <strong>{formatCurrency(selectedCard.billingCutoffAmount)}</strong>
+                </span>
               </div>
             </div>
+          )}
 
-            {/* Aviso de Corte Activo */}
-            {selectedCard.billingCutoffAmount !== undefined && (
-              <div className="mx-5 my-4 p-3.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/40 rounded-2xl flex items-center justify-between text-xs text-amber-800 dark:text-amber-300">
-                <div className="flex items-center gap-2">
-                  <Scissors className="w-4 h-4 text-amber-600 flex-shrink-0" />
-                  <span>
-                    Corte de facturación con valor de: <strong>{formatCurrency(selectedCard.billingCutoffAmount)}</strong>
-                  </span>
-                </div>
-              </div>
-            )}
-
-            {/* Lista de Compras con diseño idéntico a Billetera con ícono de categoría */}
-            <div className="divide-y divide-slate-200 dark:divide-slate-800">
-              {(() => {
-                const visiblePurchases = (selectedCard.purchases || []).filter(p => !p.hidden);
-                if (visiblePurchases.length === 0) {
-                  return (
-                    <div className="p-8 text-center text-slate-400 dark:text-slate-500 text-xs">
-                      No hay compras visibles registradas. Haz clic en <strong>+</strong> para añadir una.
-                    </div>
-                  );
-                }
-                return visiblePurchases.slice(0, visiblePurchasesCount).map((p, pIdx) => {
-                  const PurchaseIcon = getIconComponent(p.icon || 'shopping_bag');
-                  const formattedDate = p.date ? (() => {
-                    const d = new Date(p.date);
-                    return isNaN(d.getTime())
-                      ? p.date
-                      : d.toLocaleDateString('es-CO', {
-                          day: '2-digit',
-                          month: 'short',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        });
-                  })() : '';
-
-                  return (
-                    <div
-                      key={p.id}
-                      draggable={isEditingPurchases}
-                      onDragStart={(e) => {
-                        setDraggedPurchaseIdx(pIdx);
-                        e.dataTransfer.effectAllowed = 'move';
-                      }}
-                      onDragOver={(e) => {
-                        e.preventDefault();
-                        e.dataTransfer.dropEffect = 'move';
-                      }}
-                      onDrop={(e) => {
-                        e.preventDefault();
-                        if (draggedPurchaseIdx !== null && draggedPurchaseIdx !== pIdx) {
-                          moveCardPurchase(selectedCard.id, draggedPurchaseIdx, pIdx);
-                        }
-                        setDraggedPurchaseIdx(null);
-                      }}
-                      onDragEnd={() => setDraggedPurchaseIdx(null)}
-                      className={`p-4 transition-colors flex items-center justify-between gap-3 bg-white dark:bg-slate-900 ${
-                        isEditingPurchases ? 'cursor-move select-none' : ''
-                      }`}
-                    >
-                      <div className="flex items-start gap-3 min-w-0 flex-1">
-                        {isEditingPurchases && (
-                          <div className="text-slate-400 dark:text-slate-500 cursor-grab active:cursor-grabbing p-1 flex-shrink-0 mt-0.5">
-                            <GripVertical className="w-4 h-4" />
-                          </div>
-                        )}
-                        <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/50 shadow-sm flex-shrink-0 mt-0.5">
-                          <PurchaseIcon className="w-5 h-5" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <h4 className="font-bold text-slate-800 dark:text-white text-sm truncate">{p.concept}</h4>
-
-                          {/* Metadatos en Columna Vertical: Fecha y Hora */}
-                          <div className="flex flex-col gap-0.5 mt-1 text-[11px] text-slate-500 dark:text-slate-400 leading-tight">
-                            {formattedDate && (
-                              <span className="inline-flex items-center gap-1 text-slate-400 dark:text-slate-500 font-medium">
-                                <Calendar className="w-3 h-3 flex-shrink-0" /> {formattedDate}
-                              </span>
-                            )}
-                            {p.isAfterCutoff && (
-                              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
-                                <Scissors className="w-3 h-3 flex-shrink-0" /> Compra Post-Corte
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <div className="text-right">
-                          <span className="font-mono font-bold text-sm text-slate-800 dark:text-white block">
-                            {formatCurrency(p.amount)}
-                          </span>
-                        </div>
-
-                        {isEditingPurchases ? (
-                          <button
-                            onClick={() => {
-                              setConfirmConfig({
-                                isOpen: true,
-                                title: 'Eliminar Registro',
-                                message: '¿Estás seguro de eliminar este registro?',
-                                confirmText: 'Sí, eliminar',
-                                cancelText: 'Cancelar',
-                                variant: 'danger',
-                                onConfirm: () => deleteCardPurchaseRecord(selectedCard.id, p.id)
-                              });
-                            }}
-                            className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-rose-100 dark:hover:bg-rose-950/50 text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 border border-slate-300/80 dark:border-transparent transition-colors"
-                            title="Eliminar registro"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => {
-                              setEditingPurchase(p);
-                              setPurchaseConcept(p.concept);
-                              setPurchaseAmount(p.amount.toString());
-                              setPurchaseIcon(p.icon || 'shopping_bag');
-                              setShowAddPurchaseModal(true);
-                            }}
-                            className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-300/80 dark:border-transparent transition-colors"
-                            title="Editar compra"
-                          >
-                            <Edit2 className="w-3.5 h-3.5" />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  );
-                });
-              })()}
-            </div>
-
-            {/* Botón Cargar Más Compras */}
+          {/* Lista de Compras con ícono de categoría interactivo */}
+          <div className="divide-y divide-slate-200 dark:divide-slate-800">
             {(() => {
               const visiblePurchases = (selectedCard.purchases || []).filter(p => !p.hidden);
-              if (visiblePurchases.length > visiblePurchasesCount) {
+              if (visiblePurchases.length === 0) {
                 return (
-                  <div className="p-3 bg-slate-50 dark:bg-slate-950/40 border-t border-slate-200 dark:border-slate-800 text-center">
-                    <button
-                      type="button"
-                      onClick={() => setVisiblePurchasesCount(prev => prev + 10)}
-                      className="px-4 py-2 rounded-xl text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900/60 border border-blue-200 dark:border-blue-800/50 transition-all shadow-sm inline-flex items-center gap-1.5"
-                    >
-                      Mostrar más
-                    </button>
+                  <div className="p-8 text-center text-slate-400 dark:text-slate-500 text-xs">
+                    No hay compras visibles registradas. Haz clic en <strong>+</strong> para añadir una.
                   </div>
                 );
               }
-              return null;
+              return visiblePurchases.slice(0, visiblePurchasesCount).map((p, pIdx) => {
+                const PurchaseIcon = getIconComponent(p.icon || 'shopping_bag');
+                const formattedDate = p.date ? (() => {
+                  const d = new Date(p.date);
+                  return isNaN(d.getTime())
+                    ? p.date
+                    : d.toLocaleDateString('es-CO', {
+                        day: '2-digit',
+                        month: 'short',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      });
+                })() : '';
+
+                return (
+                  <div
+                    key={p.id}
+                    draggable={isEditingPurchases}
+                    onDragStart={(e) => {
+                      setDraggedPurchaseIdx(pIdx);
+                      e.dataTransfer.effectAllowed = 'move';
+                    }}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      e.dataTransfer.dropEffect = 'move';
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      if (draggedPurchaseIdx !== null && draggedPurchaseIdx !== pIdx) {
+                        moveCardPurchase(selectedCard.id, draggedPurchaseIdx, pIdx);
+                      }
+                      setDraggedPurchaseIdx(null);
+                    }}
+                    onDragEnd={() => setDraggedPurchaseIdx(null)}
+                    className={`p-4 transition-colors flex items-center justify-between gap-3 bg-white dark:bg-slate-900 ${
+                      isEditingPurchases ? 'cursor-move select-none' : ''
+                    }`}
+                  >
+                    <div className="flex items-start gap-3 min-w-0 flex-1">
+                      {isEditingPurchases && (
+                        <div className="text-slate-400 dark:text-slate-500 cursor-grab active:cursor-grabbing p-1 flex-shrink-0 mt-0.5">
+                          <GripVertical className="w-4 h-4" />
+                        </div>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() => setIconPickerTarget({
+                          targetId: p.id,
+                          currentIcon: p.icon || 'shopping_bag',
+                          title: 'Cambiar Categoría'
+                        })}
+                        title="Click para cambiar categoría"
+                        className="w-10 h-10 rounded-2xl flex items-center justify-center bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/50 shadow-sm flex-shrink-0 mt-0.5 hover:scale-105 active:scale-95 transition-transform cursor-pointer"
+                      >
+                        <PurchaseIcon className="w-5 h-5" />
+                      </button>
+
+                      <div className="min-w-0 flex-1">
+                        <h4 className="font-bold text-slate-800 dark:text-white text-sm truncate">{p.concept}</h4>
+
+                        {/* Metadatos: Fecha y Hora */}
+                        <div className="flex flex-col gap-0.5 mt-1 text-[11px] text-slate-500 dark:text-slate-400 leading-tight">
+                          {formattedDate && (
+                            <span className="inline-flex items-center gap-1 text-slate-400 dark:text-slate-500 font-medium">
+                              <Calendar className="w-3 h-3 flex-shrink-0" /> {formattedDate}
+                            </span>
+                          )}
+                          {p.isAfterCutoff && (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
+                              <Scissors className="w-3 h-3 flex-shrink-0" /> Compra Post-Corte
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <div className="text-right">
+                        <span className="font-mono font-bold text-sm text-slate-800 dark:text-white block">
+                          {formatCurrency(p.amount)}
+                        </span>
+                      </div>
+
+                      {isEditingPurchases && (
+                        <button
+                          onClick={() => {
+                            setConfirmConfig({
+                              isOpen: true,
+                              title: 'Eliminar Registro',
+                              message: '¿Estás seguro de eliminar este registro?',
+                              confirmText: 'Sí, eliminar',
+                              cancelText: 'Cancelar',
+                              variant: 'danger',
+                              onConfirm: () => deleteCardPurchaseRecord(selectedCard.id, p.id)
+                            });
+                          }}
+                          className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-rose-100 dark:hover:bg-rose-950/50 text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 border border-slate-300/80 dark:border-transparent transition-colors"
+                          title="Eliminar registro"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              });
             })()}
           </div>
-        )}
-      </div>
+
+          {/* Botón Cargar Más Compras */}
+          {(() => {
+            const visiblePurchases = (selectedCard.purchases || []).filter(p => !p.hidden);
+            if (visiblePurchases.length > visiblePurchasesCount) {
+              return (
+                <div className="p-3 bg-slate-50 dark:bg-slate-950/40 border-t border-slate-200 dark:border-slate-800 text-center">
+                  <button
+                    type="button"
+                    onClick={() => setVisiblePurchasesCount(prev => prev + 10)}
+                    className="px-4 py-2 rounded-xl text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900/60 border border-blue-200 dark:border-blue-800/50 transition-all shadow-sm inline-flex items-center gap-1.5"
+                  >
+                    Mostrar más
+                  </button>
+                </div>
+              );
+            }
+            return null;
+          })()}
+        </div>
+      )}
 
       {/* Modal: Crear / Editar Tarjeta */}
       {showCardModal && (
@@ -706,7 +641,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
           <div className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl animate-scaleUp max-h-[90vh] overflow-y-auto my-auto">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold text-slate-800 dark:text-white">
-                {editingPurchase ? 'Editar Compra' : `Nueva Compra en ${selectedCard?.name || 'Tarjeta'}`}
+                {`Nueva Compra en ${selectedCard?.name || 'Tarjeta'}`}
               </h3>
               <button
                 onClick={() => setShowAddPurchaseModal(false)}
@@ -717,18 +652,6 @@ export const CreditosSuscripcionesView: React.FC = () => {
             </div>
 
             <form onSubmit={handleAddPurchase} className="space-y-4">
-              {/* Selector de Categoría / Ícono */}
-              <IconPickerTrigger
-                selectedIconId={purchaseIcon}
-                label="Categoría / Ícono"
-                onClick={() => {
-                  setIconPickerTarget({
-                    currentIcon: purchaseIcon,
-                    title: 'Seleccionar Categoría de Compra'
-                  });
-                }}
-              />
-
               <div>
                 <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
                   Concepto de la Compra
@@ -767,7 +690,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
                   type="submit"
                   className="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs py-3 rounded-2xl shadow-sm transition-all text-center"
                 >
-                  {editingPurchase ? 'Actualizar Compra' : 'Guardar Compra'}
+                  Guardar Compra
                 </button>
               </div>
             </form>
@@ -783,7 +706,18 @@ export const CreditosSuscripcionesView: React.FC = () => {
           selectedIconId={iconPickerTarget.currentIcon}
           title={iconPickerTarget.title}
           onSelectIcon={(newIcon) => {
-            setPurchaseIcon(newIcon);
+            if (!iconPickerTarget || !selectedCard) return;
+            if (iconPickerTarget.targetId) {
+              const existingP = (selectedCard.purchases || []).find(p => p.id === iconPickerTarget.targetId);
+              if (existingP) {
+                updateCardPurchase(selectedCard.id, existingP.id, {
+                  concept: existingP.concept,
+                  amount: existingP.amount,
+                  moneda: existingP.moneda,
+                  icon: newIcon
+                });
+              }
+            }
             setIconPickerTarget(null);
           }}
         />

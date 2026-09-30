@@ -148,29 +148,31 @@ export const PortafolioView: React.FC = () => {
   return (
     <div className="space-y-4 pb-2 animate-fadeIn">
       {/* Submenú Superior Fijo (Sticky) */}
-      <div className="sticky top-0 z-30 bg-slate-50 dark:bg-slate-900 pt-1 pb-2.5 -mx-3.5 px-3.5 border-b border-slate-200/80 dark:border-slate-800/80 mb-2 flex items-center gap-2">
-        <button
-          onClick={() => setActiveSubTab('portafolio')}
-          className={`flex-1 py-2 px-3 rounded-2xl text-xs font-bold border transition-all flex items-center justify-center gap-1.5 shadow-sm ${
-            activeSubTab === 'portafolio'
-              ? 'bg-blue-600 text-white border-blue-600'
-              : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-750'
-          }`}
-        >
-          <Briefcase className="w-3.5 h-3.5" />
-          <span>Portafolio</span>
-        </button>
-        <button
-          onClick={() => setActiveSubTab('graficas')}
-          className={`flex-1 py-2 px-3 rounded-2xl text-xs font-bold border transition-all flex items-center justify-center gap-1.5 shadow-sm ${
-            activeSubTab === 'graficas'
-              ? 'bg-blue-600 text-white border-blue-600'
-              : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-750'
-          }`}
-        >
-          <BarChart3 className="w-3.5 h-3.5" />
-          <span>Gráficas</span>
-        </button>
+      <div className="sticky top-0 z-30 bg-slate-50 dark:bg-slate-900 pt-1 pb-2.5 -mx-3.5 px-3.5 flex items-center justify-center border-b border-slate-200/80 dark:border-slate-800/80 shadow-xs">
+        <div className="bg-slate-200/80 dark:bg-slate-800 p-1 rounded-2xl flex items-center gap-1 shadow-inner border border-slate-300/80 dark:border-slate-700/60 w-full sm:w-auto">
+          <button
+            type="button"
+            onClick={() => setActiveSubTab('portafolio')}
+            className={`flex-1 sm:px-8 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+              activeSubTab === 'portafolio'
+                ? 'bg-blue-600 text-white shadow-sm'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+            }`}
+          >
+            <Briefcase className="w-4 h-4" /> Portafolio
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveSubTab('graficas')}
+            className={`flex-1 sm:px-8 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+              activeSubTab === 'graficas'
+                ? 'bg-blue-600 text-white shadow-sm'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+            }`}
+          >
+            <BarChart3 className="w-4 h-4" /> Gráficas
+          </button>
+        </div>
       </div>
 
       {/* Pestaña: Portafolio */}
