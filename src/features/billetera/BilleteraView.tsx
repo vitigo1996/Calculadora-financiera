@@ -471,10 +471,8 @@ export const BilleteraView: React.FC = () => {
                   const isTransfer = mov.type === 'transfer';
                   const MovementIcon = getIconComponent(mov.icon || (isIncome ? 'banknote' : isTransfer ? 'layers' : 'shopping_bag'));
                   const formattedDate = new Date(mov.date).toLocaleDateString('es-CO', {
-                    day: '2-digit',
-                    month: 'short',
-                    hour: '2-digit',
-                    minute: '2-digit'
+                    day: 'numeric',
+                    month: 'short'
                   });
 
                   return (

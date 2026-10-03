@@ -235,9 +235,8 @@ export const CreditosSuscripcionesView: React.FC = () => {
                             {cc.name}
                           </h3>
                           {hasCutoff && (
-                            <span className="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300 font-bold border border-amber-300/60 dark:border-amber-800/40 text-[10px] flex items-center gap-1 font-mono flex-shrink-0" title="Corte de facturación">
+                            <span className="p-1 rounded-full bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300 font-bold border border-amber-300/60 dark:border-amber-800/40 flex items-center justify-center flex-shrink-0" title={`Corte de facturación: ${formatCurrency(cc.billingCutoffAmount!)}`}>
                               <Scissors className="w-3 h-3 text-amber-600 dark:text-amber-400" />
-                              <span>{formatCurrency(cc.billingCutoffAmount!)}</span>
                             </span>
                           )}
                         </div>
@@ -395,10 +394,8 @@ export const CreditosSuscripcionesView: React.FC = () => {
                   return isNaN(d.getTime())
                     ? p.date
                     : d.toLocaleDateString('es-CO', {
-                        day: '2-digit',
-                        month: 'short',
-                        hour: '2-digit',
-                        minute: '2-digit'
+                        day: 'numeric',
+                        month: 'short'
                       });
                 })() : '';
 
