@@ -235,8 +235,9 @@ export const CreditosSuscripcionesView: React.FC = () => {
                             {cc.name}
                           </h3>
                           {hasCutoff && (
-                            <span className="px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300 font-semibold border border-amber-300/60 dark:border-amber-800/40 text-[9px] flex items-center gap-0.5 flex-shrink-0" title="Corte Activo">
-                              <Scissors className="w-2.5 h-2.5" /> Corte
+                            <span className="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300 font-bold border border-amber-300/60 dark:border-amber-800/40 text-[10px] flex items-center gap-1 font-mono flex-shrink-0" title="Corte de facturación">
+                              <Scissors className="w-3 h-3 text-amber-600 dark:text-amber-400" />
+                              <span>{formatCurrency(cc.billingCutoffAmount!)}</span>
                             </span>
                           )}
                         </div>
@@ -279,23 +280,23 @@ export const CreditosSuscripcionesView: React.FC = () => {
                       </div>
 
                       {/* Métricas Principales: Pago Mínimo y Deuda Total */}
-                      <div className="grid grid-cols-2 gap-2 text-[11px]">
+                      <div className="grid grid-cols-2 gap-2">
                         {/* Pago Mínimo */}
-                        <div className={`p-2.5 rounded-2xl border ${isSelected ? 'bg-white dark:bg-slate-900 border-blue-200 dark:border-slate-700' : 'bg-slate-100/70 dark:bg-slate-950/40 border-slate-200 dark:border-slate-800/60'}`}>
-                          <span className="text-slate-500 dark:text-slate-400 block text-[10px] font-semibold">
+                        <div>
+                          <span className="text-slate-500 dark:text-slate-400 block text-xs font-semibold">
                             Pago Mínimo
                           </span>
-                          <span className="font-mono font-bold text-sm block text-slate-900 dark:text-white truncate">
+                          <span className="font-mono font-bold text-base block text-slate-900 dark:text-white truncate">
                             {formatCurrency(pagoDelMes)}
                           </span>
                         </div>
 
                         {/* Deuda Total */}
-                        <div className={`p-2.5 rounded-2xl border ${isSelected ? 'bg-white dark:bg-slate-900 border-blue-200 dark:border-slate-700' : 'bg-slate-100/70 dark:bg-slate-950/40 border-slate-200 dark:border-slate-800/60'}`}>
-                          <span className="text-slate-400 block text-[10px]">
+                        <div>
+                          <span className="text-slate-500 dark:text-slate-400 block text-xs font-semibold">
                             Deuda Total
                           </span>
-                          <span className="font-mono font-bold text-sm block text-slate-700 dark:text-slate-200 truncate">
+                          <span className="font-mono font-bold text-base block text-slate-900 dark:text-white truncate">
                             {formatCurrency(totalDeuda)}
                           </span>
                         </div>
@@ -303,12 +304,12 @@ export const CreditosSuscripcionesView: React.FC = () => {
                     </div>
 
                     {/* Footer de Tarjeta: Cupo y Cupo Disp. */}
-                    <div className={`pt-2.5 mt-2.5 border-t flex items-center justify-between text-[11px] ${isSelected ? 'border-blue-200 dark:border-slate-700 text-slate-500 dark:text-slate-400' : 'border-slate-200 dark:border-slate-800 text-slate-400'}`}>
-                      <span className="font-medium text-slate-600 dark:text-slate-300">
-                        Cupo: <span className="font-mono">{formatCurrency(cc.creditLimit)}</span>
+                    <div className={`pt-2.5 mt-2.5 border-t flex items-center justify-between text-xs ${isSelected ? 'border-blue-200 dark:border-slate-700 text-slate-500 dark:text-slate-400' : 'border-slate-200 dark:border-slate-800 text-slate-400'}`}>
+                      <span className="text-slate-500 dark:text-slate-400">
+                        Cupo: <span className="font-mono font-medium text-slate-700 dark:text-slate-300">{formatCurrency(cc.creditLimit)}</span>
                       </span>
 
-                      <span className="font-semibold text-slate-600 dark:text-slate-300">
+                      <span className="text-slate-500 dark:text-slate-400">
                         Cupo Disp.: <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(cupoDisponible)}</span>
                       </span>
                     </div>
@@ -375,18 +376,6 @@ export const CreditosSuscripcionesView: React.FC = () => {
               </button>
             </div>
           </div>
-
-          {/* Aviso de Corte Activo */}
-          {selectedCard.billingCutoffAmount !== undefined && (
-            <div className="mx-5 my-4 p-3.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/40 rounded-2xl flex items-center justify-between text-xs text-amber-800 dark:text-amber-300">
-              <div className="flex items-center gap-2">
-                <Scissors className="w-4 h-4 text-amber-600 flex-shrink-0" />
-                <span>
-                  Corte de facturación con valor de: <strong>{formatCurrency(selectedCard.billingCutoffAmount)}</strong>
-                </span>
-              </div>
-            </div>
-          )}
 
           {/* Lista de Compras con ícono de categoría interactivo */}
           <div className="divide-y divide-slate-200 dark:divide-slate-800">
