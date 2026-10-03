@@ -220,7 +220,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
                   <div
                     key={cc.id}
                     onClick={() => setSelectedCardId(cc.id)}
-                    className={`flex-shrink-0 w-72 rounded-3xl p-5 cursor-pointer transition-all border snap-start flex flex-col justify-between ${
+                    className={`flex-shrink-0 w-72 rounded-3xl p-4 cursor-pointer transition-all border snap-start flex flex-col justify-between ${
                       isSelected
                         ? 'bg-blue-50/90 dark:bg-slate-800/90 border-blue-500 dark:border-blue-400 shadow-md ring-2 ring-blue-500/25'
                         : 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
@@ -228,12 +228,17 @@ export const CreditosSuscripcionesView: React.FC = () => {
                   >
                     <div>
                       {/* Cabecera Tarjeta: Nombre + Icono / Acciones */}
-                      <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2 min-w-0">
                           <CreditCard className={`w-5 h-5 flex-shrink-0 ${isSelected ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400'}`} />
                           <h3 className="font-bold text-base truncate text-slate-800 dark:text-white">
                             {cc.name}
                           </h3>
+                          {hasCutoff && (
+                            <span className="px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300 font-semibold border border-amber-300/60 dark:border-amber-800/40 text-[9px] flex items-center gap-0.5 flex-shrink-0" title="Corte Activo">
+                              <Scissors className="w-2.5 h-2.5" /> Corte
+                            </span>
+                          )}
                         </div>
 
                         {/* Botones de acción cuando se editan tarjetas */}
@@ -273,47 +278,39 @@ export const CreditosSuscripcionesView: React.FC = () => {
                         )}
                       </div>
 
-                      {/* Métricas Principales */}
-                      <div className="space-y-3">
+                      {/* Métricas Principales: Pago Mínimo y Deuda Total */}
+                      <div className="grid grid-cols-2 gap-2 text-[11px]">
                         {/* Pago Mínimo */}
-                        <div>
-                          <span className="text-[11px] block font-semibold text-slate-500 dark:text-slate-400">
-                            Pago Mínimo ({cc.period === '1st_fortnight' ? '1ª Q' : '2ª Q'})
+                        <div className={`p-2.5 rounded-2xl border ${isSelected ? 'bg-white dark:bg-slate-900 border-blue-200 dark:border-slate-700' : 'bg-slate-100/70 dark:bg-slate-950/40 border-slate-200 dark:border-slate-800/60'}`}>
+                          <span className="text-slate-500 dark:text-slate-400 block text-[10px] font-semibold">
+                            Pago Mínimo
                           </span>
-                          <span className="text-xl font-mono font-bold block text-slate-900 dark:text-white">
+                          <span className="font-mono font-bold text-sm block text-slate-900 dark:text-white truncate">
                             {formatCurrency(pagoDelMes)}
                           </span>
                         </div>
 
-                        {/* Deuda Total y Cupo */}
-                        <div className="grid grid-cols-2 gap-2 text-[11px]">
-                          <div className={`p-2.5 rounded-xl border ${isSelected ? 'bg-white dark:bg-slate-900 border-blue-200 dark:border-slate-700' : 'bg-slate-100/70 dark:bg-slate-950/40 border-slate-200 dark:border-slate-800/60'}`}>
-                            <span className="text-slate-400 block text-[10px]">Deuda Total</span>
-                            <span className="font-mono font-bold block text-slate-700 dark:text-slate-200">
-                              {formatCurrency(totalDeuda)}
-                            </span>
-                          </div>
-
-                          <div className={`p-2.5 rounded-xl border ${isSelected ? 'bg-white dark:bg-slate-900 border-blue-200 dark:border-slate-700' : 'bg-slate-100/70 dark:bg-slate-950/40 border-slate-200 dark:border-slate-800/60'}`}>
-                            <span className="text-slate-400 block text-[10px]">Cupo Disp.</span>
-                            <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400 block">
-                              {formatCurrency(cupoDisponible)}
-                            </span>
-                          </div>
+                        {/* Deuda Total */}
+                        <div className={`p-2.5 rounded-2xl border ${isSelected ? 'bg-white dark:bg-slate-900 border-blue-200 dark:border-slate-700' : 'bg-slate-100/70 dark:bg-slate-950/40 border-slate-200 dark:border-slate-800/60'}`}>
+                          <span className="text-slate-400 block text-[10px]">
+                            Deuda Total
+                          </span>
+                          <span className="font-mono font-bold text-sm block text-slate-700 dark:text-slate-200 truncate">
+                            {formatCurrency(totalDeuda)}
+                          </span>
                         </div>
                       </div>
                     </div>
 
-                    {/* Footer de Tarjeta con Badge de Corte */}
-                    <div className={`pt-3 mt-3 border-t flex items-center justify-between text-[10px] ${isSelected ? 'border-blue-200 dark:border-slate-700 text-slate-500 dark:text-slate-400' : 'border-slate-200 dark:border-slate-800 text-slate-400'}`}>
-                      <span className="font-medium">
-                        Cupo: {formatCurrency(cc.creditLimit)}
+                    {/* Footer de Tarjeta: Cupo y Cupo Disp. */}
+                    <div className={`pt-2.5 mt-2.5 border-t flex items-center justify-between text-[11px] ${isSelected ? 'border-blue-200 dark:border-slate-700 text-slate-500 dark:text-slate-400' : 'border-slate-200 dark:border-slate-800 text-slate-400'}`}>
+                      <span className="font-medium text-slate-600 dark:text-slate-300">
+                        Cupo: <span className="font-mono">{formatCurrency(cc.creditLimit)}</span>
                       </span>
-                      {hasCutoff && (
-                        <span className="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300 font-semibold border border-amber-300/60 dark:border-amber-800/40 flex items-center gap-1">
-                          <Scissors className="w-2.5 h-2.5" /> Corte Activo
-                        </span>
-                      )}
+
+                      <span className="font-semibold text-slate-600 dark:text-slate-300">
+                        Cupo Disp.: <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(cupoDisponible)}</span>
+                      </span>
                     </div>
                   </div>
                 );
