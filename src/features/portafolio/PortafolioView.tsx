@@ -5,11 +5,8 @@ import { PortfolioAccountItem } from '../../models/finance';
 import { IconPickerModal } from '../../components/ui/IconPicker';
 import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import { AmountCalculatorInput } from '../../components/ui/AmountCalculatorInput';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import {
   Briefcase,
-  PieChart as PieChartIcon,
-  Wallet,
   Edit2,
   Plus,
   Trash2,
@@ -35,7 +32,6 @@ const PRESET_COLORS_4X4 = [
 export const PortafolioView: React.FC = () => {
   const {
     data,
-    summary,
     baseCurrency,
     isFetchingRate,
     refreshLiveDolarRate,
@@ -44,9 +40,6 @@ export const PortafolioView: React.FC = () => {
     deletePortfolioItem,
     reorderPortfolioItems
   } = useFinance();
-
-  // Submenu tab state: 'portafolio' | 'distribucion'
-  const [activeSubTab, setActiveSubTab] = useState<'portafolio' | 'distribucion'>('portafolio');
 
   // Edit states
   const [isEditingPortfolio, setIsEditingPortfolio] = useState(false);
@@ -72,7 +65,6 @@ export const PortafolioView: React.FC = () => {
   } | null>(null);
 
   const dolarRate = data.dolarRate || 3600;
-  const port = summary.portafolio;
 
   // Active item for the 4x4 color palette popover
   const [colorPickerTarget, setColorPickerTarget] = useState<{ id: string; label: string; currentColor: string } | null>(null);
@@ -146,343 +138,158 @@ export const PortafolioView: React.FC = () => {
     }
   };
 
-  // Cálculo para la gráfica de barras de Disponible (Billeteras)
-  const billeteraList = data.billeteraItems || [];
-  const totalDisponibleCOP = billeteraList.reduce(
-    (sum, b) => sum + convertToBase(b.saldo || 0, b.moneda || 'COP', 'COP', dolarRate),
-    0
-  );
-
   return (
-    <div className="space-y-6 pb-2 animate-fadeIn">
-      {/* Submenú Superior Fijo (Sticky) idéntico a Presupuesto y Billetera */}
-      <div className="sticky top-0 z-30 bg-slate-50 dark:bg-slate-900 pt-1 pb-2.5 -mx-3.5 px-3.5 flex items-center justify-center border-b border-slate-200/80 dark:border-slate-800/80 shadow-xs">
-        <div className="bg-slate-200/80 dark:bg-slate-800 p-1 rounded-2xl flex items-center gap-1 shadow-inner border border-slate-300/80 dark:border-slate-700/60 w-full sm:w-auto">
-          <button
-            type="button"
-            onClick={() => setActiveSubTab('portafolio')}
-            className={`flex-1 sm:px-8 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
-              activeSubTab === 'portafolio'
-                ? 'bg-blue-600 text-white shadow-sm'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-            }`}
-          >
-            <Briefcase className="w-4 h-4" /> Portafolio
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveSubTab('distribucion')}
-            className={`flex-1 sm:px-8 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
-              activeSubTab === 'distribucion'
-                ? 'bg-blue-600 text-white shadow-sm'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-            }`}
-          >
-            <PieChartIcon className="w-4 h-4" /> Distribución
-          </button>
-        </div>
-      </div>
-
-      {/* Pestaña 1: Portafolio */}
-      {activeSubTab === 'portafolio' && (
-        <div className="space-y-6 animate-fadeIn">
-          {/* Recuadro Portafolio */}
-          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
-            <div className="p-4 bg-slate-100 dark:bg-slate-800/70 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-indigo-600 dark:bg-indigo-600 text-white border-2 border-indigo-400 dark:border-indigo-400 flex items-center justify-center shadow-xs flex-shrink-0">
-                  <Briefcase className="w-4 h-4" />
-                </div>
-                <span className="font-extrabold text-slate-800 dark:text-white text-base tracking-wide uppercase">
-                  PORTAFOLIO
-                </span>
-              </div>
-
-              {/* Botones de acción: Editar y Agregar (+) */}
-              <div className="flex items-center gap-2">
-                {(data.portfolioItems || []).length > 0 && (
-                  <button
-                    onClick={() => setIsEditingPortfolio(!isEditingPortfolio)}
-                    className={`p-2 rounded-xl text-xs font-semibold border transition-all flex items-center justify-center shadow-sm ${
-                      isEditingPortfolio
-                        ? 'bg-blue-600 text-white border-blue-600'
-                        : 'bg-white dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-300/80 dark:border-transparent'
-                    }`}
-                    title={isEditingPortfolio ? 'Listo' : 'Editar Portafolio'}
-                  >
-                    {isEditingPortfolio ? <Check className="w-4 h-4" /> : <Edit2 className="w-4 h-4" />}
-                  </button>
-                )}
-
-                <button
-                  onClick={openCreateModal}
-                  className="p-2 rounded-xl text-xs font-semibold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800/40 hover:bg-blue-200 transition-all flex items-center justify-center shadow-sm"
-                  title="Agregar Activo"
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
-              </div>
+    <div className="space-y-6 pb-24 animate-fadeIn">
+      {/* Recuadro Portafolio */}
+      <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
+        <div className="p-4 bg-slate-100 dark:bg-slate-800/70 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-indigo-600 dark:bg-indigo-600 text-white border-2 border-indigo-400 dark:border-indigo-400 flex items-center justify-center shadow-xs flex-shrink-0">
+              <Briefcase className="w-4 h-4" />
             </div>
-
-            <div className="divide-y divide-slate-200 dark:divide-slate-800">
-              {(!data.portfolioItems || data.portfolioItems.length === 0) ? (
-                <div className="p-8 text-center text-slate-400 dark:text-slate-500 text-xs">
-                  No tienes activos en tu portafolio. Haz clic en <strong>+</strong> para registrar uno.
-                </div>
-              ) : (
-                data.portfolioItems.map((item, idx) => {
-                  const itemMoneda = item.moneda || 'COP';
-                  const isDiff = itemMoneda !== baseCurrency;
-                  const equivalentInBase = convertToBase(item.saldo, itemMoneda, baseCurrency, dolarRate);
-
-                  return (
-                    <div
-                      key={item.id}
-                      draggable={isEditingPortfolio}
-                      onDragStart={(e) => {
-                        setDraggedPortfolioIdx(idx);
-                        e.dataTransfer.effectAllowed = 'move';
-                      }}
-                      onDragOver={(e) => {
-                        e.preventDefault();
-                        e.dataTransfer.dropEffect = 'move';
-                      }}
-                      onDrop={(e) => {
-                        e.preventDefault();
-                        if (draggedPortfolioIdx !== null && draggedPortfolioIdx !== idx) {
-                          reorderPortfolioItems(draggedPortfolioIdx, idx);
-                        }
-                        setDraggedPortfolioIdx(null);
-                      }}
-                      onDragEnd={() => setDraggedPortfolioIdx(null)}
-                      className={`p-4 bg-white dark:bg-slate-900 transition-all flex items-center justify-between ${
-                        isEditingPortfolio ? 'cursor-move select-none' : ''
-                      }`}
-                    >
-                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                        {isEditingPortfolio && (
-                          <div className="text-slate-400 dark:text-slate-500 cursor-grab active:cursor-grabbing p-1 flex-shrink-0">
-                            <GripVertical className="w-4 h-4" />
-                          </div>
-                        )}
-                        <div className="min-w-0 flex-1">
-                          <div className="flex flex-wrap items-center gap-1.5">
-                            <h4 className="font-bold text-slate-800 dark:text-white text-sm truncate">{item.nombre}</h4>
-                            {isDiff && (
-                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300 flex-shrink-0">
-                                {itemMoneda}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <div className="text-right">
-                          <span className="font-mono font-bold text-sm text-slate-800 dark:text-white block">
-                            {formatCurrency(item.saldo, itemMoneda)}
-                          </span>
-                          {isDiff && (
-                            <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 block">
-                              {formatCurrency(equivalentInBase, baseCurrency)}
-                            </span>
-                          )}
-                        </div>
-
-                        {isEditingPortfolio ? (
-                          <button
-                            onClick={() => {
-                              setConfirmConfig({
-                                isOpen: true,
-                                title: 'Eliminar Activo',
-                                message: `¿Estás seguro de eliminar "${item.nombre}" del portafolio?`,
-                                confirmText: 'Sí, eliminar',
-                                cancelText: 'Cancelar',
-                                variant: 'danger',
-                                onConfirm: () => deletePortfolioItem(item.id)
-                              });
-                            }}
-                            className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-rose-100 dark:hover:bg-rose-950/50 text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 border border-slate-300/80 dark:border-transparent transition-colors"
-                            title="Eliminar activo"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => openEditModal(item)}
-                            className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-300/80 dark:border-transparent transition-colors"
-                            title="Editar activo y monto"
-                          >
-                            <Edit2 className="w-3.5 h-3.5" />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
+            <span className="font-extrabold text-slate-800 dark:text-white text-base tracking-wide uppercase">
+              PORTAFOLIO
+            </span>
           </div>
-        </div>
-      )}
 
-      {/* Pestaña 2: Distribución (Gráfica de Barras Disponible + Gráfica de Anillo Activos) */}
-      {activeSubTab === 'distribucion' && (
-        <div className="space-y-6 animate-fadeIn">
-          {/* 1. Gráfica de Barras Horizontales: DISPONIBLE (Billeteras) */}
-          <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-300 dark:border-slate-800 shadow-sm transition-colors space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
-              <span className="text-xs font-extrabold uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
-                <Wallet className="w-4 h-4 text-blue-600 dark:text-blue-400" /> Disponible
-              </span>
-              <span className="text-xs font-mono font-bold text-slate-800 dark:text-white">
-                Total: {formatCurrency(totalDisponibleCOP, 'COP')}
-              </span>
-            </div>
-
-            {billeteraList.length === 0 ? (
-              <div className="p-6 text-center text-slate-400 dark:text-slate-500 text-xs">
-                No tienes cuentas de billetera registradas.
-              </div>
-            ) : (
-              <div className="space-y-4 pt-1">
-                {billeteraList.map((item, idx) => {
-                  const valCOP = convertToBase(item.saldo || 0, item.moneda || 'COP', 'COP', dolarRate);
-                  const percentage = totalDisponibleCOP > 0 ? (valCOP / totalDisponibleCOP) * 100 : 0;
-                  const barColor = PRESET_COLORS_4X4[idx % PRESET_COLORS_4X4.length];
-
-                  return (
-                    <div key={item.id} className="space-y-1.5">
-                      {/* Fila Superior: Nombre y Porcentaje */}
-                      <div className="flex justify-between items-center text-xs">
-                        <span className="font-bold text-slate-800 dark:text-white truncate max-w-[70%]">
-                          {item.nombre}
-                        </span>
-                        <span
-                          className="font-bold text-[11px] font-mono px-2 py-0.5 rounded-lg text-white whitespace-nowrap shadow-xs min-w-[46px] text-center"
-                          style={{ backgroundColor: barColor }}
-                        >
-                          {percentage.toFixed(1)}%
-                        </span>
-                      </div>
-
-                      {/* Barra Horizontal Proporcional */}
-                      <div className="h-3.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden p-0.5">
-                        <div
-                          className="h-full rounded-full transition-all duration-500 shadow-xs"
-                          style={{
-                            width: `${Math.max(percentage, 2)}%`,
-                            backgroundColor: barColor
-                          }}
-                        />
-                      </div>
-
-                      {/* Texto pequeño debajo de la barra horizontal con el valor */}
-                      <div className="flex justify-between items-center text-[11px] text-slate-500 dark:text-slate-400 font-mono">
-                        <span>{formatCurrency(item.saldo, item.moneda || 'COP')}</span>
-                        {item.moneda === 'USD' && (
-                          <span className="text-[10px]">≈ {formatCurrency(valCOP, 'COP')}</span>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+          {/* Botones de acción: Editar y Agregar (+) */}
+          <div className="flex items-center gap-2">
+            {(data.portfolioItems || []).length > 0 && (
+              <button
+                onClick={() => setIsEditingPortfolio(!isEditingPortfolio)}
+                className={`p-2 rounded-xl text-xs font-semibold border transition-all flex items-center justify-center shadow-sm ${
+                  isEditingPortfolio
+                    ? 'bg-blue-600 text-white border-blue-600'
+                    : 'bg-white dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-300/80 dark:border-transparent'
+                }`}
+                title={isEditingPortfolio ? 'Listo' : 'Editar Portafolio'}
+              >
+                {isEditingPortfolio ? <Check className="w-4 h-4" /> : <Edit2 className="w-4 h-4" />}
+              </button>
             )}
-          </div>
 
-          {/* 2. Gráfica de Anillo: ACTIVOS (Portafolio) */}
-          {port.items.length === 0 ? (
-            <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 border border-slate-300 dark:border-slate-800 text-center text-slate-400 dark:text-slate-500 text-xs">
-              No hay datos para mostrar activos. Agrega activos en la pestaña Portafolio.
+            <button
+              onClick={openCreateModal}
+              className="p-2 rounded-xl text-xs font-semibold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800/40 hover:bg-blue-200 transition-all flex items-center justify-center shadow-sm"
+              title="Agregar Activo"
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        <div className="divide-y divide-slate-200 dark:divide-slate-800">
+          {(!data.portfolioItems || data.portfolioItems.length === 0) ? (
+            <div className="p-8 text-center text-slate-400 dark:text-slate-500 text-xs">
+              No tienes activos en tu portafolio. Haz clic en <strong>+</strong> para registrar uno.
             </div>
           ) : (
-            <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-300 dark:border-slate-800 shadow-sm transition-colors space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
-                <span className="text-xs font-extrabold uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
-                  <PieChartIcon className="w-4 h-4 text-blue-600 dark:text-blue-400" /> Activos
-                </span>
-                <span className="text-xs font-mono font-bold text-slate-800 dark:text-white">
-                  Total: {formatCurrency(port.totalPortafolio, 'COP')}
-                </span>
-              </div>
+            data.portfolioItems.map((item, idx) => {
+              const itemMoneda = item.moneda || 'COP';
+              const isDiff = itemMoneda !== baseCurrency;
+              const equivalentInBase = convertToBase(item.saldo, itemMoneda, baseCurrency, dolarRate);
 
-              {/* Gráfica Donut */}
-              <div className="h-52 flex items-center justify-center">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={port.items}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={55}
-                      outerRadius={85}
-                      paddingAngle={3}
-                      dataKey="valorCOP"
-                      nameKey="label"
-                    >
-                      {port.items.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} stroke="#ffffff" strokeWidth={1.5} />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      formatter={(value: any, name: any) => [`${formatCurrency(Number(value), 'COP')}`, `${name}`]}
-                      contentStyle={{
-                        backgroundColor: '#0f172a',
-                        borderColor: '#334155',
-                        borderRadius: '16px',
-                        padding: '10px 14px',
-                        color: '#ffffff',
-                        fontWeight: 'bold',
-                        boxShadow: '0 12px 30px -4px rgba(0, 0, 0, 0.4)'
-                      }}
-                      itemStyle={{ color: '#60a5fa', fontSize: '13px', fontWeight: 'bold' }}
-                      labelStyle={{ color: '#f8fafc', fontSize: '13px', fontWeight: 'bold' }}
+              return (
+                <div
+                  key={item.id}
+                  draggable={isEditingPortfolio}
+                  onDragStart={(e) => {
+                    setDraggedPortfolioIdx(idx);
+                    e.dataTransfer.effectAllowed = 'move';
+                  }}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    if (draggedPortfolioIdx !== null && draggedPortfolioIdx !== idx) {
+                      reorderPortfolioItems(draggedPortfolioIdx, idx);
+                    }
+                    setDraggedPortfolioIdx(null);
+                  }}
+                  onDragEnd={() => setDraggedPortfolioIdx(null)}
+                  className={`p-4 transition-colors flex items-center justify-between gap-3 ${
+                    isEditingPortfolio
+                      ? 'cursor-grab active:cursor-grabbing hover:bg-blue-50/50 dark:hover:bg-blue-950/20'
+                      : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                  }`}
+                >
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    {/* Indicador de arrastre cuando se está editando */}
+                    {isEditingPortfolio && (
+                      <div className="text-slate-400 dark:text-slate-500 flex-shrink-0 cursor-grab active:cursor-grabbing">
+                        <GripVertical className="w-4 h-4" />
+                      </div>
+                    )}
+
+                    {/* Botón de Color del Activo */}
+                    <button
+                      type="button"
+                      onClick={() => setColorPickerTarget({ id: item.id, label: item.nombre, currentColor: item.color || '#2563eb' })}
+                      title="Cambiar color del activo"
+                      className="w-4 h-4 rounded-full shadow-sm ring-2 ring-white dark:ring-slate-800 hover:scale-110 active:scale-95 transition-transform flex-shrink-0 cursor-pointer"
+                      style={{ backgroundColor: item.color || '#2563eb' }}
                     />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
 
-              {/* Lista de Leyenda de Activos */}
-              <div className="space-y-2 pt-1">
-                {port.items.map((item, i) => (
-                  <div
-                    key={item.id || i}
-                    className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 transition-colors flex items-center justify-between gap-3"
-                  >
-                    {/* Lado Izquierdo: Botón de Color + Nombre */}
-                    <div className="flex items-center gap-3 min-w-0 flex-1">
-                      <button
-                        type="button"
-                        onClick={() => setColorPickerTarget({ id: item.id, label: item.label, currentColor: item.color })}
-                        title="Click para cambiar color"
-                        className="w-5 h-5 rounded-full shadow-sm ring-2 ring-white dark:ring-slate-800 hover:scale-110 active:scale-95 transition-transform flex-shrink-0 cursor-pointer"
-                        style={{ backgroundColor: item.color }}
-                      />
-                      <span className="text-xs font-bold text-slate-900 dark:text-white truncate">
-                        {item.label}
+                    <div className="min-w-0">
+                      <span className="font-bold text-slate-900 dark:text-white text-xs truncate block">
+                        {item.nombre}
                       </span>
-                    </div>
-
-                    {/* Lado Derecho: Valor en COP + Porcentaje */}
-                    <div className="flex items-center gap-2.5 flex-shrink-0">
-                      <span className="text-xs font-mono font-bold text-slate-900 dark:text-white">
-                        {formatCurrency(item.valorCOP, 'COP')}
-                      </span>
-                      <span
-                        className="font-bold text-[11px] font-mono px-2 py-0.5 rounded-lg text-white whitespace-nowrap shadow-xs min-w-[46px] text-center"
-                        style={{ backgroundColor: item.color }}
-                      >
-                        {item.percentage.toFixed(1)}%
-                      </span>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span className="px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-[10px] font-mono font-bold text-slate-500 dark:text-slate-400">
+                          {itemMoneda}
+                        </span>
+                        {isDiff && (
+                          <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">
+                            ≈ {formatCurrency(equivalentInBase, baseCurrency)}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
+
+                  {/* Lado Derecho: Saldo o Botones de Edición / Eliminar */}
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    {isEditingPortfolio ? (
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => openEditModal(item)}
+                          className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors"
+                          title="Editar"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => {
+                            setConfirmConfig({
+                              isOpen: true,
+                              title: 'Eliminar Activo',
+                              message: `¿Estás seguro de eliminar "${item.nombre}"?`,
+                              confirmText: 'Sí, eliminar',
+                              cancelText: 'Cancelar',
+                              variant: 'danger',
+                              onConfirm: () => deletePortfolioItem(item.id)
+                            });
+                          }}
+                          className="p-1.5 rounded-lg bg-rose-100 dark:bg-rose-950/60 hover:bg-rose-200 text-rose-600 dark:text-rose-400 transition-colors"
+                          title="Eliminar"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ) : (
+                      <span className="font-mono font-bold text-xs text-blue-700 dark:text-blue-300">
+                        {formatCurrency(item.saldo, itemMoneda)}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })
           )}
         </div>
-      )}
+      </div>
 
       {/* Modal Emergente de Selección de Color (Malla 4x4) */}
       {colorPickerTarget && (
