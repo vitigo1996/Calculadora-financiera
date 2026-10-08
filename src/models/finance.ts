@@ -41,7 +41,8 @@ export interface HousingExpense {
   id: string;
   name: string;
   referenceCode?: string;
-  period: PaymentPeriod;
+  period?: PaymentPeriod;
+  paymentDay?: number;
   totalAmount: number;
   moneda?: 'COP' | 'USD';
   isShared?: boolean;
@@ -51,7 +52,8 @@ export interface HousingExpense {
 export interface ObligationItem {
   id: string;
   name: string;
-  period: PaymentPeriod;
+  period?: PaymentPeriod;
+  paymentDay?: number;
   totalAmount: number;
   davidAmount?: number;
   danielaAmount?: number;
@@ -84,7 +86,8 @@ export interface CreditCardPayment {
 export interface CreditCardItem {
   id: string;
   name: string;
-  period: PaymentPeriod;
+  period?: PaymentPeriod;
+  paymentDay?: number;
   creditLimit: number;
   moneda?: 'COP' | 'USD';
   minPaymentOverride?: number;
@@ -102,6 +105,7 @@ export interface SubscriptionItem {
   members: number;
   billing: 'monthly' | 'yearly';
   period?: PaymentPeriod;
+  paymentDay?: number;
   billingMonth?: string;
   moneda?: 'COP' | 'USD';
   active: boolean;

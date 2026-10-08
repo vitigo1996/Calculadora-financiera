@@ -5,7 +5,7 @@ import {
   calculateCardPurchasesTotal,
   calculateCardPaymentDue
 } from '../../services/financeCalculations';
-import { CreditCardItem, PaymentPeriod } from '../../models/finance';
+import { CreditCardItem } from '../../models/finance';
 import { getIconComponent, IconPickerModal } from '../../components/ui/IconPicker';
 import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import { AmountCalculatorInput } from '../../components/ui/AmountCalculatorInput';
@@ -68,7 +68,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
   const [editingCardObj, setEditingCardObj] = useState<CreditCardItem | null>(null);
   const [cardName, setCardName] = useState('');
   const [cardLimit, setCardLimit] = useState('');
-  const [cardPeriod, setCardPeriod] = useState<PaymentPeriod>('1st_fortnight');
+  const [cardPaymentDay, setCardPaymentDay] = useState<string>('');
 
   // Modal: Add Purchase
   const [showAddPurchaseModal, setShowAddPurchaseModal] = useState(false);
@@ -82,7 +82,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
   const openCreateCard = () => {
     setCardName('');
     setCardLimit('');
-    setCardPeriod('1st_fortnight');
+    setCardPaymentDay('');
     setEditingCardObj(null);
     setShowCardModal(true);
   };
@@ -92,7 +92,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
     setEditingCardObj(card);
     setCardName(card.name);
     setCardLimit(card.creditLimit.toString());
-    setCardPeriod(card.period);
+    setCardPaymentDay(card.paymentDay !== undefined ? card.paymentDay.toString() : '');
     setShowCardModal(true);
   };
 
@@ -101,19 +101,20 @@ export const CreditosSuscripcionesView: React.FC = () => {
     e.preventDefault();
     if (!cardName.trim()) return;
     const limit = parseFloat(cardLimit) || 0;
+    const dayVal = cardPaymentDay ? parseInt(cardPaymentDay, 10) : undefined;
 
     if (editingCardObj) {
       updateCreditCard(editingCardObj.id, {
         name: cardName.trim(),
         creditLimit: limit,
-        period: cardPeriod,
+        paymentDay: dayVal,
         moneda: 'COP'
       });
     } else {
       addCreditCard({
         name: cardName.trim(),
         creditLimit: limit,
-        period: cardPeriod,
+        paymentDay: dayVal,
         moneda: 'COP'
       });
     }
@@ -325,9 +326,16 @@ export const CreditosSuscripcionesView: React.FC = () => {
         <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
           {/* Encabezado del Detalle */}
           <div className="p-4 bg-slate-100 dark:bg-slate-800/70 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between flex-wrap gap-2">
-            <h3 className="text-base font-extrabold text-slate-800 dark:text-white uppercase tracking-wide">
-              {selectedCard.name.toUpperCase()}
-            </h3>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="text-base font-extrabold text-slate-800 dark:text-white uppercase tracking-wide">
+                {selectedCard.name.toUpperCase()}
+              </h3>
+              {selectedCard.paymentDay ? (
+                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 bg-slate-200/80 dark:bg-slate-800 px-2 py-0.5 rounded-lg">
+                  Pago: día {selectedCard.paymentDay}
+                </span>
+              ) : null}
+            </div>
 
             {/* Botones de acción: Corte, Editar, Agregar (+) */}
             <div className="flex items-center gap-2 flex-wrap">
@@ -555,36 +563,20 @@ export const CreditosSuscripcionesView: React.FC = () => {
                 title="Ajustar Cupo"
               />
 
-              {/* Quincena de Pago */}
+              {/* Día de Pago */}
               <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
-                  Periodo de Pago
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                  Día de Pago (1 - 31)
                 </label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setCardPeriod('1st_fortnight')}
-                    className={`py-2.5 px-3 rounded-2xl text-xs font-bold border transition-all ${
-                      cardPeriod === '1st_fortnight'
-                        ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
-                        : 'bg-slate-50 dark:bg-slate-950/40 border-slate-300 dark:border-slate-800 text-slate-600 dark:text-slate-400'
-                    }`}
-                  >
-                    1ª Quincena
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setCardPeriod('2nd_fortnight')}
-                    className={`py-2.5 px-3 rounded-2xl text-xs font-bold border transition-all ${
-                      cardPeriod === '2nd_fortnight'
-                        ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
-                        : 'bg-slate-50 dark:bg-slate-950/40 border-slate-300 dark:border-slate-800 text-slate-600 dark:text-slate-400'
-                    }`}
-                  >
-                    2ª Quincena
-                  </button>
-                </div>
+                <input
+                  type="number"
+                  min="1"
+                  max="31"
+                  value={cardPaymentDay}
+                  onChange={e => setCardPaymentDay(e.target.value)}
+                  placeholder="Ej. 15, 30"
+                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white font-mono focus:outline-none focus:border-blue-500"
+                />
               </div>
 
               <div className="flex items-center gap-2 pt-3">

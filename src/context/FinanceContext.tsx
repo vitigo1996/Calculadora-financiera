@@ -49,7 +49,7 @@ interface FinanceContextType {
   deletePortfolioItem: (id: string) => void;
   movePortfolioItem: (index: number, direction: 'up' | 'down') => void;
   reorderPortfolioItems: (fromIndex: number, toIndex: number) => void;
-  addCreditCard: (item: { name: string; period: PaymentPeriod; creditLimit: number; moneda?: 'COP' | 'USD' }) => void;
+  addCreditCard: (item: { name: string; period?: PaymentPeriod; paymentDay?: number; creditLimit: number; moneda?: 'COP' | 'USD'; minPaymentOverride?: number }) => void;
   updateCreditCard: (id: string, updated: Partial<CreditCardItem>) => void;
   deleteCreditCard: (id: string) => void;
   moveCreditCard: (index: number, direction: 'up' | 'down') => void;
@@ -65,19 +65,19 @@ interface FinanceContextType {
   deleteCardPurchaseRecord: (cardId: string, purchaseId: string) => void;
   deleteCardPurchase: (cardId: string, purchaseId: string) => void;
   moveCardPurchase: (cardId: string, fromIndex: number, toIndex: number) => void;
-  addHousingExpense: (item: { name: string; period: PaymentPeriod; totalAmount: number; moneda?: 'COP' | 'USD'; isShared?: boolean; icon?: string }) => void;
+  addHousingExpense: (item: { name: string; period?: PaymentPeriod; paymentDay?: number; totalAmount: number; moneda?: 'COP' | 'USD'; isShared?: boolean; icon?: string }) => void;
   updateHousingExpense: (id: string, updated: Partial<HousingExpense>) => void;
   deleteHousingExpense: (id: string) => void;
   moveHousingExpense: (index: number, direction: 'up' | 'down') => void;
   reorderHousingExpenses: (fromIndex: number, toIndex: number) => void;
   toggleHousingShared: (id: string) => void;
-  addObligation: (item: { name: string; period: PaymentPeriod; totalAmount: number; totalDebtBalance?: number; moneda?: 'COP' | 'USD'; isShared?: boolean; icon?: string }) => void;
+  addObligation: (item: { name: string; period?: PaymentPeriod; paymentDay?: number; totalAmount: number; totalDebtBalance?: number; moneda?: 'COP' | 'USD'; isShared?: boolean; icon?: string }) => void;
   updateObligation: (id: string, updated: Partial<ObligationItem>) => void;
   deleteObligation: (id: string) => void;
   moveObligation: (index: number, direction: 'up' | 'down') => void;
   reorderObligations: (fromIndex: number, toIndex: number) => void;
   toggleObligationShared: (id: string) => void;
-  addSubscription: (item: { name: string; totalPrice: number; members: number; billing: 'monthly' | 'yearly'; period?: PaymentPeriod; billingMonth?: string; moneda?: 'COP' | 'USD'; icon?: string }) => void;
+  addSubscription: (item: { name: string; totalPrice: number; members: number; billing: 'monthly' | 'yearly'; period?: PaymentPeriod; paymentDay?: number; billingMonth?: string; moneda?: 'COP' | 'USD'; icon?: string }) => void;
   updateSubscription: (id: string, updated: Partial<SubscriptionItem>) => void;
   deleteSubscription: (id: string) => void;
   moveSubscription: (index: number, direction: 'up' | 'down') => void;
@@ -546,11 +546,12 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }));
   };
 
-  const addCreditCard = (card: { name: string; period: PaymentPeriod; creditLimit: number; moneda?: 'COP' | 'USD'; minPaymentOverride?: number }) => {
+  const addCreditCard = (card: { name: string; period?: PaymentPeriod; paymentDay?: number; creditLimit: number; moneda?: 'COP' | 'USD'; minPaymentOverride?: number }) => {
     const newCard: CreditCardItem = {
       id: `cc-${Date.now()}`,
       name: card.name,
-      period: card.period,
+      period: card.period || '1st_fortnight',
+      paymentDay: card.paymentDay,
       creditLimit: card.creditLimit,
       moneda: card.moneda || 'COP',
       minPaymentOverride: card.minPaymentOverride,
@@ -886,11 +887,13 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   // Housing CRUD
-  const addHousingExpense = (item: { name: string; period: PaymentPeriod; totalAmount: number; moneda?: 'COP' | 'USD'; isShared?: boolean; icon?: string }) => {
+  const addHousingExpense = (item: { name: string; period?: PaymentPeriod; paymentDay?: number; totalAmount: number; moneda?: 'COP' | 'USD'; isShared?: boolean; icon?: string }) => {
     const newH: HousingExpense = {
       id: `house-${Date.now()}`,
       isShared: item.isShared !== undefined ? item.isShared : true,
       moneda: item.moneda || 'COP',
+      period: item.period || '1st_fortnight',
+      paymentDay: item.paymentDay,
       ...item
     };
     setData(prev => ({
@@ -942,11 +945,13 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   // Obligations CRUD
-  const addObligation = (item: { name: string; period: PaymentPeriod; totalAmount: number; totalDebtBalance?: number; moneda?: 'COP' | 'USD'; isShared?: boolean; icon?: string }) => {
+  const addObligation = (item: { name: string; period?: PaymentPeriod; paymentDay?: number; totalAmount: number; totalDebtBalance?: number; moneda?: 'COP' | 'USD'; isShared?: boolean; icon?: string }) => {
     const newOb: ObligationItem = {
       id: `ob-${Date.now()}`,
       isShared: item.isShared !== undefined ? item.isShared : true,
       moneda: item.moneda || 'COP',
+      period: item.period || '1st_fortnight',
+      paymentDay: item.paymentDay,
       ...item
     };
     setData(prev => ({

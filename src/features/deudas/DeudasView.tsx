@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { useFinance } from '../../context/FinanceContext';
 import { formatCurrency, calculateSubscriptionMonthlyCost } from '../../services/financeCalculations';
-import { DeudaItem, SubscriptionItem, PaymentPeriod } from '../../models/finance';
-import { getIconComponent, IconPickerModal } from '../../components/ui/IconPicker';
+import { DeudaItem, SubscriptionItem } from '../../models/finance';
 import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import { AmountCalculatorInput } from '../../components/ui/AmountCalculatorInput';
 import {
@@ -23,53 +22,29 @@ const MONTHS = [
   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
 ];
 
-export const DeudasView: React.FC = () => {
+/**
+ * SECCIÓN DEUDAS (Me deben / Debo)
+ */
+export const DeudasSection: React.FC = () => {
   const {
     data,
     addDeudaItem,
     updateDeudaItem,
     deleteDeudaItem,
-    reorderDeudaItems,
-    addSubscription,
-    updateSubscription,
-    deleteSubscription,
-    reorderSubscriptions
+    reorderDeudaItems
   } = useFinance();
 
-  // Edit states
   const [isEditingDeudas, setIsEditingDeudas] = useState(false);
-  const [isEditingSubs, setIsEditingSubs] = useState(false);
   const [draggedDeudaIdx, setDraggedDeudaIdx] = useState<number | null>(null);
-  const [draggedSubIdx, setDraggedSubIdx] = useState<number | null>(null);
 
-  // Modal: Deuda
+  // Modal Deuda
   const [showAddDeudaModal, setShowAddDeudaModal] = useState(false);
   const [editingDeudaObj, setEditingDeudaObj] = useState<DeudaItem | null>(null);
-
-  // Form fields: Deuda
   const [deudaName, setDeudaName] = useState('');
   const [deudaTipo, setDeudaTipo] = useState<'por_cobrar' | 'por_pagar'>('por_pagar');
   const [deudaAmount, setDeudaAmount] = useState('');
-  const [deudaIcon, setDeudaIcon] = useState('shield_alert');
 
-  // Modal: Subscription
-  const [showSubModal, setShowSubModal] = useState(false);
-  const [editingSubObj, setEditingSubObj] = useState<SubscriptionItem | null>(null);
-  const [subName, setSubName] = useState('');
-  const [subPrice, setSubPrice] = useState('');
-  const [subBilling, setSubBilling] = useState<'monthly' | 'yearly'>('monthly');
-  const [subMembers, setSubMembers] = useState('1');
-  const [subPeriod, setSubPeriod] = useState<PaymentPeriod>('1st_fortnight');
-  const [subMonth, setSubMonth] = useState('Enero');
-
-  // Icon Picker Modal State
-  const [iconPickerTarget, setIconPickerTarget] = useState<{
-    targetId?: string;
-    currentIcon: string;
-    title: string;
-  } | null>(null);
-
-  // Confirmation modal state
+  // Confirmation modal
   const [confirmConfig, setConfirmConfig] = useState<{
     isOpen: boolean;
     title?: string;
@@ -80,16 +55,11 @@ export const DeudasView: React.FC = () => {
     onConfirm: () => void;
   } | null>(null);
 
-  const getItemIconStyle = () => {
-    return 'bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/50 shadow-sm';
-  };
-
   const openCreateDeuda = () => {
     setEditingDeudaObj(null);
     setDeudaName('');
     setDeudaTipo('por_pagar');
     setDeudaAmount('');
-    setDeudaIcon('shield_alert');
     setShowAddDeudaModal(true);
   };
 
@@ -98,7 +68,6 @@ export const DeudasView: React.FC = () => {
     setDeudaName(item.nombre);
     setDeudaTipo(item.tipo);
     setDeudaAmount(item.monto !== undefined ? item.monto.toString() : '');
-    setDeudaIcon(item.icon || (item.tipo === 'por_cobrar' ? 'coins' : 'shield_alert'));
     setShowAddDeudaModal(true);
   };
 
@@ -111,16 +80,14 @@ export const DeudasView: React.FC = () => {
       updateDeudaItem(editingDeudaObj.id, {
         nombre: deudaName.trim(),
         tipo: deudaTipo,
-        monto: parsedAmount,
-        icon: deudaIcon
+        monto: parsedAmount
       });
     } else {
       addDeudaItem({
         nombre: deudaName.trim(),
         tipo: deudaTipo,
         monto: parsedAmount,
-        moneda: 'COP',
-        icon: deudaIcon
+        moneda: 'COP'
       });
     }
 
@@ -128,363 +95,144 @@ export const DeudasView: React.FC = () => {
     setEditingDeudaObj(null);
   };
 
-  const handleDeleteDeudaFromModal = () => {
-    if (!editingDeudaObj) return;
-    setConfirmConfig({
-      isOpen: true,
-      title: 'Eliminar Registro de Deuda',
-      message: `¿Estás seguro de eliminar "${editingDeudaObj.nombre}"?`,
-      confirmText: 'Sí, eliminar',
-      cancelText: 'Cancelar',
-      variant: 'danger',
-      onConfirm: () => {
-        deleteDeudaItem(editingDeudaObj.id);
-        setShowAddDeudaModal(false);
-        setEditingDeudaObj(null);
-      }
-    });
-  };
-
-  // Open Create Subscription
-  const openCreateSub = () => {
-    setEditingSubObj(null);
-    setSubName('');
-    setSubPrice('');
-    setSubBilling('monthly');
-    setSubMembers('1');
-    setSubPeriod('1st_fortnight');
-    setSubMonth('Enero');
-    setShowSubModal(true);
-  };
-
-  // Open Edit Subscription
-  const openEditSub = (sub: SubscriptionItem) => {
-    setEditingSubObj(sub);
-    setSubName(sub.name);
-    setSubPrice(sub.totalPrice.toString());
-    setSubBilling(sub.billing);
-    setSubMembers((sub.members || 1).toString());
-    setSubPeriod(sub.period || '1st_fortnight');
-    setSubMonth(sub.billingMonth || 'Enero');
-    setShowSubModal(true);
-  };
-
-  // Save Subscription
-  const handleSaveSub = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!subName.trim()) return;
-    const price = parseFloat(subPrice) || 0;
-    const members = parseInt(subMembers, 10) || 1;
-
-    if (editingSubObj) {
-      updateSubscription(editingSubObj.id, {
-        name: subName.trim(),
-        totalPrice: price,
-        members,
-        billing: subBilling,
-        period: subBilling === 'monthly' ? subPeriod : undefined,
-        billingMonth: subBilling === 'yearly' ? subMonth : undefined,
-        moneda: 'COP'
-      });
-    } else {
-      addSubscription({
-        name: subName.trim(),
-        totalPrice: price,
-        members,
-        billing: subBilling,
-        period: subBilling === 'monthly' ? subPeriod : undefined,
-        billingMonth: subBilling === 'yearly' ? subMonth : undefined,
-        moneda: 'COP'
-      });
-    }
-    setShowSubModal(false);
-    setEditingSubObj(null);
-  };
-
-  // Delete Subscription
-  const handleDeleteSub = () => {
-    if (!editingSubObj) return;
-    setConfirmConfig({
-      isOpen: true,
-      title: 'Eliminar Suscripción',
-      message: `¿Estás seguro de eliminar la suscripción "${editingSubObj.name}"?`,
-      confirmText: 'Sí, eliminar',
-      cancelText: 'Cancelar',
-      variant: 'danger',
-      onConfirm: () => {
-        deleteSubscription(editingSubObj.id);
-        setShowSubModal(false);
-        setEditingSubObj(null);
-      }
-    });
-  };
-
   return (
-    <div className="space-y-6 animate-fadeIn">
-      {/* SECCIÓN 1: DEUDAS */}
-      <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
-        <div className="p-4 bg-slate-100 dark:bg-slate-800/70 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-indigo-600 dark:bg-indigo-600 text-white border-2 border-indigo-400 dark:border-indigo-400 flex items-center justify-center shadow-xs flex-shrink-0">
-              <ArrowLeftRight className="w-4 h-4" />
-            </div>
-            <span className="font-extrabold text-slate-800 dark:text-white text-base tracking-wide uppercase">
-              DEUDAS
-            </span>
+    <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
+      <div className="p-4 bg-slate-100 dark:bg-slate-800/70 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-xl bg-indigo-600 dark:bg-indigo-600 text-white border-2 border-indigo-400 dark:border-indigo-400 flex items-center justify-center shadow-xs flex-shrink-0">
+            <ArrowLeftRight className="w-4 h-4" />
           </div>
-
-          {/* Botones de acción: Editar y Agregar (+) */}
-          <div className="flex items-center gap-2">
-            {(data.deudaItems || []).length > 0 && (
-              <button
-                onClick={() => setIsEditingDeudas(!isEditingDeudas)}
-                className={`p-2 rounded-xl text-xs font-semibold border transition-all flex items-center justify-center shadow-sm ${
-                  isEditingDeudas
-                    ? 'bg-blue-600 text-white border-blue-600'
-                    : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-300/80 dark:border-transparent'
-                }`}
-                title={isEditingDeudas ? 'Listo' : 'Editar Deudas'}
-              >
-                {isEditingDeudas ? <Check className="w-4 h-4" /> : <Edit2 className="w-4 h-4" />}
-              </button>
-            )}
-
-            <button
-              onClick={openCreateDeuda}
-              className="p-2 rounded-xl text-xs font-semibold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800/40 hover:bg-blue-200 transition-all flex items-center justify-center shadow-sm"
-              title="Agregar Deuda"
-            >
-              <Plus className="w-4 h-4" />
-            </button>
-          </div>
+          <span className="font-extrabold text-slate-800 dark:text-white text-base tracking-wide uppercase">
+            DEUDAS
+          </span>
         </div>
 
-        <div className="divide-y divide-slate-200 dark:divide-slate-800">
-          {(!data.deudaItems || data.deudaItems.length === 0) ? (
-            <div className="p-8 text-center text-slate-400 dark:text-slate-500 text-xs">
-              No tienes deudas registradas. Haz clic en <strong>+</strong> para registrar una.
-            </div>
-          ) : (
-            data.deudaItems.map((item, idx) => {
-              const isPorCobrar = item.tipo === 'por_cobrar';
-              const hasAmount = item.monto !== undefined && item.monto > 0;
-
-              return (
-                <div
-                  key={item.id}
-                  draggable={isEditingDeudas}
-                  onDragStart={(e) => {
-                    setDraggedDeudaIdx(idx);
-                    e.dataTransfer.effectAllowed = 'move';
-                  }}
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    e.dataTransfer.dropEffect = 'move';
-                  }}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    if (draggedDeudaIdx !== null && draggedDeudaIdx !== idx) {
-                      reorderDeudaItems(draggedDeudaIdx, idx);
-                    }
-                    setDraggedDeudaIdx(null);
-                  }}
-                  onDragEnd={() => setDraggedDeudaIdx(null)}
-                  className={`p-4 bg-white dark:bg-slate-900 transition-all flex items-center justify-between ${
-                    isEditingDeudas ? 'cursor-move select-none' : ''
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                    {isEditingDeudas && (
-                      <div className="text-slate-400 dark:text-slate-500 cursor-grab active:cursor-grabbing p-1 flex-shrink-0">
-                        <GripVertical className="w-4 h-4" />
-                      </div>
-                    )}
-                    {/* Nombre y etiqueta Debo/Me deben debajo */}
-                    <div className="min-w-0 flex-1">
-                      <h4 className="font-bold text-slate-800 dark:text-white text-sm truncate">{item.nombre}</h4>
-                      <div className="mt-0.5">
-                        {isPorCobrar ? (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50">
-                            <ArrowDownLeft className="w-2.5 h-2.5 text-emerald-600 dark:text-emerald-400" />
-                            Me Deben
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800/50">
-                            <ArrowUpRight className="w-2.5 h-2.5 text-rose-600 dark:text-rose-400" />
-                            Debo
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    {hasAmount ? (
-                      <div className="text-right">
-                        <span className="font-mono font-bold text-sm text-slate-800 dark:text-white block">
-                          {formatCurrency(item.monto || 0)}
-                        </span>
-                      </div>
-                    ) : null}
-
-                    {isEditingDeudas ? (
-                      <button
-                        onClick={() => {
-                          setConfirmConfig({
-                            isOpen: true,
-                            title: 'Eliminar Registro de Deuda',
-                            message: `¿Estás seguro de eliminar "${item.nombre}"?`,
-                            confirmText: 'Sí, eliminar',
-                            cancelText: 'Cancelar',
-                            variant: 'danger',
-                            onConfirm: () => deleteDeudaItem(item.id)
-                          });
-                        }}
-                        className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-rose-100 dark:hover:bg-rose-950/50 text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 border border-slate-300/80 dark:border-transparent transition-colors"
-                        title="Eliminar deuda"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => openEditDeuda(item)}
-                        className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-300/80 dark:border-transparent transition-colors"
-                        title="Editar deuda y monto"
-                      >
-                        <Edit2 className="w-3.5 h-3.5" />
-                      </button>
-                    )}
-                  </div>
-                </div>
-              );
-            })
+        {/* Botones de acción: Editar y Agregar (+) */}
+        <div className="flex items-center gap-2">
+          {(data.deudaItems || []).length > 0 && (
+            <button
+              onClick={() => setIsEditingDeudas(!isEditingDeudas)}
+              className={`p-2 rounded-xl text-xs font-semibold border transition-all flex items-center justify-center shadow-sm ${
+                isEditingDeudas
+                  ? 'bg-blue-600 text-white border-blue-600'
+                  : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-300/80 dark:border-transparent'
+              }`}
+              title={isEditingDeudas ? 'Listo' : 'Editar Deudas'}
+            >
+              {isEditingDeudas ? <Check className="w-4 h-4" /> : <Edit2 className="w-4 h-4" />}
+            </button>
           )}
+
+          <button
+            onClick={openCreateDeuda}
+            className="p-2 rounded-xl text-xs font-semibold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800/40 hover:bg-blue-200 transition-all flex items-center justify-center shadow-sm"
+            title="Agregar Deuda"
+          >
+            <Plus className="w-4 h-4" />
+          </button>
         </div>
       </div>
 
-      {/* SECCIÓN 2: SUSCRIPCIONES */}
-      <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
-        <div className="p-4 bg-slate-100 dark:bg-slate-800/70 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-indigo-600 dark:bg-indigo-600 text-white border-2 border-indigo-400 dark:border-indigo-400 flex items-center justify-center shadow-xs flex-shrink-0">
-              <Calendar className="w-4 h-4" />
-            </div>
-            <span className="font-extrabold text-slate-800 dark:text-white text-base tracking-wide uppercase">
-              SUSCRIPCIONES
-            </span>
+      <div className="divide-y divide-slate-200 dark:divide-slate-800">
+        {(!data.deudaItems || data.deudaItems.length === 0) ? (
+          <div className="p-8 text-center text-slate-400 dark:text-slate-500 text-xs">
+            No tienes deudas registradas. Haz clic en <strong>+</strong> para registrar una.
           </div>
+        ) : (
+          data.deudaItems.map((item, idx) => {
+            const isPorCobrar = item.tipo === 'por_cobrar';
+            const hasAmount = item.monto !== undefined && item.monto > 0;
 
-          {/* Botones de acción: Editar y Agregar (+) */}
-          <div className="flex items-center gap-2">
-            {(data.subscriptions || []).length > 0 && (
-              <button
-                onClick={() => setIsEditingSubs(!isEditingSubs)}
-                className={`p-2 rounded-xl text-xs font-semibold border transition-all flex items-center justify-center shadow-sm ${
-                  isEditingSubs
-                    ? 'bg-blue-600 text-white border-blue-600'
-                    : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-300/80 dark:border-transparent'
+            return (
+              <div
+                key={item.id}
+                draggable={isEditingDeudas}
+                onDragStart={(e) => {
+                  setDraggedDeudaIdx(idx);
+                  e.dataTransfer.effectAllowed = 'move';
+                }}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.dataTransfer.dropEffect = 'move';
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  if (draggedDeudaIdx !== null && draggedDeudaIdx !== idx) {
+                    reorderDeudaItems(draggedDeudaIdx, idx);
+                  }
+                  setDraggedDeudaIdx(null);
+                }}
+                onDragEnd={() => setDraggedDeudaIdx(null)}
+                className={`p-4 bg-white dark:bg-slate-900 transition-all flex items-center justify-between ${
+                  isEditingDeudas ? 'cursor-move select-none' : ''
                 }`}
-                title={isEditingSubs ? 'Listo' : 'Editar Suscripciones'}
               >
-                {isEditingSubs ? <Check className="w-4 h-4" /> : <Edit2 className="w-4 h-4" />}
-              </button>
-            )}
-
-            <button
-              onClick={openCreateSub}
-              className="p-2 rounded-xl text-xs font-semibold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800/40 hover:bg-blue-200 transition-all flex items-center justify-center shadow-sm"
-              title="Agregar Suscripción"
-            >
-              <Plus className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-
-        <div className="divide-y divide-slate-200 dark:divide-slate-800">
-          {(!data.subscriptions || data.subscriptions.length === 0) ? (
-            <div className="p-8 text-center text-slate-400 dark:text-slate-500 text-xs">
-              No tienes suscripciones registradas. Haz clic en <strong>+</strong> para registrar una.
-            </div>
-          ) : (
-            data.subscriptions.map((sub, idx) => {
-              const monthlyCost = calculateSubscriptionMonthlyCost(sub);
-              const isYearly = sub.billing === 'yearly';
-
-              return (
-                <div
-                  key={sub.id}
-                  draggable={isEditingSubs}
-                  onDragStart={(e) => {
-                    setDraggedSubIdx(idx);
-                    e.dataTransfer.effectAllowed = 'move';
-                  }}
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    e.dataTransfer.dropEffect = 'move';
-                  }}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    if (draggedSubIdx !== null && draggedSubIdx !== idx) {
-                      reorderSubscriptions(draggedSubIdx, idx);
-                    }
-                    setDraggedSubIdx(null);
-                  }}
-                  onDragEnd={() => setDraggedSubIdx(null)}
-                  className={`p-4 bg-white dark:bg-slate-900 transition-all flex items-center justify-between ${
-                    isEditingSubs ? 'cursor-move select-none' : ''
-                  }`}
-                >
-                  <div className="flex items-center gap-3 min-w-0 flex-1">
-                    {isEditingSubs && (
-                      <div className="text-slate-400 dark:text-slate-500 cursor-grab active:cursor-grabbing p-1 flex-shrink-0">
-                        <GripVertical className="w-4 h-4" />
-                      </div>
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <h4 className="font-bold text-slate-800 dark:text-white text-sm truncate">{sub.name}</h4>
+                <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                  {isEditingDeudas && (
+                    <div className="text-slate-400 dark:text-slate-500 cursor-grab active:cursor-grabbing p-1 flex-shrink-0">
+                      <GripVertical className="w-4 h-4" />
                     </div>
-                  </div>
-
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <div className="text-right">
-                      <span className="font-mono font-bold text-sm text-slate-800 dark:text-white block">
-                        {formatCurrency(monthlyCost)}{isYearly ? '/año' : '/mes'}
-                      </span>
+                  )}
+                  {/* Nombre y etiqueta Debo/Me deben debajo */}
+                  <div className="min-w-0 flex-1">
+                    <h4 className="font-bold text-slate-800 dark:text-white text-sm truncate">{item.nombre}</h4>
+                    <div className="mt-0.5">
+                      {isPorCobrar ? (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50">
+                          <ArrowDownLeft className="w-2.5 h-2.5 text-emerald-600 dark:text-emerald-400" />
+                          Me Deben
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800/50">
+                          <ArrowUpRight className="w-2.5 h-2.5 text-rose-600 dark:text-rose-400" />
+                          Debo
+                        </span>
+                      )}
                     </div>
-
-                    {isEditingSubs ? (
-                      <button
-                        onClick={() => {
-                          setConfirmConfig({
-                            isOpen: true,
-                            title: 'Eliminar Suscripción',
-                            message: `¿Estás seguro de eliminar "${sub.name}"?`,
-                            confirmText: 'Sí, eliminar',
-                            cancelText: 'Cancelar',
-                            variant: 'danger',
-                            onConfirm: () => deleteSubscription(sub.id)
-                          });
-                        }}
-                        className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-rose-100 dark:hover:bg-rose-950/50 text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 border border-slate-300/80 dark:border-transparent transition-colors"
-                        title="Eliminar suscripción"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => openEditSub(sub)}
-                        className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-300/80 dark:border-transparent transition-colors"
-                        title="Editar suscripción"
-                      >
-                        <Edit2 className="w-3.5 h-3.5" />
-                      </button>
-                    )}
                   </div>
                 </div>
-              );
-            })
-          )}
-        </div>
+
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  {hasAmount ? (
+                    <div className="text-right">
+                      <span className="font-mono font-bold text-sm text-slate-800 dark:text-white block">
+                        {formatCurrency(item.monto || 0)}
+                      </span>
+                    </div>
+                  ) : null}
+
+                  {isEditingDeudas ? (
+                    <button
+                      onClick={() => {
+                        setConfirmConfig({
+                          isOpen: true,
+                          title: 'Eliminar Registro de Deuda',
+                          message: `¿Estás seguro de eliminar "${item.nombre}"?`,
+                          confirmText: 'Sí, eliminar',
+                          cancelText: 'Cancelar',
+                          variant: 'danger',
+                          onConfirm: () => deleteDeudaItem(item.id)
+                        });
+                      }}
+                      className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-rose-100 dark:hover:bg-rose-950/50 text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 border border-slate-300/80 dark:border-transparent transition-colors"
+                      title="Eliminar deuda"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => openEditDeuda(item)}
+                      className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-300/80 dark:border-transparent transition-colors"
+                      title="Editar deuda y monto"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })
+        )}
       </div>
 
       {/* Modal: Crear / Editar Deuda */}
@@ -582,6 +330,257 @@ export const DeudasView: React.FC = () => {
         </div>
       )}
 
+      {/* Confirmation Modal */}
+      {confirmConfig && (
+        <ConfirmModal
+          isOpen={confirmConfig.isOpen}
+          title={confirmConfig.title}
+          message={confirmConfig.message}
+          confirmText={confirmConfig.confirmText}
+          cancelText={confirmConfig.cancelText}
+          variant={confirmConfig.variant}
+          onConfirm={() => {
+            confirmConfig.onConfirm();
+            setConfirmConfig(null);
+          }}
+          onCancel={() => setConfirmConfig(null)}
+        />
+      )}
+    </div>
+  );
+};
+
+/**
+ * VISTA SUSCRIPCIONES (Submenú Suscripciones en Presupuesto)
+ */
+export const SuscripcionesView: React.FC = () => {
+  const {
+    data,
+    addSubscription,
+    updateSubscription,
+    deleteSubscription,
+    reorderSubscriptions
+  } = useFinance();
+
+  const [isEditingSubs, setIsEditingSubs] = useState(false);
+  const [draggedSubIdx, setDraggedSubIdx] = useState<number | null>(null);
+
+  // Modal: Subscription
+  const [showSubModal, setShowSubModal] = useState(false);
+  const [editingSubObj, setEditingSubObj] = useState<SubscriptionItem | null>(null);
+  const [subName, setSubName] = useState('');
+  const [subPrice, setSubPrice] = useState('');
+  const [subBilling, setSubBilling] = useState<'monthly' | 'yearly'>('monthly');
+  const [subMembers, setSubMembers] = useState('1');
+  const [subPaymentDay, setSubPaymentDay] = useState<string>('');
+  const [subMonth, setSubMonth] = useState('Enero');
+
+  // Confirmation modal
+  const [confirmConfig, setConfirmConfig] = useState<{
+    isOpen: boolean;
+    title?: string;
+    message: string;
+    confirmText?: string;
+    cancelText?: string | null;
+    variant?: 'danger' | 'warning' | 'info';
+    onConfirm: () => void;
+  } | null>(null);
+
+  // Open Create Subscription
+  const openCreateSub = () => {
+    setEditingSubObj(null);
+    setSubName('');
+    setSubPrice('');
+    setSubBilling('monthly');
+    setSubMembers('1');
+    setSubPaymentDay('');
+    setSubMonth('Enero');
+    setShowSubModal(true);
+  };
+
+  // Open Edit Subscription
+  const openEditSub = (sub: SubscriptionItem) => {
+    setEditingSubObj(sub);
+    setSubName(sub.name);
+    setSubPrice(sub.totalPrice.toString());
+    setSubBilling(sub.billing);
+    setSubMembers((sub.members || 1).toString());
+    setSubPaymentDay(sub.paymentDay !== undefined ? sub.paymentDay.toString() : '');
+    setSubMonth(sub.billingMonth || 'Enero');
+    setShowSubModal(true);
+  };
+
+  // Save Subscription
+  const handleSaveSub = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!subName.trim()) return;
+    const price = parseFloat(subPrice) || 0;
+    const members = parseInt(subMembers, 10) || 1;
+    const dayVal = subPaymentDay ? parseInt(subPaymentDay, 10) : undefined;
+
+    if (editingSubObj) {
+      updateSubscription(editingSubObj.id, {
+        name: subName.trim(),
+        totalPrice: price,
+        members,
+        billing: subBilling,
+        paymentDay: subBilling === 'monthly' ? dayVal : undefined,
+        billingMonth: subBilling === 'yearly' ? subMonth : undefined,
+        moneda: 'COP'
+      });
+    } else {
+      addSubscription({
+        name: subName.trim(),
+        totalPrice: price,
+        members,
+        billing: subBilling,
+        paymentDay: subBilling === 'monthly' ? dayVal : undefined,
+        billingMonth: subBilling === 'yearly' ? subMonth : undefined,
+        moneda: 'COP'
+      });
+    }
+    setShowSubModal(false);
+    setEditingSubObj(null);
+  };
+
+  return (
+    <div className="space-y-6 animate-fadeIn">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
+        <div className="p-4 bg-slate-100 dark:bg-slate-800/70 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-indigo-600 dark:bg-indigo-600 text-white border-2 border-indigo-400 dark:border-indigo-400 flex items-center justify-center shadow-xs flex-shrink-0">
+              <Calendar className="w-4 h-4" />
+            </div>
+            <span className="font-extrabold text-slate-800 dark:text-white text-base tracking-wide uppercase">
+              SUSCRIPCIONES
+            </span>
+          </div>
+
+          {/* Botones de acción: Editar y Agregar (+) */}
+          <div className="flex items-center gap-2">
+            {(data.subscriptions || []).length > 0 && (
+              <button
+                onClick={() => setIsEditingSubs(!isEditingSubs)}
+                className={`p-2 rounded-xl text-xs font-semibold border transition-all flex items-center justify-center shadow-sm ${
+                  isEditingSubs
+                    ? 'bg-blue-600 text-white border-blue-600'
+                    : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-300/80 dark:border-transparent'
+                }`}
+                title={isEditingSubs ? 'Listo' : 'Editar Suscripciones'}
+              >
+                {isEditingSubs ? <Check className="w-4 h-4" /> : <Edit2 className="w-4 h-4" />}
+              </button>
+            )}
+
+            <button
+              onClick={openCreateSub}
+              className="p-2 rounded-xl text-xs font-semibold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800/40 hover:bg-blue-200 transition-all flex items-center justify-center shadow-sm"
+              title="Agregar Suscripción"
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        <div className="divide-y divide-slate-200 dark:divide-slate-800">
+          {(!data.subscriptions || data.subscriptions.length === 0) ? (
+            <div className="p-8 text-center text-slate-400 dark:text-slate-500 text-xs">
+              No tienes suscripciones registradas. Haz clic en <strong>+</strong> para registrar una.
+            </div>
+          ) : (
+            data.subscriptions.map((sub, idx) => {
+              const monthlyCost = calculateSubscriptionMonthlyCost(sub);
+              const isYearly = sub.billing === 'yearly';
+
+              return (
+                <div
+                  key={sub.id}
+                  draggable={isEditingSubs}
+                  onDragStart={(e) => {
+                    setDraggedSubIdx(idx);
+                    e.dataTransfer.effectAllowed = 'move';
+                  }}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    if (draggedSubIdx !== null && draggedSubIdx !== idx) {
+                      reorderSubscriptions(draggedSubIdx, idx);
+                    }
+                    setDraggedSubIdx(null);
+                  }}
+                  onDragEnd={() => setDraggedSubIdx(null)}
+                  className={`p-4 bg-white dark:bg-slate-900 transition-all flex items-center justify-between ${
+                    isEditingSubs ? 'cursor-move select-none' : ''
+                  }`}
+                >
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    {isEditingSubs && (
+                      <div className="text-slate-400 dark:text-slate-500 cursor-grab active:cursor-grabbing p-1 flex-shrink-0">
+                        <GripVertical className="w-4 h-4" />
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-bold text-slate-800 dark:text-white text-sm truncate">{sub.name}</h4>
+                        {sub.paymentDay && !isYearly ? (
+                          <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold whitespace-nowrap flex-shrink-0 bg-blue-100 dark:bg-blue-950/70 border border-blue-300/60 dark:border-blue-800/40 text-blue-700 dark:text-blue-300">
+                            Día {sub.paymentDay}
+                          </span>
+                        ) : null}
+                        {isYearly && sub.billingMonth ? (
+                          <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold whitespace-nowrap flex-shrink-0 bg-purple-100 dark:bg-purple-950/70 border border-purple-300/60 dark:border-purple-800/40 text-purple-700 dark:text-purple-300">
+                            {sub.billingMonth}
+                          </span>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <div className="text-right">
+                      <span className="font-mono font-bold text-sm text-slate-800 dark:text-white block">
+                        {formatCurrency(monthlyCost)}{isYearly ? '/año' : '/mes'}
+                      </span>
+                    </div>
+
+                    {isEditingSubs ? (
+                      <button
+                        onClick={() => {
+                          setConfirmConfig({
+                            isOpen: true,
+                            title: 'Eliminar Suscripción',
+                            message: `¿Estás seguro de eliminar "${sub.name}"?`,
+                            confirmText: 'Sí, eliminar',
+                            cancelText: 'Cancelar',
+                            variant: 'danger',
+                            onConfirm: () => deleteSubscription(sub.id)
+                          });
+                        }}
+                        className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-rose-100 dark:hover:bg-rose-950/50 text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 border border-slate-300/80 dark:border-transparent transition-colors"
+                        title="Eliminar suscripción"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => openEditSub(sub)}
+                        className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-300/80 dark:border-transparent transition-colors"
+                        title="Editar suscripción"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
+
       {/* Modal: Crear / Editar Suscripción */}
       {showSubModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
@@ -605,7 +604,7 @@ export const DeudasView: React.FC = () => {
                   type="text"
                   value={subName}
                   onChange={e => setSubName(e.target.value)}
-                  placeholder="Ej. Suscripción 1, Membresía, Servicio digital"
+                  placeholder="Ej. Netflix, Spotify, iCloud"
                   className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
                   required
                 />
@@ -669,6 +668,39 @@ export const DeudasView: React.FC = () => {
                 </div>
               </div>
 
+              {/* Día de pago si mensual, o Mes si anual */}
+              {subBilling === 'monthly' ? (
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                    Día de Cobro (1 - 31)
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="31"
+                    value={subPaymentDay}
+                    onChange={e => setSubPaymentDay(e.target.value)}
+                    placeholder="Ej. 10, 15, 28"
+                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white font-mono focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+              ) : (
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                    Mes de Cobro
+                  </label>
+                  <select
+                    value={subMonth}
+                    onChange={e => setSubMonth(e.target.value)}
+                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
+                  >
+                    {MONTHS.map(m => (
+                      <option key={m} value={m}>{m}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
               <div className="flex items-center gap-2 pt-3">
                 <button
                   type="button"
@@ -690,23 +722,6 @@ export const DeudasView: React.FC = () => {
         </div>
       )}
 
-      {/* Pop-up Modal de Selección de Ícono */}
-      {iconPickerTarget && (
-        <IconPickerModal
-          isOpen={true}
-          onClose={() => setIconPickerTarget(null)}
-          selectedIconId={iconPickerTarget.currentIcon}
-          title={iconPickerTarget.title}
-          onSelectIcon={(newIcon) => {
-            if (!iconPickerTarget) return;
-            if (iconPickerTarget.targetId) {
-              updateDeudaItem(iconPickerTarget.targetId, { icon: newIcon });
-            }
-            setIconPickerTarget(null);
-          }}
-        />
-      )}
-
       {/* Confirmation Modal */}
       {confirmConfig && (
         <ConfirmModal
@@ -723,6 +738,14 @@ export const DeudasView: React.FC = () => {
           onCancel={() => setConfirmConfig(null)}
         />
       )}
+    </div>
+  );
+};
+
+export const DeudasView: React.FC = () => {
+  return (
+    <div className="space-y-6">
+      <DeudasSection />
     </div>
   );
 };
