@@ -209,16 +209,14 @@ export const PortafolioView: React.FC = () => {
                     setDraggedPortfolioIdx(null);
                   }}
                   onDragEnd={() => setDraggedPortfolioIdx(null)}
-                  className={`p-4 transition-colors flex items-center justify-between gap-3 ${
-                    isEditingPortfolio
-                      ? 'cursor-grab active:cursor-grabbing hover:bg-blue-50/50 dark:hover:bg-blue-950/20'
-                      : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                  className={`p-4 bg-white dark:bg-slate-900 transition-all flex items-center justify-between gap-3 ${
+                    isEditingPortfolio ? 'cursor-move select-none' : ''
                   }`}
                 >
-                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
                     {/* Indicador de arrastre cuando se está editando */}
                     {isEditingPortfolio && (
-                      <div className="text-slate-400 dark:text-slate-500 flex-shrink-0 cursor-grab active:cursor-grabbing">
+                      <div className="text-slate-400 dark:text-slate-500 cursor-grab active:cursor-grabbing p-1 flex-shrink-0">
                         <GripVertical className="w-4 h-4" />
                       </div>
                     )}
@@ -232,10 +230,10 @@ export const PortafolioView: React.FC = () => {
                       style={{ backgroundColor: item.color || '#2563eb' }}
                     />
 
-                    <div className="min-w-0">
-                      <span className="font-bold text-slate-900 dark:text-white text-xs truncate block">
+                    <div className="min-w-0 flex-1">
+                      <h4 className="font-bold text-slate-800 dark:text-white text-sm truncate">
                         {item.nombre}
-                      </span>
+                      </h4>
                       <div className="flex items-center gap-1.5 mt-0.5">
                         <span className="px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-[10px] font-mono font-bold text-slate-500 dark:text-slate-400">
                           {itemMoneda}
@@ -249,39 +247,38 @@ export const PortafolioView: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Lado Derecho: Saldo o Botones de Edición / Eliminar */}
+                  {/* Lado Derecho: Saldo y Botón de Edición / Eliminar */}
                   <div className="flex items-center gap-2 flex-shrink-0">
+                    <span className="font-mono font-bold text-sm text-slate-900 dark:text-white block">
+                      {formatCurrency(item.saldo, itemMoneda)}
+                    </span>
+
                     {isEditingPortfolio ? (
-                      <div className="flex items-center gap-1">
-                        <button
-                          onClick={() => openEditModal(item)}
-                          className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors"
-                          title="Editar"
-                        >
-                          <Edit2 className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => {
-                            setConfirmConfig({
-                              isOpen: true,
-                              title: 'Eliminar Activo',
-                              message: `¿Estás seguro de eliminar "${item.nombre}"?`,
-                              confirmText: 'Sí, eliminar',
-                              cancelText: 'Cancelar',
-                              variant: 'danger',
-                              onConfirm: () => deletePortfolioItem(item.id)
-                            });
-                          }}
-                          className="p-1.5 rounded-lg bg-rose-100 dark:bg-rose-950/60 hover:bg-rose-200 text-rose-600 dark:text-rose-400 transition-colors"
-                          title="Eliminar"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
+                      <button
+                        onClick={() => {
+                          setConfirmConfig({
+                            isOpen: true,
+                            title: 'Eliminar Activo',
+                            message: `¿Estás seguro de eliminar "${item.nombre}"?`,
+                            confirmText: 'Sí, eliminar',
+                            cancelText: 'Cancelar',
+                            variant: 'danger',
+                            onConfirm: () => deletePortfolioItem(item.id)
+                          });
+                        }}
+                        className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-rose-100 dark:hover:bg-rose-950/50 text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 border border-slate-300/80 dark:border-transparent transition-colors"
+                        title="Eliminar activo"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     ) : (
-                      <span className="font-mono font-bold text-xs text-blue-700 dark:text-blue-300">
-                        {formatCurrency(item.saldo, itemMoneda)}
-                      </span>
+                      <button
+                        onClick={() => openEditModal(item)}
+                        className="p-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-300/80 dark:border-transparent transition-colors"
+                        title="Editar activo"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </button>
                     )}
                   </div>
                 </div>

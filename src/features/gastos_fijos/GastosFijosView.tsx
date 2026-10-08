@@ -4,6 +4,7 @@ import { formatCurrency } from '../../services/financeCalculations';
 import { HousingExpense, ObligationItem } from '../../models/finance';
 import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import { AmountCalculatorInput } from '../../components/ui/AmountCalculatorInput';
+import { SuscripcionesView } from '../deudas/DeudasView';
 import {
   Home,
   Layers,
@@ -13,7 +14,6 @@ import {
   X,
   Users,
   User,
-  Calendar,
   Check,
   GripVertical
 } from 'lucide-react';
@@ -60,7 +60,6 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
   const [editingHousingObj, setEditingHousingObj] = useState<HousingExpense | null>(null);
   const [housingName, setHousingName] = useState('');
   const [housingTotal, setHousingTotal] = useState('');
-  const [housingPaymentDay, setHousingPaymentDay] = useState<string>('');
 
   // Modal: Obligation (Cuota Mensual + Total Deuda)
   const [showObligationModal, setShowObligationModal] = useState(false);
@@ -68,7 +67,6 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
   const [obligationName, setObligationName] = useState('');
   const [obligationMonthlyPayment, setObligationMonthlyPayment] = useState('');
   const [obligationTotalDebt, setObligationTotalDebt] = useState('');
-  const [obligationPaymentDay, setObligationPaymentDay] = useState<string>('');
 
   // Calculate ratio for a person
   const getPersonRatio = (personMonthlyIncome: number) => {
@@ -90,7 +88,6 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
     setEditingHousingObj(null);
     setHousingName('');
     setHousingTotal('');
-    setHousingPaymentDay('');
     setShowHousingModal(true);
   };
 
@@ -99,7 +96,6 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
     setEditingHousingObj(h);
     setHousingName(h.name);
     setHousingTotal(h.totalAmount.toString());
-    setHousingPaymentDay(h.paymentDay !== undefined ? h.paymentDay.toString() : '');
     setShowHousingModal(true);
   };
 
@@ -108,20 +104,17 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
     e.preventDefault();
     if (!housingName.trim()) return;
     const total = parseFloat(housingTotal) || 0;
-    const dayVal = housingPaymentDay ? parseInt(housingPaymentDay, 10) : undefined;
 
     if (editingHousingObj) {
       updateHousingExpense(editingHousingObj.id, {
         name: housingName.trim(),
         totalAmount: total,
-        paymentDay: dayVal,
         moneda: 'COP'
       });
     } else {
       addHousingExpense({
         name: housingName.trim(),
         totalAmount: total,
-        paymentDay: dayVal,
         moneda: 'COP'
       });
     }
@@ -153,7 +146,6 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
     setObligationName('');
     setObligationMonthlyPayment('');
     setObligationTotalDebt('');
-    setObligationPaymentDay('');
     setShowObligationModal(true);
   };
 
@@ -163,7 +155,6 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
     setObligationName(ob.name);
     setObligationMonthlyPayment(ob.totalAmount.toString());
     setObligationTotalDebt(ob.totalDebtBalance !== undefined ? ob.totalDebtBalance.toString() : '');
-    setObligationPaymentDay(ob.paymentDay !== undefined ? ob.paymentDay.toString() : '');
     setShowObligationModal(true);
   };
 
@@ -173,14 +164,12 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
     if (!obligationName.trim()) return;
     const monthlyVal = parseFloat(obligationMonthlyPayment) || 0;
     const debtVal = obligationTotalDebt ? parseFloat(obligationTotalDebt) : undefined;
-    const dayVal = obligationPaymentDay ? parseInt(obligationPaymentDay, 10) : undefined;
 
     if (editingObligationObj) {
       updateObligation(editingObligationObj.id, {
         name: obligationName.trim(),
         totalAmount: monthlyVal,
         totalDebtBalance: debtVal,
-        paymentDay: dayVal,
         moneda: 'COP'
       });
     } else {
@@ -188,7 +177,6 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
         name: obligationName.trim(),
         totalAmount: monthlyVal,
         totalDebtBalance: debtVal,
-        paymentDay: dayVal,
         moneda: 'COP'
       });
     }
@@ -303,12 +291,6 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
                         </div>
                       )}
                       <h4 className="font-bold text-slate-800 dark:text-white text-sm truncate">{item.name}</h4>
-
-                      {item.paymentDay ? (
-                        <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold whitespace-nowrap flex-shrink-0 bg-blue-100 dark:bg-blue-950/70 border border-blue-300/60 dark:border-blue-800/40 text-blue-700 dark:text-blue-300">
-                          Día {item.paymentDay}
-                        </span>
-                      ) : null}
                     </div>
 
                     <div className="flex items-center gap-2 flex-shrink-0">
@@ -478,12 +460,6 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
                         </div>
                       )}
                       <h4 className="font-bold text-slate-800 dark:text-white text-sm truncate">{ob.name}</h4>
-
-                      {ob.paymentDay ? (
-                        <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold whitespace-nowrap flex-shrink-0 bg-blue-100 dark:bg-blue-950/70 border border-blue-300/60 dark:border-blue-800/40 text-blue-700 dark:text-blue-300">
-                          Día {ob.paymentDay}
-                        </span>
-                      ) : null}
                     </div>
 
                     <div className="flex items-center gap-2 flex-shrink-0">
@@ -571,6 +547,9 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
         </div>
       </div>
 
+      {/* SECCIÓN 3: SUSCRIPCIONES (Al final de Gastos) */}
+      <SuscripcionesView />
+
       {/* Modal: Crear / Editar Vivienda */}
       {showHousingModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
@@ -609,22 +588,6 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
                 required
                 title="Ajustar Monto"
               />
-
-              {/* Día de Pago */}
-              <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                  Día de Pago (1 - 31)
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  max="31"
-                  value={housingPaymentDay}
-                  onChange={e => setHousingPaymentDay(e.target.value)}
-                  placeholder="Ej. 5, 15, 30"
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white font-mono focus:outline-none focus:border-blue-500"
-                />
-              </div>
 
               <div className="flex items-center gap-2 pt-3">
                 <button
@@ -685,22 +648,6 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
                 required
                 title="Ajustar Cuota"
               />
-
-              {/* Día de Pago */}
-              <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                  Día de Pago (1 - 31)
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  max="31"
-                  value={obligationPaymentDay}
-                  onChange={e => setObligationPaymentDay(e.target.value)}
-                  placeholder="Ej. 5, 15, 30"
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white font-mono focus:outline-none focus:border-blue-500"
-                />
-              </div>
 
               <div className="flex items-center gap-2 pt-3">
                 <button

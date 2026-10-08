@@ -6,6 +6,7 @@ import { getIconComponent, IconPickerModal } from '../../components/ui/IconPicke
 import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import { AmountCalculatorInput } from '../../components/ui/AmountCalculatorInput';
 import { CreditosSuscripcionesView } from '../creditos_suscripciones/CreditosSuscripcionesView';
+import { DeudasSection } from '../deudas/DeudasView';
 import {
   Wallet,
   Edit2,
@@ -56,8 +57,8 @@ export const BilleteraView: React.FC = () => {
     type?: 'billetera_item' | 'billetera_form' | 'movement_item';
   } | null>(null);
 
-  // Submenu: Billetera | Tarjetas
-  const [subView, setSubView] = useState<'billetera' | 'tarjetas'>('billetera');
+  // Submenu: Billetera | Deudas | Tarjetas
+  const [subView, setSubView] = useState<'billetera' | 'deudas' | 'tarjetas'>('billetera');
 
   // Edit states for Billetera and Registro
   const [isEditingBilletera, setIsEditingBilletera] = useState(false);
@@ -274,7 +275,7 @@ export const BilleteraView: React.FC = () => {
           <button
             type="button"
             onClick={() => setSubView('billetera')}
-            className={`flex-1 sm:px-8 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+            className={`flex-1 sm:px-6 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
               subView === 'billetera'
                 ? 'bg-blue-600 text-white shadow-sm'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -284,8 +285,19 @@ export const BilleteraView: React.FC = () => {
           </button>
           <button
             type="button"
+            onClick={() => setSubView('deudas')}
+            className={`flex-1 sm:px-6 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+              subView === 'deudas'
+                ? 'bg-blue-600 text-white shadow-sm'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+            }`}
+          >
+            <ArrowLeftRight className="w-4 h-4" /> Deudas
+          </button>
+          <button
+            type="button"
             onClick={() => setSubView('tarjetas')}
-            className={`flex-1 sm:px-8 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+            className={`flex-1 sm:px-6 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
               subView === 'tarjetas'
                 ? 'bg-blue-600 text-white shadow-sm'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -298,6 +310,8 @@ export const BilleteraView: React.FC = () => {
 
       {subView === 'tarjetas' ? (
         <CreditosSuscripcionesView />
+      ) : subView === 'deudas' ? (
+        <DeudasSection />
       ) : (
         <>
           {/* SECCIÓN 1: BILLETERA */}

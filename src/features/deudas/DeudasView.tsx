@@ -17,11 +17,6 @@ import {
   GripVertical
 } from 'lucide-react';
 
-const MONTHS = [
-  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
-];
-
 /**
  * SECCIÓN DEUDAS (Me deben / Debo)
  */
@@ -351,7 +346,7 @@ export const DeudasSection: React.FC = () => {
 };
 
 /**
- * VISTA SUSCRIPCIONES (Submenú Suscripciones en Presupuesto)
+ * SECCIÓN SUSCRIPCIONES (Incrustable al final de Gastos)
  */
 export const SuscripcionesView: React.FC = () => {
   const {
@@ -372,8 +367,6 @@ export const SuscripcionesView: React.FC = () => {
   const [subPrice, setSubPrice] = useState('');
   const [subBilling, setSubBilling] = useState<'monthly' | 'yearly'>('monthly');
   const [subMembers, setSubMembers] = useState('1');
-  const [subPaymentDay, setSubPaymentDay] = useState<string>('');
-  const [subMonth, setSubMonth] = useState('Enero');
 
   // Confirmation modal
   const [confirmConfig, setConfirmConfig] = useState<{
@@ -393,8 +386,6 @@ export const SuscripcionesView: React.FC = () => {
     setSubPrice('');
     setSubBilling('monthly');
     setSubMembers('1');
-    setSubPaymentDay('');
-    setSubMonth('Enero');
     setShowSubModal(true);
   };
 
@@ -405,8 +396,6 @@ export const SuscripcionesView: React.FC = () => {
     setSubPrice(sub.totalPrice.toString());
     setSubBilling(sub.billing);
     setSubMembers((sub.members || 1).toString());
-    setSubPaymentDay(sub.paymentDay !== undefined ? sub.paymentDay.toString() : '');
-    setSubMonth(sub.billingMonth || 'Enero');
     setShowSubModal(true);
   };
 
@@ -416,7 +405,6 @@ export const SuscripcionesView: React.FC = () => {
     if (!subName.trim()) return;
     const price = parseFloat(subPrice) || 0;
     const members = parseInt(subMembers, 10) || 1;
-    const dayVal = subPaymentDay ? parseInt(subPaymentDay, 10) : undefined;
 
     if (editingSubObj) {
       updateSubscription(editingSubObj.id, {
@@ -424,8 +412,6 @@ export const SuscripcionesView: React.FC = () => {
         totalPrice: price,
         members,
         billing: subBilling,
-        paymentDay: subBilling === 'monthly' ? dayVal : undefined,
-        billingMonth: subBilling === 'yearly' ? subMonth : undefined,
         moneda: 'COP'
       });
     } else {
@@ -434,8 +420,6 @@ export const SuscripcionesView: React.FC = () => {
         totalPrice: price,
         members,
         billing: subBilling,
-        paymentDay: subBilling === 'monthly' ? dayVal : undefined,
-        billingMonth: subBilling === 'yearly' ? subMonth : undefined,
         moneda: 'COP'
       });
     }
@@ -444,141 +428,127 @@ export const SuscripcionesView: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 animate-fadeIn">
-      <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
-        <div className="p-4 bg-slate-100 dark:bg-slate-800/70 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-indigo-600 dark:bg-indigo-600 text-white border-2 border-indigo-400 dark:border-indigo-400 flex items-center justify-center shadow-xs flex-shrink-0">
-              <Calendar className="w-4 h-4" />
-            </div>
-            <span className="font-extrabold text-slate-800 dark:text-white text-base tracking-wide uppercase">
-              SUSCRIPCIONES
-            </span>
+    <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
+      <div className="p-4 bg-slate-100 dark:bg-slate-800/70 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-xl bg-indigo-600 dark:bg-indigo-600 text-white border-2 border-indigo-400 dark:border-indigo-400 flex items-center justify-center shadow-xs flex-shrink-0">
+            <Calendar className="w-4 h-4" />
           </div>
-
-          {/* Botones de acción: Editar y Agregar (+) */}
-          <div className="flex items-center gap-2">
-            {(data.subscriptions || []).length > 0 && (
-              <button
-                onClick={() => setIsEditingSubs(!isEditingSubs)}
-                className={`p-2 rounded-xl text-xs font-semibold border transition-all flex items-center justify-center shadow-sm ${
-                  isEditingSubs
-                    ? 'bg-blue-600 text-white border-blue-600'
-                    : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-300/80 dark:border-transparent'
-                }`}
-                title={isEditingSubs ? 'Listo' : 'Editar Suscripciones'}
-              >
-                {isEditingSubs ? <Check className="w-4 h-4" /> : <Edit2 className="w-4 h-4" />}
-              </button>
-            )}
-
-            <button
-              onClick={openCreateSub}
-              className="p-2 rounded-xl text-xs font-semibold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800/40 hover:bg-blue-200 transition-all flex items-center justify-center shadow-sm"
-              title="Agregar Suscripción"
-            >
-              <Plus className="w-4 h-4" />
-            </button>
-          </div>
+          <span className="font-extrabold text-slate-800 dark:text-white text-base tracking-wide uppercase">
+            SUSCRIPCIONES
+          </span>
         </div>
 
-        <div className="divide-y divide-slate-200 dark:divide-slate-800">
-          {(!data.subscriptions || data.subscriptions.length === 0) ? (
-            <div className="p-8 text-center text-slate-400 dark:text-slate-500 text-xs">
-              No tienes suscripciones registradas. Haz clic en <strong>+</strong> para registrar una.
-            </div>
-          ) : (
-            data.subscriptions.map((sub, idx) => {
-              const monthlyCost = calculateSubscriptionMonthlyCost(sub);
-              const isYearly = sub.billing === 'yearly';
+        {/* Botones de acción: Editar y Agregar (+) */}
+        <div className="flex items-center gap-2">
+          {(data.subscriptions || []).length > 0 && (
+            <button
+              onClick={() => setIsEditingSubs(!isEditingSubs)}
+              className={`p-2 rounded-xl text-xs font-semibold border transition-all flex items-center justify-center shadow-sm ${
+                isEditingSubs
+                  ? 'bg-blue-600 text-white border-blue-600'
+                  : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-300/80 dark:border-transparent'
+              }`}
+              title={isEditingSubs ? 'Listo' : 'Editar Suscripciones'}
+            >
+              {isEditingSubs ? <Check className="w-4 h-4" /> : <Edit2 className="w-4 h-4" />}
+            </button>
+          )}
 
-              return (
-                <div
-                  key={sub.id}
-                  draggable={isEditingSubs}
-                  onDragStart={(e) => {
-                    setDraggedSubIdx(idx);
-                    e.dataTransfer.effectAllowed = 'move';
-                  }}
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    e.dataTransfer.dropEffect = 'move';
-                  }}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    if (draggedSubIdx !== null && draggedSubIdx !== idx) {
-                      reorderSubscriptions(draggedSubIdx, idx);
-                    }
-                    setDraggedSubIdx(null);
-                  }}
-                  onDragEnd={() => setDraggedSubIdx(null)}
-                  className={`p-4 bg-white dark:bg-slate-900 transition-all flex items-center justify-between ${
-                    isEditingSubs ? 'cursor-move select-none' : ''
-                  }`}
-                >
-                  <div className="flex items-center gap-2 min-w-0 flex-1">
-                    {isEditingSubs && (
-                      <div className="text-slate-400 dark:text-slate-500 cursor-grab active:cursor-grabbing p-1 flex-shrink-0">
-                        <GripVertical className="w-4 h-4" />
-                      </div>
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-bold text-slate-800 dark:text-white text-sm truncate">{sub.name}</h4>
-                        {sub.paymentDay && !isYearly ? (
-                          <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold whitespace-nowrap flex-shrink-0 bg-blue-100 dark:bg-blue-950/70 border border-blue-300/60 dark:border-blue-800/40 text-blue-700 dark:text-blue-300">
-                            Día {sub.paymentDay}
-                          </span>
-                        ) : null}
-                        {isYearly && sub.billingMonth ? (
-                          <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold whitespace-nowrap flex-shrink-0 bg-purple-100 dark:bg-purple-950/70 border border-purple-300/60 dark:border-purple-800/40 text-purple-700 dark:text-purple-300">
-                            {sub.billingMonth}
-                          </span>
-                        ) : null}
-                      </div>
+          <button
+            onClick={openCreateSub}
+            className="p-2 rounded-xl text-xs font-semibold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800/40 hover:bg-blue-200 transition-all flex items-center justify-center shadow-sm"
+            title="Agregar Suscripción"
+          >
+            <Plus className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
+      <div className="divide-y divide-slate-200 dark:divide-slate-800">
+        {(!data.subscriptions || data.subscriptions.length === 0) ? (
+          <div className="p-8 text-center text-slate-400 dark:text-slate-500 text-xs">
+            No tienes suscripciones registradas. Haz clic en <strong>+</strong> para registrar una.
+          </div>
+        ) : (
+          data.subscriptions.map((sub, idx) => {
+            const monthlyCost = calculateSubscriptionMonthlyCost(sub);
+            const isYearly = sub.billing === 'yearly';
+
+            return (
+              <div
+                key={sub.id}
+                draggable={isEditingSubs}
+                onDragStart={(e) => {
+                  setDraggedSubIdx(idx);
+                  e.dataTransfer.effectAllowed = 'move';
+                }}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.dataTransfer.dropEffect = 'move';
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  if (draggedSubIdx !== null && draggedSubIdx !== idx) {
+                    reorderSubscriptions(draggedSubIdx, idx);
+                  }
+                  setDraggedSubIdx(null);
+                }}
+                onDragEnd={() => setDraggedSubIdx(null)}
+                className={`p-4 bg-white dark:bg-slate-900 transition-all flex items-center justify-between ${
+                  isEditingSubs ? 'cursor-move select-none' : ''
+                }`}
+              >
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                  {isEditingSubs && (
+                    <div className="text-slate-400 dark:text-slate-500 cursor-grab active:cursor-grabbing p-1 flex-shrink-0">
+                      <GripVertical className="w-4 h-4" />
                     </div>
-                  </div>
-
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <div className="text-right">
-                      <span className="font-mono font-bold text-sm text-slate-800 dark:text-white block">
-                        {formatCurrency(monthlyCost)}{isYearly ? '/año' : '/mes'}
-                      </span>
-                    </div>
-
-                    {isEditingSubs ? (
-                      <button
-                        onClick={() => {
-                          setConfirmConfig({
-                            isOpen: true,
-                            title: 'Eliminar Suscripción',
-                            message: `¿Estás seguro de eliminar "${sub.name}"?`,
-                            confirmText: 'Sí, eliminar',
-                            cancelText: 'Cancelar',
-                            variant: 'danger',
-                            onConfirm: () => deleteSubscription(sub.id)
-                          });
-                        }}
-                        className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-rose-100 dark:hover:bg-rose-950/50 text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 border border-slate-300/80 dark:border-transparent transition-colors"
-                        title="Eliminar suscripción"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => openEditSub(sub)}
-                        className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-300/80 dark:border-transparent transition-colors"
-                        title="Editar suscripción"
-                      >
-                        <Edit2 className="w-3.5 h-3.5" />
-                      </button>
-                    )}
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <h4 className="font-bold text-slate-800 dark:text-white text-sm truncate">{sub.name}</h4>
                   </div>
                 </div>
-              );
-            })
-          )}
-        </div>
+
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <div className="text-right">
+                    <span className="font-mono font-bold text-sm text-slate-800 dark:text-white block">
+                      {formatCurrency(monthlyCost)}{isYearly ? '/año' : '/mes'}
+                    </span>
+                  </div>
+
+                  {isEditingSubs ? (
+                    <button
+                      onClick={() => {
+                        setConfirmConfig({
+                          isOpen: true,
+                          title: 'Eliminar Suscripción',
+                          message: `¿Estás seguro de eliminar "${sub.name}"?`,
+                          confirmText: 'Sí, eliminar',
+                          cancelText: 'Cancelar',
+                          variant: 'danger',
+                          onConfirm: () => deleteSubscription(sub.id)
+                        });
+                      }}
+                      className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-rose-100 dark:hover:bg-rose-950/50 text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 border border-slate-300/80 dark:border-transparent transition-colors"
+                      title="Eliminar suscripción"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => openEditSub(sub)}
+                      className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-300/80 dark:border-transparent transition-colors"
+                      title="Editar suscripción"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })
+        )}
       </div>
 
       {/* Modal: Crear / Editar Suscripción */}
@@ -667,39 +637,6 @@ export const SuscripcionesView: React.FC = () => {
                   </button>
                 </div>
               </div>
-
-              {/* Día de pago si mensual, o Mes si anual */}
-              {subBilling === 'monthly' ? (
-                <div>
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                    Día de Cobro (1 - 31)
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="31"
-                    value={subPaymentDay}
-                    onChange={e => setSubPaymentDay(e.target.value)}
-                    placeholder="Ej. 10, 15, 28"
-                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white font-mono focus:outline-none focus:border-blue-500"
-                  />
-                </div>
-              ) : (
-                <div>
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                    Mes de Cobro
-                  </label>
-                  <select
-                    value={subMonth}
-                    onChange={e => setSubMonth(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
-                  >
-                    {MONTHS.map(m => (
-                      <option key={m} value={m}>{m}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
 
               <div className="flex items-center gap-2 pt-3">
                 <button
