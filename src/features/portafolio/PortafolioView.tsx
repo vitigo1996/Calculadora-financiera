@@ -179,10 +179,15 @@ export const PortafolioView: React.FC = () => {
                       </div>
                     )}
 
-                    <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
                       <h4 className="font-bold text-slate-800 dark:text-white text-sm truncate">
                         {item.nombre}
                       </h4>
+                      {isDiff && (
+                        <span className="px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-[10px] font-mono font-bold text-slate-500 dark:text-slate-400 flex-shrink-0">
+                          {itemMoneda}
+                        </span>
+                      )}
                     </div>
                   </div>
 
@@ -194,7 +199,7 @@ export const PortafolioView: React.FC = () => {
                       </span>
                       {isDiff && (
                         <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono block">
-                          ≈ {formatCurrency(equivalentInBase, baseCurrency)}
+                          {formatCurrency(equivalentInBase, baseCurrency)}
                         </span>
                       )}
                     </div>
