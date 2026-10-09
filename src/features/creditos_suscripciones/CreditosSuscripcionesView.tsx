@@ -78,6 +78,18 @@ export const CreditosSuscripcionesView: React.FC = () => {
   // Selected card reference
   const selectedCard = data.creditCards.find(c => c.id === selectedCardId) || data.creditCards[0];
 
+  const getNextMonthPaymentDateStr = (day: number) => {
+    const now = new Date();
+    const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    const daysInNextMonth = new Date(nextMonth.getFullYear(), nextMonth.getMonth() + 1, 0).getDate();
+    const validDay = Math.min(day, daysInNextMonth);
+    const targetDate = new Date(nextMonth.getFullYear(), nextMonth.getMonth(), validDay);
+    return targetDate.toLocaleDateString('es-CO', {
+      day: 'numeric',
+      month: 'short'
+    });
+  };
+
   // Open Create Card Modal
   const openCreateCard = () => {
     setCardName('');
@@ -332,7 +344,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
               </h3>
               {selectedCard.paymentDay ? (
                 <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 bg-slate-200/80 dark:bg-slate-800 px-2 py-0.5 rounded-lg">
-                  Pago: día {selectedCard.paymentDay}
+                  Pago: {getNextMonthPaymentDateStr(selectedCard.paymentDay)}
                 </span>
               ) : null}
             </div>
