@@ -261,10 +261,10 @@ export const DeudasSection: React.FC = () => {
                 />
               </div>
 
-              {/* Selector de Dirección: 'Me Deben' vs 'Debo' */}
+              {/* Selector de Estado: 'Me Deben' vs 'Debo' */}
               <div>
                 <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
-                  Dirección
+                  Estado
                 </label>
                 <div className="grid grid-cols-2 gap-2">
                   <button

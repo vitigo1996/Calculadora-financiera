@@ -73,7 +73,7 @@ export const AmountCalculatorInput: React.FC<AmountCalculatorInputProps> = ({
 
         {/* Pop-up de Calculadora */}
         {showPopup && (
-          <div className="absolute right-0 top-full mt-2 z-30 p-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-2xl shadow-xl space-y-2.5 w-64 animate-scaleUp">
+          <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 z-30 p-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-2xl shadow-xl space-y-2.5 w-72 max-w-[95vw] animate-scaleUp">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
                 {title}
@@ -81,42 +81,46 @@ export const AmountCalculatorInput: React.FC<AmountCalculatorInputProps> = ({
               <button
                 type="button"
                 onClick={() => setShowPopup(false)}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
             </div>
 
-            <input
-              type="number"
-              step="any"
-              value={delta}
-              onChange={e => setDelta(e.target.value)}
-              onFocus={e => {
-                if (e.target.value === '0') {
-                  e.target.select();
-                }
-              }}
-              placeholder="Valor a sumar o restar..."
-              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-xs px-2.5 py-1.5 rounded-xl text-slate-800 dark:text-white font-mono focus:outline-none focus:border-blue-500"
-              autoFocus
-            />
+            <div className="flex items-stretch gap-2">
+              <input
+                type="number"
+                step="any"
+                value={delta}
+                onChange={e => setDelta(e.target.value)}
+                onFocus={e => {
+                  if (e.target.value === '0') {
+                    e.target.select();
+                  }
+                }}
+                placeholder="Valor"
+                className="flex-1 min-w-0 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-sm px-3 py-2 rounded-xl text-slate-800 dark:text-white font-mono focus:outline-none focus:border-blue-500"
+                autoFocus
+              />
 
-            <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => applyCalc('+')}
-                className="flex-1 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center justify-center gap-1 shadow-sm transition-all"
-              >
-                <Plus className="w-3.5 h-3.5" /> Sumar
-              </button>
-              <button
-                type="button"
-                onClick={() => applyCalc('-')}
-                className="flex-1 py-1.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-white font-bold text-xs flex items-center justify-center gap-1 shadow-sm transition-all"
-              >
-                <Minus className="w-3.5 h-3.5" /> Restar
-              </button>
+              <div className="flex flex-col gap-1.5 flex-shrink-0">
+                <button
+                  type="button"
+                  onClick={() => applyCalc('+')}
+                  className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center justify-center gap-1 shadow-sm transition-all"
+                  title="Sumar"
+                >
+                  <Plus className="w-3.5 h-3.5" /> Sumar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => applyCalc('-')}
+                  className="px-3 py-1.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-white font-bold text-xs flex items-center justify-center gap-1 shadow-sm transition-all"
+                  title="Restar"
+                >
+                  <Minus className="w-3.5 h-3.5" /> Restar
+                </button>
+              </div>
             </div>
           </div>
         )}

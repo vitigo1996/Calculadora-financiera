@@ -578,17 +578,20 @@ export const CreditosSuscripcionesView: React.FC = () => {
               {/* Día de Pago */}
               <div>
                 <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                  Día de Pago (1 - 31)
+                  Día de Pago
                 </label>
-                <input
-                  type="number"
-                  min="1"
-                  max="31"
+                <select
                   value={cardPaymentDay}
                   onChange={e => setCardPaymentDay(e.target.value)}
-                  placeholder="Ej. 15, 30"
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white font-mono focus:outline-none focus:border-blue-500"
-                />
+                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
+                >
+                  <option value="">Seleccionar día</option>
+                  {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
+                    <option key={day} value={day.toString()}>
+                      Día {day}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="flex items-center gap-2 pt-3">
