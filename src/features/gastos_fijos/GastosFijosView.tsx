@@ -586,7 +586,7 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
                 onChange={setHousingTotal}
                 placeholder="0"
                 required
-                title="Ajustar Monto"
+                title="Ajuste"
               />
 
               <div className="flex items-center gap-2 pt-3">
@@ -646,7 +646,7 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
                 onChange={setObligationMonthlyPayment}
                 placeholder="0"
                 required
-                title="Ajustar Cuota"
+                title="Ajuste"
               />
 
               <div className="flex items-center gap-2 pt-3">

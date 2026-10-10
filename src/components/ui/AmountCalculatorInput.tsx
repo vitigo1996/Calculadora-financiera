@@ -18,7 +18,7 @@ export const AmountCalculatorInput: React.FC<AmountCalculatorInputProps> = ({
   placeholder = '0',
   required = false,
   className = '',
-  title = 'Ajustar Monto'
+  title = 'Ajuste'
 }) => {
   const [showPopup, setShowPopup] = useState(false);
   const [delta, setDelta] = useState('');
@@ -74,7 +74,7 @@ export const AmountCalculatorInput: React.FC<AmountCalculatorInputProps> = ({
         {/* Modal de Calculadora Centrado en Pantalla */}
         {showPopup && (
           <div
-            className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn"
+            className="fixed inset-0 z-[60] backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn"
             onClick={() => setShowPopup(false)}
           >
             <div

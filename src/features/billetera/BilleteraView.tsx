@@ -667,11 +667,11 @@ export const BilleteraView: React.FC = () => {
 
               {/* Saldo con Calculadora */}
               <AmountCalculatorInput
-                label="Saldo Inicial"
+                label="Saldo"
                 value={billeteraBalance}
                 onChange={setBilleteraBalance}
                 placeholder="0"
-                title="Ajustar Saldo"
+                title="Ajuste"
               />
 
               <div className="flex items-center gap-2 pt-3">
@@ -781,7 +781,7 @@ export const BilleteraView: React.FC = () => {
                 onChange={setMovementAmount}
                 placeholder="0"
                 required
-                title="Ajustar Monto del Registro"
+                title="Ajuste"
               />
 
               {/* Selector de Cuenta Origen / Destino */}

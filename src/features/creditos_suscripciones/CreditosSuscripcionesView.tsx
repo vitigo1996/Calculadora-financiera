@@ -572,7 +572,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
                 onChange={setCardLimit}
                 placeholder="0"
                 required
-                title="Ajustar Cupo"
+                title="Ajuste"
               />
 
               {/* Día de Pago */}
@@ -621,7 +621,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
           <div className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl animate-scaleUp max-h-[90vh] overflow-y-auto my-auto">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold text-slate-800 dark:text-white">
-                {`Nueva Compra en ${selectedCard?.name || 'Tarjeta'}`}
+                {`Registro ${selectedCard?.name || 'Tarjeta'}`}
               </h3>
               <button
                 onClick={() => setShowAddPurchaseModal(false)}
@@ -634,7 +634,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
             <form onSubmit={handleAddPurchase} className="space-y-4">
               <div>
                 <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                  Concepto de la Compra
+                  Concepto
                 </label>
                 <input
                   type="text"
@@ -654,7 +654,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
                 onChange={setPurchaseAmount}
                 placeholder="0"
                 required
-                title="Ajustar Monto"
+                title="Ajuste"
               />
 
               <div className="flex items-center gap-2 pt-3">

@@ -319,7 +319,7 @@ export const PortafolioView: React.FC = () => {
                 value={itemBalance}
                 onChange={setItemBalance}
                 placeholder="0"
-                title="Ajustar Saldo"
+                title="Ajuste"
               />
 
               <div className="flex items-center gap-2 pt-3">

@@ -301,7 +301,7 @@ export const DeudasSection: React.FC = () => {
                 value={deudaAmount}
                 onChange={setDeudaAmount}
                 placeholder="0"
-                title="Ajustar Monto"
+                title="Ajuste"
               />
 
               <div className="flex items-center gap-2 pt-3">
@@ -587,7 +587,7 @@ export const SuscripcionesView: React.FC = () => {
                 onChange={setSubPrice}
                 placeholder="0"
                 required
-                title="Ajustar Precio"
+                title="Ajuste"
               />
 
               {/* Miembros / Personas */}
