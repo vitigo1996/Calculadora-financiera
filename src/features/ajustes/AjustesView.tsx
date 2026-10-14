@@ -6,14 +6,13 @@ import { formatCurrency, convertToBase } from '../../services/financeCalculation
 import { PersonProfile, ExpenseSplitMethod } from '../../models/finance';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import {
-  User,
-  Users,
   Sun,
   Moon,
   Coins,
   Sliders,
   RefreshCw,
   ChevronRight,
+  ChevronDown,
   ArrowLeft,
   Wallet,
   PieChart as PieChartIcon
@@ -38,9 +37,10 @@ export const AjustesView: React.FC = () => {
   } = useFinance();
   const { theme, toggleTheme } = useTheme();
 
-  // Pantalla activa: 'main', 'perfil', 'distribucion'
-  const [activeScreen, setActiveScreen] = useState<'main' | 'perfil' | 'distribucion'>('main');
+  // Pantalla activa: 'main', 'distribucion'
+  const [activeScreen, setActiveScreen] = useState<'main' | 'distribucion'>('main');
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [isIngresosExpanded, setIsIngresosExpanded] = useState(false);
 
   // Asegurar 4 aportantes fijos
   const getPerson = (index: number): PersonProfile => {
@@ -81,76 +81,8 @@ export const AjustesView: React.FC = () => {
     updatePeople(updated);
   };
 
-  // Actualizar nombre de aportante (en perfil)
-  const handleUpdateName = (index: number, newName: string) => {
-    const updated = [...peopleList];
-    updated[index] = { ...updated[index], name: newName };
-    updatePeople(updated);
-  };
-
   // Calcular total de ingreso familiar
   const totalCombinedIncome = peopleList.reduce((sum, p) => sum + (p.monthlyIncome || 0), 0);
-
-  // ==========================================
-  // SUB-VISTA: PERFIL (Diseño unificado de filas)
-  // ==========================================
-  if (activeScreen === 'perfil') {
-    return (
-      <div className="space-y-4 animate-fadeIn pb-24">
-        {/* Botón Volver */}
-        <button
-          onClick={() => setActiveScreen('main')}
-          className="flex items-center gap-2 text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 px-3.5 py-2 rounded-2xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 shadow-xs transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Volver a Ajustes</span>
-        </button>
-
-        {/* Tarjeta de Perfil replicando el diseño del menú de ajustes */}
-        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors divide-y divide-slate-200 dark:divide-slate-800">
-          {/* Fila 1: Nombre */}
-          <div className="p-4 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3 flex-shrink-0">
-              <div className="w-9 h-9 rounded-xl bg-indigo-600 dark:bg-indigo-600 text-white border-2 border-indigo-400 dark:border-indigo-400 flex items-center justify-center shadow-xs flex-shrink-0">
-                <User className="w-4 h-4" />
-              </div>
-              <span className="font-bold text-slate-800 dark:text-white text-sm">
-                Nombre
-              </span>
-            </div>
-
-            <input
-              type="text"
-              value={peopleList[0]?.name || ''}
-              onChange={e => handleUpdateName(0, e.target.value)}
-              placeholder="Mi Nombre"
-              className="w-48 sm:w-64 text-right bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 transition-colors"
-            />
-          </div>
-
-          {/* Fila 2: Ingreso */}
-          <div className="p-4 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3 flex-shrink-0">
-              <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-200/60 dark:border-blue-800/40 shadow-xs flex-shrink-0">
-                <Coins className="w-4 h-4" />
-              </div>
-              <span className="font-bold text-slate-800 dark:text-white text-sm">
-                Ingreso
-              </span>
-            </div>
-
-            <input
-              type="number"
-              value={peopleList[0]?.monthlyIncome === 0 ? '' : peopleList[0]?.monthlyIncome}
-              onChange={e => handleUpdateIncome(0, parseFloat(e.target.value) || 0)}
-              placeholder="0"
-              className="w-48 sm:w-64 text-right bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs font-mono font-bold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 transition-colors"
-            />
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   // ==========================================
   // SUB-VISTA: DISTRIBUCIÓN (Gráficas de Disponible y Activos)
@@ -329,27 +261,7 @@ export const AjustesView: React.FC = () => {
       {/* Contenedor Principal Unificado con divisiones idénticas */}
       <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors divide-y divide-slate-200 dark:divide-slate-800">
         
-        {/* 1. PERFIL */}
-        <button
-          type="button"
-          onClick={() => setActiveScreen('perfil')}
-          className="w-full p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors text-left group"
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-indigo-600 dark:bg-indigo-600 text-white border-2 border-indigo-400 dark:border-indigo-400 flex items-center justify-center shadow-xs flex-shrink-0">
-              <User className="w-4 h-4" />
-            </div>
-            <div>
-              <h4 className="font-bold text-slate-800 dark:text-white text-sm">Perfil</h4>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                {peopleList[0]?.name || 'Mi Perfil'} • {formatCurrency(peopleList[0]?.monthlyIncome || 0)}
-              </p>
-            </div>
-          </div>
-          <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-white transition-colors" />
-        </button>
-
-        {/* 2. MODO VISUAL */}
+        {/* 1. MODO VISUAL */}
         <div className="p-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-200/60 dark:border-blue-800/40 shadow-xs flex-shrink-0">
@@ -382,7 +294,7 @@ export const AjustesView: React.FC = () => {
           </button>
         </div>
 
-        {/* 3. MONEDA BASE */}
+        {/* 2. MONEDA BASE */}
         <div className="p-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-200/60 dark:border-blue-800/40 shadow-xs flex-shrink-0">
@@ -406,42 +318,27 @@ export const AjustesView: React.FC = () => {
           </select>
         </div>
 
-        {/* 4. APORTANTES 1 AL 4: SOLO INGRESO */}
-        {[0, 1, 2, 3].map((idx) => {
-          const person = peopleList[idx];
-          const aportanteNum = idx + 1;
-          const labelTitle = `Ingreso Aportante ${aportanteNum}`;
-
-          return (
-            <div key={idx} className="p-4 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3 flex-shrink-0">
-                <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-200/60 dark:border-blue-800/40 shadow-xs flex-shrink-0">
-                  <Coins className="w-4 h-4" />
-                </div>
-                <div>
-                  <h4 className="font-bold text-slate-800 dark:text-white text-sm">
-                    {labelTitle}
-                  </h4>
-                  {idx === 0 && person.name && person.name !== 'Yo' && (
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                      {person.name}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              <input
-                type="number"
-                value={person.monthlyIncome === 0 ? '' : person.monthlyIncome}
-                onChange={e => handleUpdateIncome(idx, parseFloat(e.target.value) || 0)}
-                placeholder="0"
-                className="w-40 sm:w-56 text-right bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs font-mono font-bold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 transition-colors"
-              />
+        {/* 3. DISTRIBUCIÓN */}
+        <button
+          type="button"
+          onClick={() => setActiveScreen('distribucion')}
+          className="w-full p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors text-left group"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-indigo-600 dark:bg-indigo-600 text-white border-2 border-indigo-400 dark:border-indigo-400 flex items-center justify-center shadow-xs flex-shrink-0">
+              <PieChartIcon className="w-4 h-4" />
             </div>
-          );
-        })}
+            <div>
+              <h4 className="font-bold text-slate-800 dark:text-white text-sm">Distribución</h4>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                Gráficas de disponible y activos
+              </p>
+            </div>
+          </div>
+          <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-white transition-colors" />
+        </button>
 
-        {/* 5. MÉTODO DE REPARTO */}
+        {/* 4. MÉTODO DE REPARTO */}
         <div className="p-4 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 flex-shrink-0">
             <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-200/60 dark:border-blue-800/40 shadow-xs flex-shrink-0">
@@ -466,43 +363,70 @@ export const AjustesView: React.FC = () => {
           </select>
         </div>
 
-        {/* 5. DISTRIBUCIÓN (Movido desde Portafolio) */}
-        <button
-          type="button"
-          onClick={() => setActiveScreen('distribucion')}
-          className="w-full p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors text-left group"
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-indigo-600 dark:bg-indigo-600 text-white border-2 border-indigo-400 dark:border-indigo-400 flex items-center justify-center shadow-xs flex-shrink-0">
-              <PieChartIcon className="w-4 h-4" />
+        {/* 5. INGRESOS (BOTÓN CON SUBMENÚ DINÁMICO) */}
+        <div className="transition-colors">
+          <button
+            type="button"
+            onClick={() => setIsIngresosExpanded(!isIngresosExpanded)}
+            className="w-full p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors text-left group"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-indigo-600 dark:bg-indigo-600 text-white border-2 border-indigo-400 dark:border-indigo-400 flex items-center justify-center shadow-xs flex-shrink-0">
+                <Wallet className="w-4 h-4" />
+              </div>
+              <div>
+                <h4 className="font-bold text-slate-800 dark:text-white text-sm">Ingresos</h4>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                  Total: {formatCurrency(totalCombinedIncome)}
+                </p>
+              </div>
             </div>
-            <div>
-              <h4 className="font-bold text-slate-800 dark:text-white text-sm">Distribución</h4>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                Gráficas de disponible y activos
-              </p>
-            </div>
-          </div>
-          <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-white transition-colors" />
-        </button>
 
-        {/* 6. TOTAL INGRESO FAMILIAR (Al final del menú general) */}
-        <div className="p-4 flex items-center justify-between bg-slate-50/70 dark:bg-slate-950/40">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-indigo-600 dark:bg-indigo-600 text-white border-2 border-indigo-400 dark:border-indigo-400 flex items-center justify-center shadow-xs flex-shrink-0">
-              <Wallet className="w-4 h-4" />
+            <div className="flex items-center gap-1.5 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-white transition-colors">
+              <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isIngresosExpanded ? 'rotate-180' : ''}`} />
             </div>
-            <div>
-              <h4 className="font-bold text-slate-800 dark:text-white text-sm">Total Ingreso Familiar</h4>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                Suma total de aportes
-              </p>
-            </div>
-          </div>
+          </button>
 
-          <span className="font-mono font-black text-sm sm:text-base text-blue-700 dark:text-blue-300">
-            {formatCurrency(totalCombinedIncome)}
-          </span>
+          {/* Submenú desplegable de los 4 ingresos */}
+          {isIngresosExpanded && (
+            <div className="bg-slate-50/70 dark:bg-slate-950/40 border-t border-slate-200 dark:border-slate-800 divide-y divide-slate-200/70 dark:divide-slate-800/70 animate-fadeIn">
+              {[0, 1, 2, 3].map((idx) => {
+                const person = peopleList[idx];
+                const aportanteNum = idx + 1;
+
+                return (
+                  <div key={idx} className="px-4 py-3 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-7 h-7 rounded-lg bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center flex-shrink-0 text-xs font-bold font-mono">
+                        {aportanteNum}
+                      </div>
+                      <span className="font-semibold text-slate-700 dark:text-slate-200 text-xs truncate">
+                        Ingreso {aportanteNum}
+                      </span>
+                    </div>
+
+                    <input
+                      type="number"
+                      value={person.monthlyIncome === 0 ? '' : person.monthlyIncome}
+                      onChange={e => handleUpdateIncome(idx, parseFloat(e.target.value) || 0)}
+                      placeholder="0"
+                      className="w-32 sm:w-44 text-right bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-1.5 text-xs font-mono font-bold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 transition-colors flex-shrink-0"
+                    />
+                  </div>
+                );
+              })}
+
+              {/* Total al final del submenú desplegado */}
+              <div className="px-4 py-3.5 bg-blue-50/60 dark:bg-blue-950/30 flex items-center justify-between gap-3">
+                <span className="font-bold text-slate-800 dark:text-white text-xs uppercase tracking-wider">
+                  Ingreso Total
+                </span>
+                <span className="font-mono font-black text-sm text-blue-700 dark:text-blue-300">
+                  {formatCurrency(totalCombinedIncome)}
+                </span>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* 7. RESTABLECER TODO DE FÁBRICA */}
