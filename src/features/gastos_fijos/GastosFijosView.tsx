@@ -4,6 +4,7 @@ import { formatCurrency } from '../../services/financeCalculations';
 import { HousingExpense, ObligationItem } from '../../models/finance';
 import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import { AmountCalculatorInput } from '../../components/ui/AmountCalculatorInput';
+import { InfoModal, InfoButton } from '../../components/ui/InfoModal';
 import { SuscripcionesView } from '../deudas/DeudasView';
 import {
   Home,
@@ -33,6 +34,8 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
     reorderObligations,
     toggleObligationShared
   } = useFinance();
+
+  const [infoModalTitle, setInfoModalTitle] = useState<string | null>(null);
 
   // Confirmation modal state
   const [confirmConfig, setConfirmConfig] = useState<{
@@ -231,9 +234,12 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
             <div className="w-9 h-9 rounded-xl bg-indigo-600 dark:bg-indigo-600 text-white border-2 border-indigo-400 dark:border-indigo-400 flex items-center justify-center shadow-xs flex-shrink-0">
               <Home className="w-4 h-4" />
             </div>
-            <span className="font-extrabold text-slate-800 dark:text-white text-base tracking-wide uppercase">
-              VIVIENDA
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="font-extrabold text-slate-800 dark:text-white text-base tracking-wide uppercase">
+                VIVIENDA
+              </span>
+              <InfoButton onClick={() => setInfoModalTitle('Vivienda')} />
+            </div>
           </div>
 
           {/* Botones de acción: Editar y Agregar (+) */}
@@ -397,9 +403,12 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
             <div className="w-9 h-9 rounded-xl bg-indigo-600 dark:bg-indigo-600 text-white border-2 border-indigo-400 dark:border-indigo-400 flex items-center justify-center shadow-xs flex-shrink-0">
               <Layers className="w-4 h-4" />
             </div>
-            <span className="font-extrabold text-slate-800 dark:text-white text-base tracking-wide uppercase">
-              OBLIGACIONES
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="font-extrabold text-slate-800 dark:text-white text-base tracking-wide uppercase">
+                OBLIGACIONES
+              </span>
+              <InfoButton onClick={() => setInfoModalTitle('Obligaciones')} />
+            </div>
           </div>
 
           {/* Botones de acción: Editar y Agregar (+) */}
@@ -736,6 +745,13 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
           onCancel={() => setConfirmConfig(null)}
         />
       )}
+
+      {/* Modal Informativo ! */}
+      <InfoModal
+        isOpen={!!infoModalTitle}
+        title={infoModalTitle}
+        onClose={() => setInfoModalTitle(null)}
+      />
     </div>
   );
 };

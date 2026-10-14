@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 
 import { TabType } from './BottomNav';
-import { HelpModal } from './HelpModal';
+import { InfoModal, InfoButton } from './InfoModal';
 
 interface NavbarProps {
   activeTab?: TabType;
@@ -32,8 +32,8 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab = 'billetera' }) => {
   const [showFamilyModal, setShowFamilyModal] = useState(false);
   // Reset confirmation modal state
   const [showResetConfirm, setShowResetConfirm] = useState(false);
-  // Help modal state
-  const [showHelpModal, setShowHelpModal] = useState(false);
+  // Info modal state
+  const [showInfoModal, setShowInfoModal] = useState(false);
 
   const getTitle = () => {
     switch (activeTab) {
@@ -71,18 +71,12 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab = 'billetera' }) => {
     <>
       <header className="sticky top-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 transition-colors">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          {/* Titulo dinámico de la ventana activa + Botón de Ayuda ? */}
+          {/* Titulo dinámico de la ventana activa + Botón de Información ! */}
           <div className="flex items-center gap-2">
             <h1 className="font-bold text-lg tracking-tight text-slate-900 dark:text-white">
               {currentTitle}
             </h1>
-            <button
-              onClick={() => setShowHelpModal(true)}
-              className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 border border-slate-300/80 dark:border-slate-700/80 flex items-center justify-center text-xs font-bold transition-all shadow-sm active:scale-95"
-              title={`Ayuda sobre ${currentTitle}`}
-            >
-              ?
-            </button>
+            <InfoButton onClick={() => setShowInfoModal(true)} />
           </div>
 
           {/* Settings Menu Icon */}
@@ -202,10 +196,10 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab = 'billetera' }) => {
         onCancel={() => setShowResetConfirm(false)}
       />
 
-      {/* Pop-up Modal de Ayuda */}
-      <HelpModal
-        isOpen={showHelpModal}
-        onClose={() => setShowHelpModal(false)}
+      {/* Pop-up Modal de Información ! */}
+      <InfoModal
+        isOpen={showInfoModal}
+        onClose={() => setShowInfoModal(false)}
         title={currentTitle}
       />
     </>

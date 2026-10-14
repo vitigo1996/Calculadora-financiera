@@ -5,6 +5,7 @@ import { BilleteraAccountItem } from '../../models/finance';
 import { getIconComponent, IconPickerModal } from '../../components/ui/IconPicker';
 import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import { AmountCalculatorInput } from '../../components/ui/AmountCalculatorInput';
+import { InfoModal, InfoButton } from '../../components/ui/InfoModal';
 import { CreditosSuscripcionesView } from '../creditos_suscripciones/CreditosSuscripcionesView';
 import { DeudasSection } from '../deudas/DeudasView';
 import {
@@ -37,6 +38,8 @@ export const BilleteraView: React.FC = () => {
     reorderExpenseMovements,
     clearExpenseMovements
   } = useFinance();
+
+  const [infoModalTitle, setInfoModalTitle] = useState<string | null>(null);
 
   // Confirmation modal state
   const [confirmConfig, setConfirmConfig] = useState<{
@@ -321,9 +324,12 @@ export const BilleteraView: React.FC = () => {
                 <div className="w-9 h-9 rounded-xl bg-indigo-600 dark:bg-indigo-600 text-white border-2 border-indigo-400 dark:border-indigo-400 flex items-center justify-center shadow-xs flex-shrink-0">
                   <Wallet className="w-4 h-4" />
                 </div>
-                <span className="font-extrabold text-slate-800 dark:text-white text-base tracking-wide uppercase">
-                  BILLETERA
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="font-extrabold text-slate-800 dark:text-white text-base tracking-wide uppercase">
+                    BILLETERA
+                  </span>
+                  <InfoButton onClick={() => setInfoModalTitle('Billetera')} />
+                </div>
               </div>
 
               {/* Botones de acción: Editar y Agregar (+) */}
@@ -444,9 +450,12 @@ export const BilleteraView: React.FC = () => {
                 <div className="w-9 h-9 rounded-xl bg-indigo-600 dark:bg-indigo-600 text-white border-2 border-indigo-400 dark:border-indigo-400 flex items-center justify-center shadow-xs flex-shrink-0">
                   <History className="w-4 h-4" />
                 </div>
-                <span className="font-extrabold text-slate-800 dark:text-white text-base tracking-wide uppercase">
-                  REGISTRO
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="font-extrabold text-slate-800 dark:text-white text-base tracking-wide uppercase">
+                    REGISTRO
+                  </span>
+                  <InfoButton onClick={() => setInfoModalTitle('Registro')} />
+                </div>
               </div>
 
               <div className="flex items-center gap-2">
@@ -1111,6 +1120,13 @@ export const BilleteraView: React.FC = () => {
           onCancel={() => setConfirmConfig(null)}
         />
       )}
+
+      {/* Modal Informativo ! */}
+      <InfoModal
+        isOpen={!!infoModalTitle}
+        title={infoModalTitle}
+        onClose={() => setInfoModalTitle(null)}
+      />
     </div>
   );
 };

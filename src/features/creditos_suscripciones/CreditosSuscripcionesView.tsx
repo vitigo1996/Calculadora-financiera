@@ -9,6 +9,7 @@ import { CreditCardItem } from '../../models/finance';
 import { getIconComponent, IconPickerModal } from '../../components/ui/IconPicker';
 import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import { AmountCalculatorInput } from '../../components/ui/AmountCalculatorInput';
+import { InfoModal, InfoButton } from '../../components/ui/InfoModal';
 import {
   CreditCard,
   Edit2,
@@ -39,6 +40,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
   // Selection & Edit mode
   const [selectedCardId, setSelectedCardId] = useState<string>(data.creditCards[0]?.id || '');
   const [isEditingCards, setIsEditingCards] = useState(false);
+  const [infoModalTitle, setInfoModalTitle] = useState<string | null>(null);
   const [isEditingPurchases, setIsEditingPurchases] = useState(false);
   const [draggedPurchaseIdx, setDraggedPurchaseIdx] = useState<number | null>(null);
 
@@ -184,9 +186,12 @@ export const CreditosSuscripcionesView: React.FC = () => {
             <div className="w-9 h-9 rounded-xl bg-indigo-600 dark:bg-indigo-600 text-white border-2 border-indigo-400 dark:border-indigo-400 flex items-center justify-center shadow-xs flex-shrink-0">
               <CreditCard className="w-4 h-4" />
             </div>
-            <span className="font-extrabold text-slate-800 dark:text-white text-base tracking-wide uppercase">
-              TARJETAS
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="font-extrabold text-slate-800 dark:text-white text-base tracking-wide uppercase">
+                TARJETAS
+              </span>
+              <InfoButton onClick={() => setInfoModalTitle('Tarjetas')} />
+            </div>
           </div>
 
           <div className="flex items-center gap-2">
@@ -719,6 +724,13 @@ export const CreditosSuscripcionesView: React.FC = () => {
           onCancel={() => setConfirmConfig(null)}
         />
       )}
+
+      {/* Modal Informativo ! */}
+      <InfoModal
+        isOpen={!!infoModalTitle}
+        title={infoModalTitle}
+        onClose={() => setInfoModalTitle(null)}
+      />
     </div>
   );
 };

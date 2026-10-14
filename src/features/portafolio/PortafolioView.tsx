@@ -4,6 +4,7 @@ import { formatCurrency, convertToBase } from '../../services/financeCalculation
 import { PortfolioAccountItem } from '../../models/finance';
 import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import { AmountCalculatorInput } from '../../components/ui/AmountCalculatorInput';
+import { InfoModal, InfoButton } from '../../components/ui/InfoModal';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import {
   Briefcase,
@@ -126,16 +127,24 @@ export const PortafolioView: React.FC = () => {
   if (activeScreen === 'analisis') {
     return (
       <div className="space-y-6 pb-24 animate-fadeIn">
-        {/* Botón Volver y Menú Superior de Subpestañas */}
+        {/* Encabezado ANÁLISIS con Botón ! y Botón Volver */}
         <div className="space-y-3">
-          <button
-            type="button"
-            onClick={() => setActiveScreen('portfolio')}
-            className="flex items-center gap-2 text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 px-3.5 py-2 rounded-2xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 shadow-xs transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Volver a Portafolio</span>
-          </button>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="font-extrabold text-slate-800 dark:text-white text-base tracking-wide uppercase">
+                ANÁLISIS
+              </span>
+              <InfoButton onClick={() => setInfoModalTitle('Análisis')} />
+            </div>
+            <button
+              type="button"
+              onClick={() => setActiveScreen('portfolio')}
+              className="flex items-center gap-1.5 text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 shadow-xs transition-colors"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Volver a Portafolio</span>
+            </button>
+          </div>
 
           {/* Subpestañas: Dinero Disponible | Distribución de Activos */}
           <div className="bg-slate-200/80 dark:bg-slate-800 p-1 rounded-2xl flex items-center gap-1 shadow-inner border border-slate-300/80 dark:border-slate-700/60 w-full sm:w-auto">
@@ -171,19 +180,9 @@ export const PortafolioView: React.FC = () => {
         {activeAnalysisTab === 'disponible' ? (
           <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-300 dark:border-slate-800 shadow-sm transition-colors space-y-4">
             <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-extrabold uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
-                  <Wallet className="w-4 h-4 text-blue-600 dark:text-blue-400" /> Dinero Disponible
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setInfoModalTitle('Dinero Disponible')}
-                  className="w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 font-bold text-xs flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-xs"
-                  title="Más información"
-                >
-                  !
-                </button>
-              </div>
+              <span className="text-xs font-extrabold uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
+                <Wallet className="w-4 h-4 text-blue-600 dark:text-blue-400" /> Dinero Disponible
+              </span>
               <span className="text-xs font-mono font-bold text-slate-800 dark:text-white">
                 Total: {formatCurrency(totalDisponible, baseCurrency)}
               </span>
@@ -248,19 +247,9 @@ export const PortafolioView: React.FC = () => {
           ) : (
             <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-300 dark:border-slate-800 shadow-sm transition-colors space-y-4">
               <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-extrabold uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
-                    <PieChartIcon className="w-4 h-4 text-blue-600 dark:text-blue-400" /> Distribución de Activos
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setInfoModalTitle('Distribución de Activos')}
-                    className="w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 font-bold text-xs flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-xs"
-                    title="Más información"
-                  >
-                    !
-                  </button>
-                </div>
+                <span className="text-xs font-extrabold uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
+                  <PieChartIcon className="w-4 h-4 text-blue-600 dark:text-blue-400" /> Distribución de Activos
+                </span>
                 <span className="text-xs font-mono font-bold text-slate-800 dark:text-white">
                   Total: {formatCurrency(port.totalPortafolio, baseCurrency)}
                 </span>
@@ -333,31 +322,12 @@ export const PortafolioView: React.FC = () => {
           )
         )}
 
-        {/* Modal Informativo al presionar ! */}
-        {infoModalTitle && (
-          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
-            <div className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-3xl p-6 max-w-sm w-full shadow-2xl animate-scaleUp text-center space-y-4">
-              <div className="w-12 h-12 mx-auto rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xl font-black font-mono border border-blue-200 dark:border-blue-800/60 shadow-xs">
-                !
-              </div>
-              <div>
-                <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                  {infoModalTitle}
-                </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">
-                  Habrá información a detalle más adelante.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setInfoModalTitle(null)}
-                className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-2xl transition-all shadow-sm"
-              >
-                Entendido
-              </button>
-            </div>
-          </div>
-        )}
+        {/* Modal Informativo ! */}
+        <InfoModal
+          isOpen={!!infoModalTitle}
+          title={infoModalTitle}
+          onClose={() => setInfoModalTitle(null)}
+        />
       </div>
     );
   }
@@ -375,14 +345,7 @@ export const PortafolioView: React.FC = () => {
               <span className="font-extrabold text-slate-800 dark:text-white text-base tracking-wide uppercase">
                 PORTAFOLIO
               </span>
-              <button
-                type="button"
-                onClick={() => setInfoModalTitle('Portafolio')}
-                className="w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 font-bold text-xs flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-xs"
-                title="Más información"
-              >
-                !
-              </button>
+              <InfoButton onClick={() => setInfoModalTitle('Portafolio')} />
             </div>
           </div>
 
@@ -657,31 +620,12 @@ export const PortafolioView: React.FC = () => {
         />
       )}
 
-      {/* Modal Informativo al presionar ! */}
-      {infoModalTitle && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
-          <div className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-3xl p-6 max-w-sm w-full shadow-2xl animate-scaleUp text-center space-y-4">
-            <div className="w-12 h-12 mx-auto rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xl font-black font-mono border border-blue-200 dark:border-blue-800/60 shadow-xs">
-              !
-            </div>
-            <div>
-              <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                {infoModalTitle}
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">
-                Habrá información a detalle más adelante.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setInfoModalTitle(null)}
-              className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-2xl transition-all shadow-sm"
-            >
-              Entendido
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Modal Informativo ! */}
+      <InfoModal
+        isOpen={!!infoModalTitle}
+        title={infoModalTitle}
+        onClose={() => setInfoModalTitle(null)}
+      />
     </div>
   );
 };

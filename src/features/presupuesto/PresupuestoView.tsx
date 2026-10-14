@@ -8,7 +8,8 @@ import {
   Home,
   CreditCard,
   Layers,
-  Calendar
+  Eye,
+  X
 } from 'lucide-react';
 
 export const PresupuestoView: React.FC = () => {
@@ -17,7 +18,7 @@ export const PresupuestoView: React.FC = () => {
 
   // Submenu: Presupuesto | Gastos
   const [subView, setSubView] = useState<'presupuesto' | 'gastos'>('presupuesto');
-  const [infoModalTitle, setInfoModalTitle] = useState<string | null>(null);
+  const [fortnightDetail, setFortnightDetail] = useState<'1st' | '2nd' | null>(null);
 
   // Determinar los ítems a pagar según su fecha límite de pago
   const isShared = summary.ingresos.isShared;
@@ -78,8 +79,9 @@ export const PresupuestoView: React.FC = () => {
     .filter(item => (item.paymentDay || 1) > 15)
     .sort((a, b) => (a.paymentDay || 1) - (b.paymentDay || 1));
 
-  const totalFirstHalf = firstHalfItems.reduce((sum, item) => sum + item.amount, 0);
-  const totalSecondHalf = secondHalfItems.reduce((sum, item) => sum + item.amount, 0);
+  const halfSalud = (pres.m3_saludPension || 0) / 2;
+  const totalFirstHalf = firstHalfItems.reduce((sum, item) => sum + item.amount, 0) + halfSalud;
+  const totalSecondHalf = secondHalfItems.reduce((sum, item) => sum + item.amount, 0) + halfSalud;
 
   return (
     <div className="space-y-6 pb-2 animate-fadeIn">
@@ -115,29 +117,8 @@ export const PresupuestoView: React.FC = () => {
         <GastosFijosView hideHeader={true} />
       ) : (
         <div className="space-y-6">
-          {/* Primera Tabla: Lista de Gastos Presupuestados */}
+          {/* Primera Tabla: Gastos Presupuestados sin título */}
           <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
-            <div className="p-4 bg-slate-100 dark:bg-slate-800/70 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-200/60 dark:border-blue-800/40 shadow-xs flex-shrink-0">
-                  <Receipt className="w-4 h-4" />
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="font-extrabold text-slate-800 dark:text-white text-sm tracking-wide uppercase">
-                    Resumen de Gastos
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setInfoModalTitle('Resumen de Gastos')}
-                    className="w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 font-bold text-xs flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-xs"
-                    title="Más información"
-                  >
-                    !
-                  </button>
-                </div>
-              </div>
-            </div>
-
             <div className="divide-y divide-slate-200 dark:divide-slate-800 text-sm">
               {/* 1. Deducciones de ley */}
               <div className="p-4 flex items-center justify-between">
@@ -184,179 +165,144 @@ export const PresupuestoView: React.FC = () => {
               </div>
             </div>
 
-            {/* Línea que muestra el total del gasto */}
-            <div className="p-4 bg-slate-50 dark:bg-slate-800/50 flex items-center justify-between border-t border-slate-200 dark:border-slate-800">
-              <span className="font-extrabold text-xs uppercase tracking-wider text-slate-800 dark:text-white">
-                Total Gastos
+            {/* Línea pequeña y discreta con el total del gasto */}
+            <div className="px-4 py-2.5 bg-slate-50/60 dark:bg-slate-800/40 flex items-center justify-between border-t border-slate-100 dark:border-slate-800/60">
+              <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                Total gastos
               </span>
-              <span className="font-mono font-black text-sm text-blue-700 dark:text-blue-400">
+              <span className="font-mono text-xs font-semibold text-slate-700 dark:text-slate-300">
                 {formatCurrency(pres.m7_totalGastos)}
               </span>
             </div>
           </div>
 
-          {/* Segunda Tabla: Distribución por momento del mes (Primera vs Segunda Mitad) */}
-          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
-            <div className="p-4 bg-slate-100 dark:bg-slate-800/70 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-200/60 dark:border-blue-800/40 shadow-xs flex-shrink-0">
-                  <Calendar className="w-4 h-4" />
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="font-extrabold text-slate-800 dark:text-white text-sm tracking-wide uppercase">
-                    Distribución de Pagos
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setInfoModalTitle('Distribución de Pagos')}
-                    className="w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 font-bold text-xs flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-xs"
-                    title="Más información"
-                  >
-                    !
-                  </button>
-                </div>
+          {/* Segunda Sección: Distribución en 2 bloques (Mitad de Mes y Fin de Mes) */}
+          <div className="grid grid-cols-2 gap-3">
+            {/* Bloque 1: Mitad de Mes */}
+            <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm transition-colors flex flex-col justify-between">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Mitad de Mes
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setFortnightDetail('1st')}
+                  className="p-1.5 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors shadow-xs"
+                  title="Ver detalle de gastos"
+                >
+                  <Eye className="w-3.5 h-3.5" />
+                </button>
+              </div>
+              <div className="text-base font-bold text-blue-700 dark:text-blue-400 font-mono tracking-tight">
+                {formatCurrency(totalFirstHalf)}
               </div>
             </div>
 
-            <div className="divide-y divide-slate-200 dark:divide-slate-800">
-              {/* Bloque 1: Primera Mitad del Mes (Días 1 - 15) */}
-              <div className="p-4 space-y-3">
-                <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800/60">
-                  <div className="flex items-center gap-2">
-                    <span className="font-extrabold text-xs text-slate-900 dark:text-white uppercase tracking-wider">
-                      Primera Mitad (Día 1 - 15)
-                    </span>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200/50 dark:border-blue-800/50">
-                      {firstHalfItems.length} {firstHalfItems.length === 1 ? 'pago' : 'pagos'}
-                    </span>
-                  </div>
-                  <span className="font-mono font-black text-sm text-blue-700 dark:text-blue-400">
-                    {formatCurrency(totalFirstHalf)}
-                  </span>
-                </div>
-
-                {firstHalfItems.length === 0 ? (
-                  <p className="text-xs text-slate-400 dark:text-slate-500 py-1">
-                    No hay pagos registrados para la primera mitad del mes.
-                  </p>
-                ) : (
-                  <div className="space-y-2">
-                    {firstHalfItems.map((item) => {
-                      const Icon = item.icon;
-                      return (
-                        <div
-                          key={item.id}
-                          className="flex items-center justify-between p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-950/40 border border-slate-200/80 dark:border-slate-800/60 text-xs"
-                        >
-                          <div className="flex items-center gap-2.5 min-w-0">
-                            <div className="w-7 h-7 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center flex-shrink-0">
-                              <Icon className="w-3.5 h-3.5" />
-                            </div>
-                            <div className="min-w-0">
-                              <span className="font-bold text-slate-800 dark:text-white block truncate">
-                                {item.name}
-                              </span>
-                              <div className="flex items-center gap-1.5 text-[10px] text-slate-400 dark:text-slate-500">
-                                <span>{item.type}</span>
-                                <span>•</span>
-                                <span className="font-mono font-semibold text-slate-600 dark:text-slate-300">
-                                  {item.paymentDay ? `Día ${item.paymentDay}` : 'Sin fecha fija'}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                          <span className="font-mono font-bold text-slate-900 dark:text-white flex-shrink-0 ml-2">
-                            {formatCurrency(item.amount)}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
+            {/* Bloque 2: Fin de Mes */}
+            <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm transition-colors flex flex-col justify-between">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Fin de Mes
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setFortnightDetail('2nd')}
+                  className="p-1.5 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors shadow-xs"
+                  title="Ver detalle de gastos"
+                >
+                  <Eye className="w-3.5 h-3.5" />
+                </button>
               </div>
-
-              {/* Bloque 2: Segunda Mitad del Mes (Días 16 - 31) */}
-              <div className="p-4 space-y-3">
-                <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800/60">
-                  <div className="flex items-center gap-2">
-                    <span className="font-extrabold text-xs text-slate-900 dark:text-white uppercase tracking-wider">
-                      Segunda Mitad (Día 16 - 31)
-                    </span>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200/50 dark:border-blue-800/50">
-                      {secondHalfItems.length} {secondHalfItems.length === 1 ? 'pago' : 'pagos'}
-                    </span>
-                  </div>
-                  <span className="font-mono font-black text-sm text-blue-700 dark:text-blue-400">
-                    {formatCurrency(totalSecondHalf)}
-                  </span>
-                </div>
-
-                {secondHalfItems.length === 0 ? (
-                  <p className="text-xs text-slate-400 dark:text-slate-500 py-1">
-                    No hay pagos registrados para la segunda mitad del mes.
-                  </p>
-                ) : (
-                  <div className="space-y-2">
-                    {secondHalfItems.map((item) => {
-                      const Icon = item.icon;
-                      return (
-                        <div
-                          key={item.id}
-                          className="flex items-center justify-between p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-950/40 border border-slate-200/80 dark:border-slate-800/60 text-xs"
-                        >
-                          <div className="flex items-center gap-2.5 min-w-0">
-                            <div className="w-7 h-7 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center flex-shrink-0">
-                              <Icon className="w-3.5 h-3.5" />
-                            </div>
-                            <div className="min-w-0">
-                              <span className="font-bold text-slate-800 dark:text-white block truncate">
-                                {item.name}
-                              </span>
-                              <div className="flex items-center gap-1.5 text-[10px] text-slate-400 dark:text-slate-500">
-                                <span>{item.type}</span>
-                                <span>•</span>
-                                <span className="font-mono font-semibold text-slate-600 dark:text-slate-300">
-                                  {item.paymentDay ? `Día ${item.paymentDay}` : 'Sin fecha fija'}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                          <span className="font-mono font-bold text-slate-900 dark:text-white flex-shrink-0 ml-2">
-                            {formatCurrency(item.amount)}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
+              <div className="text-base font-bold text-blue-700 dark:text-blue-400 font-mono tracking-tight">
+                {formatCurrency(totalSecondHalf)}
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Modal Informativo al presionar ! */}
-      {infoModalTitle && (
+      {/* Ventana pequeña emergente con la pequeña tabla de gastos de cada mitad */}
+      {fortnightDetail !== null && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
-          <div className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-3xl p-6 max-w-sm w-full shadow-2xl animate-scaleUp text-center space-y-4">
-            <div className="w-12 h-12 mx-auto rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xl font-black font-mono border border-blue-200 dark:border-blue-800/60 shadow-xs">
-              !
+          <div className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-3xl p-5 max-w-sm w-full shadow-2xl animate-scaleUp max-h-[85vh] flex flex-col">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+              <div>
+                <h3 className="font-bold text-sm text-slate-900 dark:text-white">
+                  Gastos {fortnightDetail === '1st' ? 'Mitad de Mes (1ª mitad)' : 'Fin de Mes (2ª mitad)'}
+                </h3>
+                <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">
+                  {fortnightDetail === '1st' ? firstHalfItems.length : secondHalfItems.length} {((fortnightDetail === '1st' ? firstHalfItems.length : secondHalfItems.length) === 1) ? 'pago' : 'pagos'}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setFortnightDetail(null)}
+                className="p-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
-            <div>
-              <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                {infoModalTitle}
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">
-                Habrá información a detalle más adelante.
-              </p>
+
+            <div className="overflow-y-auto py-3 space-y-2 flex-1 pr-1 scrollbar-thin">
+              {halfSalud > 0 && (
+                <div className="flex items-center justify-between text-xs p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-950/40 border border-slate-200/80 dark:border-slate-800/60">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center flex-shrink-0">
+                      <ShieldCheck className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <span className="text-slate-800 dark:text-white font-bold block">Deducciones de Ley (50%)</span>
+                      <span className="text-[10px] text-slate-400">Salud y Pensión</span>
+                    </div>
+                  </div>
+                  <span className="font-mono font-bold text-slate-900 dark:text-white flex-shrink-0 ml-2">
+                    {formatCurrency(halfSalud)}
+                  </span>
+                </div>
+              )}
+
+              {(fortnightDetail === '1st' ? firstHalfItems : secondHalfItems).map(item => {
+                const Icon = item.icon;
+                return (
+                  <div
+                    key={item.id}
+                    className="flex items-center justify-between text-xs p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-950/40 border border-slate-200/80 dark:border-slate-800/60"
+                  >
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <div className="w-7 h-7 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center flex-shrink-0">
+                        <Icon className="w-3.5 h-3.5" />
+                      </div>
+                      <div className="min-w-0">
+                        <span className="font-bold text-slate-800 dark:text-white truncate block">{item.name}</span>
+                        <div className="flex items-center gap-1.5 text-[10px] text-slate-400 dark:text-slate-500">
+                          <span>{item.type}</span>
+                          <span>•</span>
+                          <span className="font-mono font-semibold text-slate-600 dark:text-slate-300">
+                            {item.paymentDay ? `Día ${item.paymentDay}` : 'Sin fecha'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <span className="font-mono font-bold text-slate-900 dark:text-white flex-shrink-0 ml-2">
+                      {formatCurrency(item.amount)}
+                    </span>
+                  </div>
+                );
+              })}
+
+              {(fortnightDetail === '1st' ? firstHalfItems : secondHalfItems).length === 0 && halfSalud === 0 && (
+                <div className="p-6 text-center text-xs text-slate-400 dark:text-slate-500">
+                  No hay gastos asignados para este periodo.
+                </div>
+              )}
             </div>
-            <button
-              type="button"
-              onClick={() => setInfoModalTitle(null)}
-              className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-2xl transition-all shadow-sm"
-            >
-              Entendido
-            </button>
+
+            <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
+              <span className="font-bold text-xs text-slate-800 dark:text-white uppercase tracking-wider">Total</span>
+              <span className="font-mono font-black text-sm text-blue-700 dark:text-blue-400">
+                {formatCurrency(fortnightDetail === '1st' ? totalFirstHalf : totalSecondHalf)}
+              </span>
+            </div>
           </div>
         </div>
       )}

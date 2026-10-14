@@ -4,6 +4,7 @@ import { formatCurrency, calculateSubscriptionMonthlyCost } from '../../services
 import { DeudaItem, SubscriptionItem } from '../../models/finance';
 import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import { AmountCalculatorInput } from '../../components/ui/AmountCalculatorInput';
+import { InfoModal, InfoButton } from '../../components/ui/InfoModal';
 import {
   Plus,
   Edit2,
@@ -31,6 +32,7 @@ export const DeudasSection: React.FC = () => {
 
   const [isEditingDeudas, setIsEditingDeudas] = useState(false);
   const [draggedDeudaIdx, setDraggedDeudaIdx] = useState<number | null>(null);
+  const [infoModalTitle, setInfoModalTitle] = useState<string | null>(null);
 
   // Modal Deuda
   const [showAddDeudaModal, setShowAddDeudaModal] = useState(false);
@@ -97,9 +99,12 @@ export const DeudasSection: React.FC = () => {
           <div className="w-9 h-9 rounded-xl bg-indigo-600 dark:bg-indigo-600 text-white border-2 border-indigo-400 dark:border-indigo-400 flex items-center justify-center shadow-xs flex-shrink-0">
             <ArrowLeftRight className="w-4 h-4" />
           </div>
-          <span className="font-extrabold text-slate-800 dark:text-white text-base tracking-wide uppercase">
-            DEUDAS
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="font-extrabold text-slate-800 dark:text-white text-base tracking-wide uppercase">
+              DEUDAS
+            </span>
+            <InfoButton onClick={() => setInfoModalTitle('Deudas')} />
+          </div>
         </div>
 
         {/* Botones de acción: Editar y Agregar (+) */}
@@ -341,6 +346,13 @@ export const DeudasSection: React.FC = () => {
           onCancel={() => setConfirmConfig(null)}
         />
       )}
+
+      {/* Modal Informativo ! */}
+      <InfoModal
+        isOpen={!!infoModalTitle}
+        title={infoModalTitle}
+        onClose={() => setInfoModalTitle(null)}
+      />
     </div>
   );
 };
@@ -359,6 +371,7 @@ export const SuscripcionesView: React.FC = () => {
 
   const [isEditingSubs, setIsEditingSubs] = useState(false);
   const [draggedSubIdx, setDraggedSubIdx] = useState<number | null>(null);
+  const [infoModalTitle, setInfoModalTitle] = useState<string | null>(null);
 
   // Modal: Subscription
   const [showSubModal, setShowSubModal] = useState(false);
@@ -434,9 +447,12 @@ export const SuscripcionesView: React.FC = () => {
           <div className="w-9 h-9 rounded-xl bg-indigo-600 dark:bg-indigo-600 text-white border-2 border-indigo-400 dark:border-indigo-400 flex items-center justify-center shadow-xs flex-shrink-0">
             <Calendar className="w-4 h-4" />
           </div>
-          <span className="font-extrabold text-slate-800 dark:text-white text-base tracking-wide uppercase">
-            SUSCRIPCIONES
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="font-extrabold text-slate-800 dark:text-white text-base tracking-wide uppercase">
+              SUSCRIPCIONES
+            </span>
+            <InfoButton onClick={() => setInfoModalTitle('Suscripciones')} />
+          </div>
         </div>
 
         {/* Botones de acción: Editar y Agregar (+) */}
@@ -675,6 +691,13 @@ export const SuscripcionesView: React.FC = () => {
           onCancel={() => setConfirmConfig(null)}
         />
       )}
+
+      {/* Modal Informativo ! */}
+      <InfoModal
+        isOpen={!!infoModalTitle}
+        title={infoModalTitle}
+        onClose={() => setInfoModalTitle(null)}
+      />
     </div>
   );
 };
