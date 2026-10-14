@@ -16,7 +16,9 @@ import {
   RefreshCw,
   GripVertical,
   Wallet,
-  PieChart as PieChartIcon
+  PieChart as PieChartIcon,
+  ArrowLeft,
+  ChevronRight
 } from 'lucide-react';
 
 // Colores predefinidos para la gráfica de barras de Disponible
@@ -38,6 +40,11 @@ export const PortafolioView: React.FC = () => {
     deletePortfolioItem,
     reorderPortfolioItems
   } = useFinance();
+
+  // Screen and analysis tab states
+  const [activeScreen, setActiveScreen] = useState<'portfolio' | 'analisis'>('portfolio');
+  const [activeAnalysisTab, setActiveAnalysisTab] = useState<'disponible' | 'activos'>('disponible');
+  const [infoModalTitle, setInfoModalTitle] = useState<string | null>(null);
 
   // Edit states
   const [isEditingPortfolio, setIsEditingPortfolio] = useState(false);
@@ -113,6 +120,248 @@ export const PortafolioView: React.FC = () => {
     setEditingItemObj(null);
   };
 
+  // ==========================================
+  // PANTALLA DE ANÁLISIS COMPLETO (SUBPESTAÑAS)
+  // ==========================================
+  if (activeScreen === 'analisis') {
+    return (
+      <div className="space-y-6 pb-24 animate-fadeIn">
+        {/* Botón Volver y Menú Superior de Subpestañas */}
+        <div className="space-y-3">
+          <button
+            type="button"
+            onClick={() => setActiveScreen('portfolio')}
+            className="flex items-center gap-2 text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 px-3.5 py-2 rounded-2xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 shadow-xs transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Volver a Portafolio</span>
+          </button>
+
+          {/* Subpestañas: Dinero Disponible | Distribución de Activos */}
+          <div className="bg-slate-200/80 dark:bg-slate-800 p-1 rounded-2xl flex items-center gap-1 shadow-inner border border-slate-300/80 dark:border-slate-700/60 w-full sm:w-auto">
+            <button
+              type="button"
+              onClick={() => setActiveAnalysisTab('disponible')}
+              className={`flex-1 sm:px-6 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                activeAnalysisTab === 'disponible'
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              <Wallet className="w-4 h-4" />
+              <span>Dinero Disponible</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveAnalysisTab('activos')}
+              className={`flex-1 sm:px-6 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                activeAnalysisTab === 'activos'
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              <PieChartIcon className="w-4 h-4" />
+              <span>Distribución de Activos</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Contenido según la subpestaña seleccionada */}
+        {activeAnalysisTab === 'disponible' ? (
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-300 dark:border-slate-800 shadow-sm transition-colors space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-extrabold uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
+                  <Wallet className="w-4 h-4 text-blue-600 dark:text-blue-400" /> Dinero Disponible
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setInfoModalTitle('Dinero Disponible')}
+                  className="w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 font-bold text-xs flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-xs"
+                  title="Más información"
+                >
+                  !
+                </button>
+              </div>
+              <span className="text-xs font-mono font-bold text-slate-800 dark:text-white">
+                Total: {formatCurrency(totalDisponible, baseCurrency)}
+              </span>
+            </div>
+
+            {billeteraList.length === 0 ? (
+              <div className="p-6 text-center text-slate-400 dark:text-slate-500 text-xs">
+                No tienes cuentas de billetera registradas.
+              </div>
+            ) : (
+              <div className="space-y-4 pt-1">
+                {billeteraList.map((item, idx) => {
+                  const valBase = convertToBase(item.saldo || 0, item.moneda || 'COP', baseCurrency, dolarRate);
+                  const percentage = totalDisponible > 0 ? (valBase / totalDisponible) * 100 : 0;
+                  const barColor = PRESET_BAR_COLORS[idx % PRESET_BAR_COLORS.length];
+
+                  return (
+                    <div key={item.id} className="space-y-1.5">
+                      {/* Fila Superior: Nombre y Porcentaje */}
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="font-bold text-slate-800 dark:text-white truncate max-w-[70%]">
+                          {item.nombre}
+                        </span>
+                        <span
+                          className="font-bold text-[11px] font-mono px-2 py-0.5 rounded-lg text-white whitespace-nowrap shadow-xs min-w-[46px] text-center"
+                          style={{ backgroundColor: barColor }}
+                        >
+                          {percentage.toFixed(1)}%
+                        </span>
+                      </div>
+
+                      {/* Barra Horizontal Proporcional */}
+                      <div className="h-3.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden p-0.5">
+                        <div
+                          className="h-full rounded-full transition-all duration-500 shadow-xs"
+                          style={{
+                            width: `${Math.max(percentage, 2)}%`,
+                            backgroundColor: barColor
+                          }}
+                        />
+                      </div>
+
+                      {/* Texto pequeño debajo de la barra horizontal con el valor */}
+                      <div className="flex justify-between items-center text-[11px] text-slate-500 dark:text-slate-400 font-mono">
+                        <span>{formatCurrency(item.saldo, item.moneda || 'COP')}</span>
+                        {item.moneda !== baseCurrency && (
+                          <span className="text-[10px]">≈ {formatCurrency(valBase, baseCurrency)}</span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        ) : (
+          /* Distribución de Activos */
+          port.items.length === 0 ? (
+            <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 border border-slate-300 dark:border-slate-800 text-center text-slate-400 dark:text-slate-500 text-xs">
+              No hay datos para mostrar activos. Agrega activos en la pestaña Portafolio.
+            </div>
+          ) : (
+            <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-300 dark:border-slate-800 shadow-sm transition-colors space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-extrabold uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
+                    <PieChartIcon className="w-4 h-4 text-blue-600 dark:text-blue-400" /> Distribución de Activos
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setInfoModalTitle('Distribución de Activos')}
+                    className="w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 font-bold text-xs flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-xs"
+                    title="Más información"
+                  >
+                    !
+                  </button>
+                </div>
+                <span className="text-xs font-mono font-bold text-slate-800 dark:text-white">
+                  Total: {formatCurrency(port.totalPortafolio, baseCurrency)}
+                </span>
+              </div>
+
+              {/* Gráfica Donut */}
+              <div className="h-52 flex items-center justify-center">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={port.items}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={55}
+                      outerRadius={85}
+                      paddingAngle={3}
+                      dataKey="valorCOP"
+                      nameKey="label"
+                    >
+                      {port.items.map((entry: any, index: number) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} stroke="#ffffff" strokeWidth={1.5} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      formatter={(value: any, name: any) => [`${formatCurrency(Number(value), baseCurrency)}`, `${name}`]}
+                      contentStyle={{
+                        backgroundColor: '#0f172a',
+                        borderColor: '#334155',
+                        borderRadius: '16px',
+                        padding: '10px 14px',
+                        color: '#ffffff',
+                        fontWeight: 'bold',
+                        boxShadow: '0 12px 30px -4px rgba(0, 0, 0, 0.4)'
+                      }}
+                      itemStyle={{ color: '#60a5fa', fontSize: '13px', fontWeight: 'bold' }}
+                      labelStyle={{ color: '#f8fafc', fontSize: '13px', fontWeight: 'bold' }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Lista de Leyenda de Activos */}
+              <div className="space-y-2 pt-1">
+                {port.items.map((item: any, i: number) => (
+                  <div
+                    key={item.id || i}
+                    className="flex items-center justify-between p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80 text-xs"
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div
+                        className="w-3.5 h-3.5 rounded-lg shadow-xs flex-shrink-0"
+                        style={{ backgroundColor: item.color }}
+                      />
+                      <span className="font-bold text-slate-800 dark:text-white truncate">
+                        {item.label}
+                      </span>
+                    </div>
+                    <div className="text-right font-mono flex-shrink-0">
+                      <span className="font-bold text-slate-900 dark:text-white block">
+                        {formatCurrency(item.valorCOP, baseCurrency)}
+                      </span>
+                      <span className="text-[10px] text-slate-400">
+                        {item.percentage.toFixed(1)}%
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )
+        )}
+
+        {/* Modal Informativo al presionar ! */}
+        {infoModalTitle && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
+            <div className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-3xl p-6 max-w-sm w-full shadow-2xl animate-scaleUp text-center space-y-4">
+              <div className="w-12 h-12 mx-auto rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xl font-black font-mono border border-blue-200 dark:border-blue-800/60 shadow-xs">
+                !
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                  {infoModalTitle}
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">
+                  Habrá información a detalle más adelante.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setInfoModalTitle(null)}
+                className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-2xl transition-all shadow-sm"
+              >
+                Entendido
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 pb-24 animate-fadeIn">
       {/* Recuadro Portafolio */}
@@ -122,9 +371,19 @@ export const PortafolioView: React.FC = () => {
             <div className="w-9 h-9 rounded-xl bg-indigo-600 dark:bg-indigo-600 text-white border-2 border-indigo-400 dark:border-indigo-400 flex items-center justify-center shadow-xs flex-shrink-0">
               <Briefcase className="w-4 h-4" />
             </div>
-            <span className="font-extrabold text-slate-800 dark:text-white text-base tracking-wide uppercase">
-              PORTAFOLIO
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="font-extrabold text-slate-800 dark:text-white text-base tracking-wide uppercase">
+                PORTAFOLIO
+              </span>
+              <button
+                type="button"
+                onClick={() => setInfoModalTitle('Portafolio')}
+                className="w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 font-bold text-xs flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-xs"
+                title="Más información"
+              >
+                !
+              </button>
+            </div>
           </div>
 
           {/* Botones de acción: Editar y Agregar (+) */}
@@ -259,164 +518,23 @@ export const PortafolioView: React.FC = () => {
         </div>
       </div>
 
-      {/* Recuadro Análisis */}
+      {/* Botón para navegar a Análisis */}
       <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
-        <div className="p-4 bg-slate-100 dark:bg-slate-800/70 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-indigo-600 dark:bg-indigo-600 text-white border-2 border-indigo-400 dark:border-indigo-400 flex items-center justify-center shadow-xs flex-shrink-0">
+        <button
+          type="button"
+          onClick={() => setActiveScreen('analisis')}
+          className="w-full p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors text-left group"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-200/60 dark:border-blue-800/40 shadow-xs flex-shrink-0">
               <PieChartIcon className="w-4 h-4" />
             </div>
-            <span className="font-extrabold text-slate-800 dark:text-white text-base tracking-wide uppercase">
-              ANÁLISIS
-            </span>
+            <div>
+              <h4 className="font-bold text-slate-800 dark:text-white text-sm">Análisis</h4>
+            </div>
           </div>
-        </div>
-
-        <div className="p-4 space-y-6">
-          {/* 1. Gráfica de Barras Horizontales: DISPONIBLE (Billeteras) */}
-          <div className="bg-slate-50 dark:bg-slate-950/40 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-xs transition-colors space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
-              <span className="text-xs font-extrabold uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
-                <Wallet className="w-4 h-4 text-blue-600 dark:text-blue-400" /> Disponible
-              </span>
-              <span className="text-xs font-mono font-bold text-slate-800 dark:text-white">
-                Total: {formatCurrency(totalDisponible, baseCurrency)}
-              </span>
-            </div>
-
-            {billeteraList.length === 0 ? (
-              <div className="p-6 text-center text-slate-400 dark:text-slate-500 text-xs">
-                No tienes cuentas de billetera registradas.
-              </div>
-            ) : (
-              <div className="space-y-4 pt-1">
-                {billeteraList.map((item, idx) => {
-                  const valBase = convertToBase(item.saldo || 0, item.moneda || 'COP', baseCurrency, dolarRate);
-                  const percentage = totalDisponible > 0 ? (valBase / totalDisponible) * 100 : 0;
-                  const barColor = PRESET_BAR_COLORS[idx % PRESET_BAR_COLORS.length];
-
-                  return (
-                    <div key={item.id} className="space-y-1.5">
-                      {/* Fila Superior: Nombre y Porcentaje */}
-                      <div className="flex justify-between items-center text-xs">
-                        <span className="font-bold text-slate-800 dark:text-white truncate max-w-[70%]">
-                          {item.nombre}
-                        </span>
-                        <span
-                          className="font-bold text-[11px] font-mono px-2 py-0.5 rounded-lg text-white whitespace-nowrap shadow-xs min-w-[46px] text-center"
-                          style={{ backgroundColor: barColor }}
-                        >
-                          {percentage.toFixed(1)}%
-                        </span>
-                      </div>
-
-                      {/* Barra Horizontal Proporcional */}
-                      <div className="h-3.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden p-0.5">
-                        <div
-                          className="h-full rounded-full transition-all duration-500 shadow-xs"
-                          style={{
-                            width: `${Math.max(percentage, 2)}%`,
-                            backgroundColor: barColor
-                          }}
-                        />
-                      </div>
-
-                      {/* Texto pequeño debajo de la barra horizontal con el valor */}
-                      <div className="flex justify-between items-center text-[11px] text-slate-500 dark:text-slate-400 font-mono">
-                        <span>{formatCurrency(item.saldo, item.moneda || 'COP')}</span>
-                        {item.moneda !== baseCurrency && (
-                          <span className="text-[10px]">≈ {formatCurrency(valBase, baseCurrency)}</span>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* 2. Gráfica de Anillo: ACTIVOS (Portafolio) */}
-          {port.items.length === 0 ? (
-            <div className="bg-slate-50 dark:bg-slate-950/40 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 text-center text-slate-400 dark:text-slate-500 text-xs">
-              No hay datos para mostrar activos. Agrega activos arriba en Portafolio.
-            </div>
-          ) : (
-            <div className="bg-slate-50 dark:bg-slate-950/40 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-xs transition-colors space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
-                <span className="text-xs font-extrabold uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
-                  <PieChartIcon className="w-4 h-4 text-blue-600 dark:text-blue-400" /> Activos
-                </span>
-                <span className="text-xs font-mono font-bold text-slate-800 dark:text-white">
-                  Total: {formatCurrency(port.totalPortafolio, baseCurrency)}
-                </span>
-              </div>
-
-              {/* Gráfica Donut */}
-              <div className="h-52 flex items-center justify-center">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={port.items}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={55}
-                      outerRadius={85}
-                      paddingAngle={3}
-                      dataKey="valorCOP"
-                      nameKey="label"
-                    >
-                      {port.items.map((entry: any, index: number) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} stroke="#ffffff" strokeWidth={1.5} />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      formatter={(value: any, name: any) => [`${formatCurrency(Number(value), baseCurrency)}`, `${name}`]}
-                      contentStyle={{
-                        backgroundColor: '#0f172a',
-                        borderColor: '#334155',
-                        borderRadius: '16px',
-                        padding: '10px 14px',
-                        color: '#ffffff',
-                        fontWeight: 'bold',
-                        boxShadow: '0 12px 30px -4px rgba(0, 0, 0, 0.4)'
-                      }}
-                      itemStyle={{ color: '#60a5fa', fontSize: '13px', fontWeight: 'bold' }}
-                      labelStyle={{ color: '#f8fafc', fontSize: '13px', fontWeight: 'bold' }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-
-              {/* Lista de Leyenda de Activos */}
-              <div className="space-y-2 pt-1">
-                {port.items.map((item: any, i: number) => (
-                  <div
-                    key={item.id || i}
-                    className="flex items-center justify-between p-2.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 text-xs"
-                  >
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <div
-                        className="w-3.5 h-3.5 rounded-lg shadow-xs flex-shrink-0"
-                        style={{ backgroundColor: item.color }}
-                      />
-                      <span className="font-bold text-slate-800 dark:text-white truncate">
-                        {item.label}
-                      </span>
-                    </div>
-                    <div className="text-right font-mono flex-shrink-0">
-                      <span className="font-bold text-slate-900 dark:text-white block">
-                        {formatCurrency(item.valorCOP, baseCurrency)}
-                      </span>
-                      <span className="text-[10px] text-slate-400">
-                        {item.percentage.toFixed(1)}%
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
+          <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-white transition-colors" />
+        </button>
       </div>
 
       {/* Modal: Crear / Editar Item de Portafolio */}
@@ -537,6 +655,32 @@ export const PortafolioView: React.FC = () => {
           }}
           onCancel={() => setConfirmConfig(null)}
         />
+      )}
+
+      {/* Modal Informativo al presionar ! */}
+      {infoModalTitle && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-3xl p-6 max-w-sm w-full shadow-2xl animate-scaleUp text-center space-y-4">
+            <div className="w-12 h-12 mx-auto rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xl font-black font-mono border border-blue-200 dark:border-blue-800/60 shadow-xs">
+              !
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                {infoModalTitle}
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">
+                Habrá información a detalle más adelante.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setInfoModalTitle(null)}
+              className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-2xl transition-all shadow-sm"
+            >
+              Entendido
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
