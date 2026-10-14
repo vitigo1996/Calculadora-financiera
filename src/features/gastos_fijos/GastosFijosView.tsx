@@ -46,7 +46,7 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
   } | null>(null);
 
   // Active people for dynamic proportional splits
-  const activePeople = (data.people || []).filter(p => p.enabled);
+  const activePeople = (data.people || []).filter((p, idx) => idx === 0 ? true : (p.enabled && (p.monthlyIncome || 0) > 0));
   const totalCombinedIncome = activePeople.reduce((sum, p) => sum + (p.monthlyIncome || 0), 0);
 
   // Edit states
@@ -60,6 +60,7 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
   const [editingHousingObj, setEditingHousingObj] = useState<HousingExpense | null>(null);
   const [housingName, setHousingName] = useState('');
   const [housingTotal, setHousingTotal] = useState('');
+  const [housingPaymentDay, setHousingPaymentDay] = useState('');
 
   // Modal: Obligation (Cuota Mensual + Total Deuda)
   const [showObligationModal, setShowObligationModal] = useState(false);
@@ -67,6 +68,7 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
   const [obligationName, setObligationName] = useState('');
   const [obligationMonthlyPayment, setObligationMonthlyPayment] = useState('');
   const [obligationTotalDebt, setObligationTotalDebt] = useState('');
+  const [obligationPaymentDay, setObligationPaymentDay] = useState('');
 
   // Calculate ratio for a person
   const getPersonRatio = (personMonthlyIncome: number) => {
@@ -88,6 +90,7 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
     setEditingHousingObj(null);
     setHousingName('');
     setHousingTotal('');
+    setHousingPaymentDay('');
     setShowHousingModal(true);
   };
 
@@ -96,6 +99,7 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
     setEditingHousingObj(h);
     setHousingName(h.name);
     setHousingTotal(h.totalAmount.toString());
+    setHousingPaymentDay(h.paymentDay !== undefined ? h.paymentDay.toString() : '');
     setShowHousingModal(true);
   };
 
@@ -104,17 +108,20 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
     e.preventDefault();
     if (!housingName.trim()) return;
     const total = parseFloat(housingTotal) || 0;
+    const dayVal = housingPaymentDay ? parseInt(housingPaymentDay, 10) : undefined;
 
     if (editingHousingObj) {
       updateHousingExpense(editingHousingObj.id, {
         name: housingName.trim(),
         totalAmount: total,
+        paymentDay: dayVal,
         moneda: 'COP'
       });
     } else {
       addHousingExpense({
         name: housingName.trim(),
         totalAmount: total,
+        paymentDay: dayVal,
         moneda: 'COP'
       });
     }
@@ -146,6 +153,7 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
     setObligationName('');
     setObligationMonthlyPayment('');
     setObligationTotalDebt('');
+    setObligationPaymentDay('');
     setShowObligationModal(true);
   };
 
@@ -155,6 +163,7 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
     setObligationName(ob.name);
     setObligationMonthlyPayment(ob.totalAmount.toString());
     setObligationTotalDebt(ob.totalDebtBalance !== undefined ? ob.totalDebtBalance.toString() : '');
+    setObligationPaymentDay(ob.paymentDay !== undefined ? ob.paymentDay.toString() : '');
     setShowObligationModal(true);
   };
 
@@ -164,12 +173,14 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
     if (!obligationName.trim()) return;
     const monthlyVal = parseFloat(obligationMonthlyPayment) || 0;
     const debtVal = obligationTotalDebt ? parseFloat(obligationTotalDebt) : undefined;
+    const dayVal = obligationPaymentDay ? parseInt(obligationPaymentDay, 10) : undefined;
 
     if (editingObligationObj) {
       updateObligation(editingObligationObj.id, {
         name: obligationName.trim(),
         totalAmount: monthlyVal,
         totalDebtBalance: debtVal,
+        paymentDay: dayVal,
         moneda: 'COP'
       });
     } else {
@@ -177,6 +188,7 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
         name: obligationName.trim(),
         totalAmount: monthlyVal,
         totalDebtBalance: debtVal,
+        paymentDay: dayVal,
         moneda: 'COP'
       });
     }
@@ -589,6 +601,25 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
                 title="Ajuste"
               />
 
+              {/* Fecha Límite de Pago */}
+              <div>
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                  Fecha Límite de Pago
+                </label>
+                <select
+                  value={housingPaymentDay}
+                  onChange={e => setHousingPaymentDay(e.target.value)}
+                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
+                >
+                  <option value="">Seleccionar día</option>
+                  {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
+                    <option key={day} value={day.toString()}>
+                      Día {day}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               <div className="flex items-center gap-2 pt-3">
                 <button
                   type="button"
@@ -648,6 +679,25 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
                 required
                 title="Ajuste"
               />
+
+              {/* Fecha Límite de Pago */}
+              <div>
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                  Fecha Límite de Pago
+                </label>
+                <select
+                  value={obligationPaymentDay}
+                  onChange={e => setObligationPaymentDay(e.target.value)}
+                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
+                >
+                  <option value="">Seleccionar día</option>
+                  {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
+                    <option key={day} value={day.toString()}>
+                      Día {day}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
               <div className="flex items-center gap-2 pt-3">
                 <button

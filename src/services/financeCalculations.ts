@@ -103,7 +103,7 @@ export function calculateCardPaymentDue(cc: CreditCardItem): number {
 }
 
 export function calculateAllFinances(data: AppFinanceData): CalculatedSummary {
-  const activePeople = (data.people || []).filter(p => p.enabled);
+  const activePeople = (data.people || []).filter((p, idx) => idx === 0 ? true : (p.enabled && (p.monthlyIncome || 0) > 0));
   const isShared = data.mode === 'shared' && activePeople.length > 1;
   const p1 = activePeople[0] || { name: 'Yo', monthlyIncome: 0, healthPensionRate: 0.08, enabled: true };
   const p2 = activePeople[1] || { name: 'Persona 2', monthlyIncome: 0, healthPensionRate: 0.0, enabled: false };

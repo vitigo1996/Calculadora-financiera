@@ -141,10 +141,11 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const updatePeople = (people: PersonProfile[]) => {
+    const activeContributors = people.filter((p, idx) => idx === 0 ? true : (p.enabled && (p.monthlyIncome || 0) > 0));
     setData(prev => ({
       ...prev,
       people,
-      mode: people.length > 1 ? 'shared' : 'single'
+      mode: activeContributors.length > 1 ? 'shared' : 'single'
     }));
   };
 

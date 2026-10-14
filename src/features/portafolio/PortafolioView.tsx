@@ -183,20 +183,22 @@ export const PortafolioView: React.FC = () => {
                       <h4 className="font-bold text-slate-800 dark:text-white text-sm truncate">
                         {item.nombre}
                       </h4>
-                      {isDiff && (
-                        <span className="px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-[10px] font-mono font-bold text-slate-500 dark:text-slate-400 flex-shrink-0">
-                          {itemMoneda}
-                        </span>
-                      )}
                     </div>
                   </div>
 
                   {/* Lado Derecho: Saldo y Botón de Edición / Eliminar */}
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <div className="text-right">
-                      <span className="font-mono font-bold text-sm text-slate-800 dark:text-white block">
-                        {formatCurrency(item.saldo, itemMoneda)}
-                      </span>
+                      <div className="flex items-center justify-end gap-1.5">
+                        <span className="font-mono font-bold text-sm text-slate-800 dark:text-white">
+                          {formatCurrency(item.saldo, itemMoneda)}
+                        </span>
+                        {isDiff && (
+                          <span className="px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-[10px] font-mono font-bold text-slate-500 dark:text-slate-400 flex-shrink-0">
+                            {itemMoneda}
+                          </span>
+                        )}
+                      </div>
                       {isDiff && (
                         <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono block">
                           {formatCurrency(equivalentInBase, baseCurrency)}

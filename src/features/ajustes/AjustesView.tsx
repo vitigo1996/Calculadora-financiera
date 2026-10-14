@@ -38,48 +38,58 @@ export const AjustesView: React.FC = () => {
   } = useFinance();
   const { theme, toggleTheme } = useTheme();
 
-  // Pantalla activa: 'main', 'perfil', 'ingreso_familiar', 'distribucion'
-  const [activeScreen, setActiveScreen] = useState<'main' | 'perfil' | 'ingreso_familiar' | 'distribucion'>('main');
+  // Pantalla activa: 'main', 'perfil', 'distribucion'
+  const [activeScreen, setActiveScreen] = useState<'main' | 'perfil' | 'distribucion'>('main');
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
-  // Contribuidores actuales (mínimo 1)
-  const currentPeople = (data.people && data.people.length > 0)
-    ? data.people
-    : [{ id: 'p-1', name: 'Yo', monthlyIncome: 0, healthPensionRate: 0.08, enabled: true }];
+  // Asegurar 4 aportantes fijos
+  const getPerson = (index: number): PersonProfile => {
+    if (data.people && data.people[index]) {
+      return data.people[index];
+    }
+    return {
+      id: `p-${index + 1}`,
+      name: index === 0 ? 'Yo' : `Aportante ${index + 1}`,
+      monthlyIncome: 0,
+      healthPensionRate: index === 0 ? 0.08 : 0,
+      enabled: index === 0
+    };
+  };
 
-  const personCount = Math.min(4, Math.max(1, currentPeople.length));
+  const peopleList: PersonProfile[] = [
+    getPerson(0),
+    getPerson(1),
+    getPerson(2),
+    getPerson(3)
+  ];
+
   const splitMethod: ExpenseSplitMethod = data.expenseSplitMethod || 'proportional';
 
-  // Cambio en número de aportantes
-  const handlePersonCountChange = (count: number) => {
-    const validCount = Math.min(4, Math.max(1, count));
-    const updated = [...currentPeople];
-    if (validCount > updated.length) {
-      for (let i = updated.length; i < validCount; i++) {
-        updated.push({
-          id: `p-${Date.now()}-${i + 1}`,
-          name: `Persona ${i + 1}`,
-          monthlyIncome: 0,
-          healthPensionRate: 0.0,
-          enabled: true
-        });
-      }
-    } else if (validCount < updated.length) {
-      updated.splice(validCount);
-    }
+  // Actualizar ingreso de aportante
+  const handleUpdateIncome = (index: number, incomeValue: number) => {
+    const updated = [...peopleList];
+    const prevPerson = updated[index];
+    const isPrimary = index === 0;
+    const isEnabled = isPrimary ? true : incomeValue > 0;
+
+    updated[index] = {
+      ...prevPerson,
+      monthlyIncome: incomeValue,
+      enabled: isEnabled
+    };
+
     updatePeople(updated);
   };
 
-  // Actualizar campo de persona
-  const handleUpdatePerson = (index: number, field: keyof PersonProfile, value: any) => {
-    const updated = [...currentPeople];
-    if (!updated[index]) return;
-    updated[index] = { ...updated[index], [field]: value };
+  // Actualizar nombre de aportante (en perfil)
+  const handleUpdateName = (index: number, newName: string) => {
+    const updated = [...peopleList];
+    updated[index] = { ...updated[index], name: newName };
     updatePeople(updated);
   };
 
   // Calcular total de ingreso familiar
-  const totalCombinedIncome = currentPeople.reduce((sum, p) => sum + (p.monthlyIncome || 0), 0);
+  const totalCombinedIncome = peopleList.reduce((sum, p) => sum + (p.monthlyIncome || 0), 0);
 
   // ==========================================
   // SUB-VISTA: PERFIL (Diseño unificado de filas)
@@ -111,8 +121,8 @@ export const AjustesView: React.FC = () => {
 
             <input
               type="text"
-              value={currentPeople[0]?.name || ''}
-              onChange={e => handleUpdatePerson(0, 'name', e.target.value)}
+              value={peopleList[0]?.name || ''}
+              onChange={e => handleUpdateName(0, e.target.value)}
               placeholder="Mi Nombre"
               className="w-48 sm:w-64 text-right bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 transition-colors"
             />
@@ -131,133 +141,12 @@ export const AjustesView: React.FC = () => {
 
             <input
               type="number"
-              value={currentPeople[0]?.monthlyIncome || ''}
-              onChange={e => handleUpdatePerson(0, 'monthlyIncome', parseFloat(e.target.value) || 0)}
+              value={peopleList[0]?.monthlyIncome === 0 ? '' : peopleList[0]?.monthlyIncome}
+              onChange={e => handleUpdateIncome(0, parseFloat(e.target.value) || 0)}
               placeholder="0"
               className="w-48 sm:w-64 text-right bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs font-mono font-bold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 transition-colors"
             />
           </div>
-        </div>
-      </div>
-    );
-  }
-
-  // ==========================================
-  // SUB-VISTA: INGRESO FAMILIAR
-  // ==========================================
-  if (activeScreen === 'ingreso_familiar') {
-    return (
-      <div className="space-y-4 animate-fadeIn pb-24">
-        {/* Botón Volver */}
-        <button
-          onClick={() => setActiveScreen('main')}
-          className="flex items-center gap-2 text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 px-3.5 py-2 rounded-2xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 shadow-xs transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Volver a Ajustes</span>
-        </button>
-
-        {/* Tarjeta de Ingreso Familiar con el mismo diseño */}
-        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors divide-y divide-slate-200 dark:divide-slate-800">
-          {/* Fila: Número de Aportantes */}
-          <div className="p-4 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3 flex-shrink-0">
-              <div className="w-9 h-9 rounded-xl bg-indigo-600 dark:bg-indigo-600 text-white border-2 border-indigo-400 dark:border-indigo-400 flex items-center justify-center shadow-xs flex-shrink-0">
-                <Users className="w-4 h-4" />
-              </div>
-              <span className="font-bold text-slate-800 dark:text-white text-sm">
-                Número de Aportantes
-              </span>
-            </div>
-
-            <select
-              value={personCount}
-              onChange={e => handlePersonCountChange(parseInt(e.target.value))}
-              className="px-3 py-2 rounded-2xl text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-white border border-slate-300/80 dark:border-slate-700 shadow-sm focus:outline-none cursor-pointer"
-            >
-              <option value={1}>1 Aportante</option>
-              <option value={2}>2 Aportantes</option>
-              <option value={3}>3 Aportantes</option>
-              <option value={4}>4 Aportantes</option>
-            </select>
-          </div>
-
-          {/* Si es mayor a 1: Método de Reparto + Aportantes Adicionales */}
-          {personCount > 1 && (
-            <>
-              {/* Fila: Método de Reparto */}
-              <div className="p-4 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3 flex-shrink-0">
-                  <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-200/60 dark:border-blue-800/40 shadow-xs flex-shrink-0">
-                    <Sliders className="w-4 h-4" />
-                  </div>
-                  <span className="font-bold text-slate-800 dark:text-white text-sm">
-                    Método de Reparto
-                  </span>
-                </div>
-
-                <select
-                  value={splitMethod}
-                  onChange={e => updateExpenseSplitMethod(e.target.value as ExpenseSplitMethod)}
-                  className="px-3 py-2 rounded-2xl text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-white border border-slate-300/80 dark:border-slate-700 shadow-sm focus:outline-none cursor-pointer max-w-[170px]"
-                >
-                  <option value="proportional">Proporcional (%)</option>
-                  <option value="equal">50 / 50 Equitativo</option>
-                  <option value="equal_remaining">Excedente Libre</option>
-                </select>
-              </div>
-
-              {/* Aportantes adicionales (Persona 2, 3, etc. - sin mostrar el aporte mío) */}
-              {currentPeople.slice(1).map((person, sliceIdx) => {
-                const actualIdx = sliceIdx + 1;
-                const defaultName = `Persona ${actualIdx + 1}`;
-
-                return (
-                  <React.Fragment key={person.id || actualIdx}>
-                    {/* Fila Nombre Aportante */}
-                    <div className="p-4 flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-3 flex-shrink-0">
-                        <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-200/60 dark:border-blue-800/40 shadow-xs flex-shrink-0">
-                          <User className="w-4 h-4" />
-                        </div>
-                        <span className="font-bold text-slate-800 dark:text-white text-sm">
-                          Nombre (Aportante {actualIdx + 1})
-                        </span>
-                      </div>
-
-                      <input
-                        type="text"
-                        value={person.name}
-                        onChange={e => handleUpdatePerson(actualIdx, 'name', e.target.value)}
-                        placeholder={defaultName}
-                        className="w-44 sm:w-60 text-right bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 transition-colors"
-                      />
-                    </div>
-
-                    {/* Fila Ingreso Aportante */}
-                    <div className="p-4 flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-3 flex-shrink-0">
-                        <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-200/60 dark:border-blue-800/40 shadow-xs flex-shrink-0">
-                          <Coins className="w-4 h-4" />
-                        </div>
-                        <span className="font-bold text-slate-800 dark:text-white text-sm">
-                          Ingreso (Aportante {actualIdx + 1})
-                        </span>
-                      </div>
-
-                      <input
-                        type="number"
-                        value={person.monthlyIncome || ''}
-                        onChange={e => handleUpdatePerson(actualIdx, 'monthlyIncome', parseFloat(e.target.value) || 0)}
-                        placeholder="0"
-                        className="w-44 sm:w-60 text-right bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs font-mono font-bold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 transition-colors"
-                      />
-                    </div>
-                  </React.Fragment>
-                );
-              })}
-            </>
-          )}
         </div>
       </div>
     );
@@ -453,7 +342,7 @@ export const AjustesView: React.FC = () => {
             <div>
               <h4 className="font-bold text-slate-800 dark:text-white text-sm">Perfil</h4>
               <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                {currentPeople[0]?.name || 'Mi Perfil'} • {formatCurrency(currentPeople[0]?.monthlyIncome || 0)}
+                {peopleList[0]?.name || 'Mi Perfil'} • {formatCurrency(peopleList[0]?.monthlyIncome || 0)}
               </p>
             </div>
           </div>
@@ -517,25 +406,65 @@ export const AjustesView: React.FC = () => {
           </select>
         </div>
 
-        {/* 4. INGRESO FAMILIAR */}
-        <button
-          type="button"
-          onClick={() => setActiveScreen('ingreso_familiar')}
-          className="w-full p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors text-left group"
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-indigo-600 dark:bg-indigo-600 text-white border-2 border-indigo-400 dark:border-indigo-400 flex items-center justify-center shadow-xs flex-shrink-0">
-              <Users className="w-4 h-4" />
+        {/* 4. APORTANTES 1 AL 4: SOLO INGRESO */}
+        {[0, 1, 2, 3].map((idx) => {
+          const person = peopleList[idx];
+          const aportanteNum = idx + 1;
+          const labelTitle = `Ingreso Aportante ${aportanteNum}`;
+
+          return (
+            <div key={idx} className="p-4 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 flex-shrink-0">
+                <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-200/60 dark:border-blue-800/40 shadow-xs flex-shrink-0">
+                  <Coins className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-slate-800 dark:text-white text-sm">
+                    {labelTitle}
+                  </h4>
+                  {idx === 0 && person.name && person.name !== 'Yo' && (
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                      {person.name}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <input
+                type="number"
+                value={person.monthlyIncome === 0 ? '' : person.monthlyIncome}
+                onChange={e => handleUpdateIncome(idx, parseFloat(e.target.value) || 0)}
+                placeholder="0"
+                className="w-40 sm:w-56 text-right bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs font-mono font-bold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 transition-colors"
+              />
+            </div>
+          );
+        })}
+
+        {/* 5. MÉTODO DE REPARTO */}
+        <div className="p-4 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 flex-shrink-0">
+            <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-200/60 dark:border-blue-800/40 shadow-xs flex-shrink-0">
+              <Sliders className="w-4 h-4" />
             </div>
             <div>
-              <h4 className="font-bold text-slate-800 dark:text-white text-sm">Ingreso Familiar</h4>
+              <h4 className="font-bold text-slate-800 dark:text-white text-sm">Método de Reparto</h4>
               <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                {personCount} {personCount === 1 ? 'aportante' : 'aportantes'} • {splitMethod === 'proportional' ? 'Proporcional' : splitMethod === 'equal' ? '50/50' : 'Excedente'}
+                División de gastos compartidos
               </p>
             </div>
           </div>
-          <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-white transition-colors" />
-        </button>
+
+          <select
+            value={splitMethod}
+            onChange={e => updateExpenseSplitMethod(e.target.value as ExpenseSplitMethod)}
+            className="px-3 py-2 rounded-2xl text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-white border border-slate-300/80 dark:border-slate-700 shadow-sm focus:outline-none cursor-pointer max-w-[170px]"
+          >
+            <option value="proportional">Proporcional (%)</option>
+            <option value="equal">50 / 50 Equitativo</option>
+            <option value="equal_remaining">Excedente Libre</option>
+          </select>
+        </div>
 
         {/* 5. DISTRIBUCIÓN (Movido desde Portafolio) */}
         <button
