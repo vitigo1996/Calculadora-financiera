@@ -265,13 +265,10 @@ export const AjustesView: React.FC = () => {
         <div className="p-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-200/60 dark:border-blue-800/40 shadow-xs flex-shrink-0">
-              {theme === 'dark' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4 text-amber-500" />}
+              {theme === 'dark' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
             </div>
             <div>
               <h4 className="font-bold text-slate-800 dark:text-white text-sm">Modo Visual</h4>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                {theme === 'dark' ? 'Tema oscuro activo' : 'Tema claro activo'}
-              </p>
             </div>
           </div>
 
@@ -302,9 +299,6 @@ export const AjustesView: React.FC = () => {
             </div>
             <div>
               <h4 className="font-bold text-slate-800 dark:text-white text-sm">Moneda Base</h4>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                Moneda de cálculo principal
-              </p>
             </div>
           </div>
 
@@ -325,37 +319,31 @@ export const AjustesView: React.FC = () => {
           className="w-full p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors text-left group"
         >
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-indigo-600 dark:bg-indigo-600 text-white border-2 border-indigo-400 dark:border-indigo-400 flex items-center justify-center shadow-xs flex-shrink-0">
+            <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-200/60 dark:border-blue-800/40 shadow-xs flex-shrink-0">
               <PieChartIcon className="w-4 h-4" />
             </div>
             <div>
               <h4 className="font-bold text-slate-800 dark:text-white text-sm">Distribución</h4>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                Gráficas de disponible y activos
-              </p>
             </div>
           </div>
           <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-white transition-colors" />
         </button>
 
         {/* 4. MÉTODO DE REPARTO */}
-        <div className="p-4 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 flex-shrink-0">
+        <div className="p-4 flex items-center justify-between gap-2 sm:gap-3">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
             <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-200/60 dark:border-blue-800/40 shadow-xs flex-shrink-0">
               <Sliders className="w-4 h-4" />
             </div>
-            <div>
-              <h4 className="font-bold text-slate-800 dark:text-white text-sm">Método de Reparto</h4>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                División de gastos compartidos
-              </p>
+            <div className="min-w-0">
+              <h4 className="font-bold text-slate-800 dark:text-white text-sm truncate">Método de Reparto</h4>
             </div>
           </div>
 
           <select
             value={splitMethod}
             onChange={e => updateExpenseSplitMethod(e.target.value as ExpenseSplitMethod)}
-            className="px-3 py-2 rounded-2xl text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-white border border-slate-300/80 dark:border-slate-700 shadow-sm focus:outline-none cursor-pointer max-w-[170px]"
+            className="px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-2xl text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-white border border-slate-300/80 dark:border-slate-700 shadow-sm focus:outline-none cursor-pointer max-w-[130px] sm:max-w-[160px] truncate flex-shrink-0"
           >
             <option value="proportional">Proporcional (%)</option>
             <option value="equal">50 / 50 Equitativo</option>
@@ -371,14 +359,11 @@ export const AjustesView: React.FC = () => {
             className="w-full p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors text-left group"
           >
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-indigo-600 dark:bg-indigo-600 text-white border-2 border-indigo-400 dark:border-indigo-400 flex items-center justify-center shadow-xs flex-shrink-0">
+              <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-200/60 dark:border-blue-800/40 shadow-xs flex-shrink-0">
                 <Wallet className="w-4 h-4" />
               </div>
               <div>
                 <h4 className="font-bold text-slate-800 dark:text-white text-sm">Ingresos</h4>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                  Total: {formatCurrency(totalCombinedIncome)}
-                </p>
               </div>
             </div>
 
@@ -396,14 +381,9 @@ export const AjustesView: React.FC = () => {
 
                 return (
                   <div key={idx} className="px-4 py-3 flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-7 h-7 rounded-lg bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center flex-shrink-0 text-xs font-bold font-mono">
-                        {aportanteNum}
-                      </div>
-                      <span className="font-semibold text-slate-700 dark:text-slate-200 text-xs truncate">
-                        Ingreso {aportanteNum}
-                      </span>
-                    </div>
+                    <span className="font-semibold text-slate-700 dark:text-slate-200 text-xs truncate">
+                      Ingreso {aportanteNum}
+                    </span>
 
                     <input
                       type="number"
@@ -429,24 +409,21 @@ export const AjustesView: React.FC = () => {
           )}
         </div>
 
-        {/* 7. RESTABLECER TODO DE FÁBRICA */}
+        {/* 6. RESTABLECER */}
         <button
           type="button"
           onClick={() => setShowResetConfirm(true)}
           className="w-full p-4 flex items-center justify-between hover:bg-rose-50/50 dark:hover:bg-rose-950/30 transition-colors text-left group"
         >
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center border border-rose-200 dark:border-rose-900/40 shadow-xs flex-shrink-0">
+            <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-200/60 dark:border-blue-800/40 shadow-xs flex-shrink-0">
               <RefreshCw className="w-4 h-4" />
             </div>
             <div>
-              <h4 className="font-bold text-rose-600 dark:text-rose-400 text-sm">Restablecer todo de fábrica</h4>
-              <p className="text-[11px] text-slate-400 dark:text-slate-500">
-                Borrar todos los datos y reiniciar la aplicación
-              </p>
+              <h4 className="font-bold text-rose-600 dark:text-rose-400 text-sm">Restablecer</h4>
             </div>
           </div>
-          <ChevronRight className="w-4 h-4 text-rose-300 dark:text-rose-600 group-hover:text-rose-500 transition-colors" />
+          <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-white transition-colors" />
         </button>
 
       </div>
@@ -454,9 +431,9 @@ export const AjustesView: React.FC = () => {
       {/* Modal de confirmación para restablecer datos */}
       <ConfirmModal
         isOpen={showResetConfirm}
-        title="Restablecer Datos"
-        message="¿Estás seguro de restablecer todos los datos a la configuración inicial en blanco? Esta acción no se puede deshacer."
-        confirmText="Sí, restablecer"
+        title="Restablecer"
+        message="¿Estás seguro de restablecer? Esta acción no se puede deshacer."
+        confirmText="Restablecer"
         cancelText="Cancelar"
         variant="danger"
         onConfirm={() => {
