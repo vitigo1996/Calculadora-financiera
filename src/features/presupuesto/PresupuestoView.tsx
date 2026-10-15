@@ -241,28 +241,37 @@ export const PresupuestoView: React.FC = () => {
             <div className="overflow-y-auto py-2 space-y-1 flex-1 pr-1 scrollbar-thin">
               {halfSalud > 0 && (
                 <div className="flex items-center justify-between text-xs py-2 border-b border-slate-100 dark:border-slate-800/60">
-                  <span className="text-slate-700 dark:text-slate-300 font-medium truncate">
-                    Deducciones de Ley (50%)
-                  </span>
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <ShieldCheck className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                    <span className="text-slate-700 dark:text-slate-300 font-medium truncate">
+                      Deducciones de Ley (50%)
+                    </span>
+                  </div>
                   <span className="font-mono font-bold text-slate-900 dark:text-white flex-shrink-0 ml-2">
                     {formatCurrency(halfSalud)}
                   </span>
                 </div>
               )}
 
-              {(fortnightDetail === '1st' ? firstHalfItems : secondHalfItems).map(item => (
-                <div
-                  key={item.id}
-                  className="flex items-center justify-between text-xs py-2 border-b border-slate-100 dark:border-slate-800/60"
-                >
-                  <span className="text-slate-700 dark:text-slate-300 font-medium truncate">
-                    {item.name}
-                  </span>
-                  <span className="font-mono font-bold text-slate-900 dark:text-white flex-shrink-0 ml-2">
-                    {formatCurrency(item.amount)}
-                  </span>
-                </div>
-              ))}
+              {(fortnightDetail === '1st' ? firstHalfItems : secondHalfItems).map(item => {
+                const Icon = item.icon;
+                return (
+                  <div
+                    key={item.id}
+                    className="flex items-center justify-between text-xs py-2 border-b border-slate-100 dark:border-slate-800/60"
+                  >
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <Icon className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                      <span className="text-slate-700 dark:text-slate-300 font-medium truncate">
+                        {item.name}
+                      </span>
+                    </div>
+                    <span className="font-mono font-bold text-slate-900 dark:text-white flex-shrink-0 ml-2">
+                      {formatCurrency(item.amount)}
+                    </span>
+                  </div>
+                );
+              })}
 
               {(fortnightDetail === '1st' ? firstHalfItems : secondHalfItems).length === 0 && halfSalud === 0 && (
                 <div className="p-6 text-center text-xs text-slate-400 dark:text-slate-500">
