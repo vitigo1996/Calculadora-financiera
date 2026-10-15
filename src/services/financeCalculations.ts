@@ -139,8 +139,8 @@ export function calculateAllFinances(data: AppFinanceData): CalculatedSummary {
   let m4_vivienda = 0;
   let viviendaDaniela = 0;
   let viviendaHogar = 0;
-  let firstFortnightHousing = 0;
-  let secondFortnightHousing = 0;
+  let mitadDeMesHousing = 0;
+  let finDeMesHousing = 0;
 
   (data.housingExpenses || []).forEach(item => {
     const itemAmount = item.totalAmount || 0;
@@ -152,18 +152,19 @@ export function calculateAllFinances(data: AppFinanceData): CalculatedSummary {
     viviendaDaniela += partnerShare;
     viviendaHogar += itemAmount;
 
-    if (item.period === '2nd_fortnight') {
-      secondFortnightHousing += myShare;
+    const isMitad = item.paymentDay !== undefined ? item.paymentDay >= 16 : item.period === '2nd_fortnight';
+    if (isMitad) {
+      mitadDeMesHousing += myShare;
     } else {
-      firstFortnightHousing += myShare;
+      finDeMesHousing += myShare;
     }
   });
 
   // 2. Obligaciones (Dinámica sumando cuota mensual de cada registro según su quincena y distribución)
   let m6_obligaciones = 0;
   let obligacionesDaniela = 0;
-  let firstFortnightObligations = 0;
-  let secondFortnightObligations = 0;
+  let mitadDeMesObligations = 0;
+  let finDeMesObligations = 0;
 
   (data.obligations || []).forEach(ob => {
     const monthlyVal = ob.davidAmount !== undefined && ob.davidAmount !== ob.totalAmount && ob.totalDebtBalance
@@ -177,27 +178,29 @@ export function calculateAllFinances(data: AppFinanceData): CalculatedSummary {
     m6_obligaciones += myShare;
     obligacionesDaniela += partnerShare;
 
-    if (ob.period === '2nd_fortnight') {
-      secondFortnightObligations += myShare;
+    const isMitad = ob.paymentDay !== undefined ? ob.paymentDay >= 16 : ob.period === '2nd_fortnight';
+    if (isMitad) {
+      mitadDeMesObligations += myShare;
     } else {
-      firstFortnightObligations += myShare;
+      finDeMesObligations += myShare;
     }
   });
 
   // 3. Tarjetas de Crédito (Dinámica sumando pago de cada tarjeta registrada)
   let m5_tarjetas = 0;
-  let firstFortnightCards = 0;
-  let secondFortnightCards = 0;
+  let mitadDeMesCards = 0;
+  let finDeMesCards = 0;
 
   (data.creditCards || []).forEach(cc => {
     const dueAmount = calculateCardPaymentDue(cc) || 0;
 
     m5_tarjetas += dueAmount;
 
-    if (cc.period === '2nd_fortnight') {
-      secondFortnightCards += dueAmount;
+    const isMitad = cc.paymentDay !== undefined ? cc.paymentDay >= 16 : cc.period === '2nd_fortnight';
+    if (isMitad) {
+      mitadDeMesCards += dueAmount;
     } else {
-      firstFortnightCards += dueAmount;
+      finDeMesCards += dueAmount;
     }
   });
 
@@ -216,11 +219,11 @@ export function calculateAllFinances(data: AppFinanceData): CalculatedSummary {
   // M7: Total Gastos del Mes
   const m7_totalGastos = m3_saludPension + m4_vivienda + m6_obligaciones + m5_tarjetas;
 
-  // M9: Mitad de mes (1ª Quincena)
-  const m9_mitadDeMes = (m3_saludPension / 2) + firstFortnightHousing + firstFortnightObligations + firstFortnightCards;
+  // M9: Mitad de mes (Vencimientos del 16 al último día del mes, pagados con la quincena del 15)
+  const m9_mitadDeMes = (m3_saludPension / 2) + mitadDeMesHousing + mitadDeMesObligations + mitadDeMesCards;
 
-  // M10: Fin de mes (2ª Quincena)
-  const m10_finDeMes = (m3_saludPension / 2) + secondFortnightHousing + secondFortnightObligations + secondFortnightCards;
+  // M10: Fin de mes (Vencimientos del 1 al 15, pagados con la quincena de fin de mes)
+  const m10_finDeMes = (m3_saludPension / 2) + finDeMesHousing + finDeMesObligations + finDeMesCards;
 
   // M11: Disponible del Mes
   const m11_disponible = p1Income - m7_totalGastos;
@@ -284,12 +287,12 @@ export function calculateAllFinances(data: AppFinanceData): CalculatedSummary {
       viviendaDaniela,
       viviendaHogar,
       obligacionesDaniela,
-      firstFortnightHousing,
-      secondFortnightHousing,
-      firstFortnightObligations,
-      secondFortnightObligations,
-      firstFortnightCards,
-      secondFortnightCards,
+      firstFortnightHousing: finDeMesHousing,
+      secondFortnightHousing: mitadDeMesHousing,
+      firstFortnightObligations: finDeMesObligations,
+      secondFortnightObligations: mitadDeMesObligations,
+      firstFortnightCards: finDeMesCards,
+      secondFortnightCards: mitadDeMesCards,
       totalMonthlyGastosFijos: m4_vivienda + m6_obligaciones
     },
     vivienda: {

@@ -18,7 +18,7 @@ export const PresupuestoView: React.FC = () => {
 
   // Submenu: Presupuesto | Gastos
   const [subView, setSubView] = useState<'presupuesto' | 'gastos'>('presupuesto');
-  const [fortnightDetail, setFortnightDetail] = useState<'1st' | '2nd' | null>(null);
+  const [fortnightDetail, setFortnightDetail] = useState<'mitad' | 'fin' | null>(null);
 
   // Determinar los ítems a pagar según su fecha límite de pago
   const isShared = summary.ingresos.isShared;
@@ -32,6 +32,7 @@ export const PresupuestoView: React.FC = () => {
       id: h.id,
       name: h.name,
       type: 'Vivienda',
+      period: h.period,
       paymentDay: h.paymentDay,
       amount,
       icon: Home
@@ -49,6 +50,7 @@ export const PresupuestoView: React.FC = () => {
       id: ob.id,
       name: ob.name,
       type: 'Obligación',
+      period: ob.period,
       paymentDay: ob.paymentDay,
       amount,
       icon: Layers
@@ -62,6 +64,7 @@ export const PresupuestoView: React.FC = () => {
       id: cc.id,
       name: cc.name,
       type: 'Tarjeta',
+      period: cc.period,
       paymentDay: cc.paymentDay,
       amount,
       icon: CreditCard
@@ -70,18 +73,25 @@ export const PresupuestoView: React.FC = () => {
 
   const allPayableItems = [...housingItems, ...obligationItems, ...cardItems];
 
-  // Primera mitad del mes (Día 1 a 15) y Segunda mitad (Día 16 a 31)
-  const firstHalfItems = allPayableItems
-    .filter(item => (item.paymentDay || 1) <= 15)
-    .sort((a, b) => (a.paymentDay || 1) - (b.paymentDay || 1));
+  // Mitad de Mes: gastos con fecha de pago entre el 16 y el último día del mes (pagados con la quincena del 15)
+  const mitadDeMesItems = allPayableItems
+    .filter(item => {
+      const day = item.paymentDay ?? (item.period === '2nd_fortnight' ? 16 : 1);
+      return day >= 16;
+    })
+    .sort((a, b) => (a.paymentDay || 16) - (b.paymentDay || 16));
 
-  const secondHalfItems = allPayableItems
-    .filter(item => (item.paymentDay || 1) > 15)
+  // Fin de Mes: gastos con fecha de pago entre el 1 y el 15 (pagados con la quincena de fin de mes)
+  const finDeMesItems = allPayableItems
+    .filter(item => {
+      const day = item.paymentDay ?? (item.period === '2nd_fortnight' ? 16 : 1);
+      return day <= 15;
+    })
     .sort((a, b) => (a.paymentDay || 1) - (b.paymentDay || 1));
 
   const halfSalud = (pres.m3_saludPension || 0) / 2;
-  const totalFirstHalf = firstHalfItems.reduce((sum, item) => sum + item.amount, 0) + halfSalud;
-  const totalSecondHalf = secondHalfItems.reduce((sum, item) => sum + item.amount, 0) + halfSalud;
+  const totalMitadDeMes = mitadDeMesItems.reduce((sum, item) => sum + item.amount, 0) + halfSalud;
+  const totalFinDeMes = finDeMesItems.reduce((sum, item) => sum + item.amount, 0) + halfSalud;
 
   return (
     <div className="space-y-6 pb-2 animate-fadeIn">
@@ -186,7 +196,7 @@ export const PresupuestoView: React.FC = () => {
                 </span>
                 <button
                   type="button"
-                  onClick={() => setFortnightDetail('1st')}
+                  onClick={() => setFortnightDetail('mitad')}
                   className="p-1.5 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors shadow-xs"
                   title="Ver detalle de gastos"
                 >
@@ -194,7 +204,7 @@ export const PresupuestoView: React.FC = () => {
                 </button>
               </div>
               <div className="text-base font-bold text-blue-700 dark:text-blue-400 font-mono tracking-tight">
-                {formatCurrency(totalFirstHalf)}
+                {formatCurrency(totalMitadDeMes)}
               </div>
             </div>
 
@@ -206,7 +216,7 @@ export const PresupuestoView: React.FC = () => {
                 </span>
                 <button
                   type="button"
-                  onClick={() => setFortnightDetail('2nd')}
+                  onClick={() => setFortnightDetail('fin')}
                   className="p-1.5 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors shadow-xs"
                   title="Ver detalle de gastos"
                 >
@@ -214,7 +224,7 @@ export const PresupuestoView: React.FC = () => {
                 </button>
               </div>
               <div className="text-base font-bold text-blue-700 dark:text-blue-400 font-mono tracking-tight">
-                {formatCurrency(totalSecondHalf)}
+                {formatCurrency(totalFinDeMes)}
               </div>
             </div>
           </div>
@@ -227,7 +237,7 @@ export const PresupuestoView: React.FC = () => {
           <div className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-3xl p-5 max-w-sm w-full shadow-2xl animate-scaleUp max-h-[85vh] flex flex-col">
             <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
               <h3 className="font-bold text-sm text-slate-900 dark:text-white">
-                {fortnightDetail === '1st' ? 'Mitad de Mes' : 'Fin de Mes'}
+                {fortnightDetail === 'mitad' ? 'Mitad de Mes' : 'Fin de Mes'}
               </h3>
               <button
                 type="button"
@@ -253,7 +263,7 @@ export const PresupuestoView: React.FC = () => {
                 </div>
               )}
 
-              {(fortnightDetail === '1st' ? firstHalfItems : secondHalfItems).map(item => {
+              {(fortnightDetail === 'mitad' ? mitadDeMesItems : finDeMesItems).map(item => {
                 const Icon = item.icon;
                 return (
                   <div
@@ -273,7 +283,7 @@ export const PresupuestoView: React.FC = () => {
                 );
               })}
 
-              {(fortnightDetail === '1st' ? firstHalfItems : secondHalfItems).length === 0 && halfSalud === 0 && (
+              {(fortnightDetail === 'mitad' ? mitadDeMesItems : finDeMesItems).length === 0 && halfSalud === 0 && (
                 <div className="p-6 text-center text-xs text-slate-400 dark:text-slate-500">
                   No hay gastos asignados para este periodo.
                 </div>
