@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useFinance } from '../../context/FinanceContext';
 import { useTheme } from '../../context/ThemeContext';
 import { ConfirmModal } from '../../components/ui/ConfirmModal';
+import { CustomSelect } from '../../components/ui/CustomSelect';
 import { formatCurrency } from '../../services/financeCalculations';
 import { PersonProfile, ExpenseSplitMethod } from '../../models/finance';
 import {
@@ -120,14 +121,17 @@ export const AjustesView: React.FC = () => {
             </div>
           </div>
 
-          <select
+          <CustomSelect
             value={baseCurrency}
-            onChange={(e) => setBaseCurrency(e.target.value as 'COP' | 'USD')}
-            className="px-3 py-2 rounded-2xl text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-white border border-slate-300/80 dark:border-slate-700 shadow-sm focus:outline-none cursor-pointer"
-          >
-            <option value="COP">COP ($)</option>
-            <option value="USD">USD ($)</option>
-          </select>
+            onChange={(val) => setBaseCurrency(val as 'COP' | 'USD')}
+            options={[
+              { value: 'COP', label: 'COP ($)' },
+              { value: 'USD', label: 'USD ($)' }
+            ]}
+            fullWidth={false}
+            align="right"
+            className="w-28"
+          />
         </div>
 
         {/* 3. INGRESOS (BOTÓN CON SUBMENÚ DINÁMICO) */}
@@ -202,15 +206,18 @@ export const AjustesView: React.FC = () => {
             </div>
           </div>
 
-          <select
+          <CustomSelect
             value={splitMethod}
-            onChange={e => updateExpenseSplitMethod(e.target.value as ExpenseSplitMethod)}
-            className="px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-2xl text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-white border border-slate-300/80 dark:border-slate-700 shadow-sm focus:outline-none cursor-pointer max-w-[130px] sm:max-w-[160px] truncate flex-shrink-0"
-          >
-            <option value="proportional">Proporcional (%)</option>
-            <option value="equal">50 / 50 Equitativo</option>
-            <option value="equal_remaining">Excedente Libre</option>
-          </select>
+            onChange={(val) => updateExpenseSplitMethod(val as ExpenseSplitMethod)}
+            options={[
+              { value: 'proportional', label: 'Proporcional (%)' },
+              { value: 'equal', label: '50 / 50 Equitativo' },
+              { value: 'equal_remaining', label: 'Excedente Libre' }
+            ]}
+            fullWidth={false}
+            align="right"
+            className="w-40 sm:w-48"
+          />
         </div>
 
         {/* 5. RESTABLECER */}

@@ -4,6 +4,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { StorageService } from '../../services/storageService';
 import { IngresoFamiliarModal } from '../modals/IngresoFamiliarModal';
 import { ConfirmModal } from './ConfirmModal';
+import { CustomSelect } from './CustomSelect';
 import {
   TrendingUp,
   Sun,
@@ -135,14 +136,18 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab = 'billetera' }) => {
                       Moneda Base
                     </span>
                   </div>
-                  <select
+                  <CustomSelect
                     value={baseCurrency}
-                    onChange={(e) => setBaseCurrency(e.target.value as 'COP' | 'USD')}
-                    className="px-2.5 py-1.5 rounded-xl text-xs font-bold bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-white border border-slate-300 dark:border-slate-700 shadow-sm focus:outline-none cursor-pointer"
-                  >
-                    <option value="COP">COP ($)</option>
-                    <option value="USD">USD ($)</option>
-                  </select>
+                    onChange={(val) => setBaseCurrency(val as 'COP' | 'USD')}
+                    options={[
+                      { value: 'COP', label: 'COP ($)' },
+                      { value: 'USD', label: 'USD ($)' }
+                    ]}
+                    size="sm"
+                    fullWidth={false}
+                    align="right"
+                    className="w-24"
+                  />
                 </div>
 
                 {/* 3. Botón de Ajustes: Ingreso Familiar */}

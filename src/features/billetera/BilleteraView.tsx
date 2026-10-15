@@ -6,6 +6,7 @@ import { getIconComponent, IconPickerModal } from '../../components/ui/IconPicke
 import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import { AmountCalculatorInput } from '../../components/ui/AmountCalculatorInput';
 import { InfoModal, InfoButton } from '../../components/ui/InfoModal';
+import { CustomSelect, CustomSelectOption } from '../../components/ui/CustomSelect';
 import { CreditosSuscripcionesView } from '../creditos_suscripciones/CreditosSuscripcionesView';
 import { DeudasSection } from '../deudas/DeudasView';
 import {
@@ -800,70 +801,48 @@ export const BilleteraView: React.FC = () => {
                     <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
                       Cuenta Origen
                     </label>
-                    <select
+                    <CustomSelect
                       value={movementSourceId}
-                      onChange={e => setMovementSourceId(e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
-                      required
-                    >
-                      {data.billeteraItems.length > 0 && (
-                        <optgroup label="Billetera">
-                          {data.billeteraItems.map(b => (
-                            <option key={b.id} value={`billetera:${b.id}`}>
-                              {b.nombre}
-                            </option>
-                          ))}
-                        </optgroup>
-                      )}
-                      {(data.portfolioItems || []).length > 0 && (
-                        <optgroup label="Portafolio">
-                          {(data.portfolioItems || []).map(p => (
-                            <option key={p.id} value={`portfolio:${p.id}`}>
-                              {p.nombre}
-                            </option>
-                          ))}
-                        </optgroup>
-                      )}
-                    </select>
+                      onChange={val => setMovementSourceId(val)}
+                      options={[
+                        ...data.billeteraItems.map(b => ({
+                          value: `billetera:${b.id}`,
+                          label: b.nombre,
+                          group: 'Billetera'
+                        })),
+                        ...(data.portfolioItems || []).map(p => ({
+                          value: `portfolio:${p.id}`,
+                          label: p.nombre,
+                          group: 'Portafolio'
+                        }))
+                      ]}
+                    />
                   </div>
 
                   <div>
                     <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
                       Destino
                     </label>
-                    <select
+                    <CustomSelect
                       value={movementDestTransferId}
-                      onChange={e => setMovementDestTransferId(e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
-                      required
-                    >
-                      {data.billeteraItems
-                        .filter(b => `billetera:${b.id}` !== movementSourceId && b.id !== movementSourceId)
-                        .length > 0 && (
-                        <optgroup label="Billetera">
-                          {data.billeteraItems
-                            .filter(b => `billetera:${b.id}` !== movementSourceId && b.id !== movementSourceId)
-                            .map(b => (
-                              <option key={b.id} value={`billetera:${b.id}`}>
-                                {b.nombre}
-                              </option>
-                            ))}
-                        </optgroup>
-                      )}
-                      {(data.portfolioItems || [])
-                        .filter(p => `portfolio:${p.id}` !== movementSourceId && p.id !== movementSourceId)
-                        .length > 0 && (
-                        <optgroup label="Portafolio">
-                          {(data.portfolioItems || [])
-                            .filter(p => `portfolio:${p.id}` !== movementSourceId && p.id !== movementSourceId)
-                            .map(p => (
-                              <option key={p.id} value={`portfolio:${p.id}`}>
-                                {p.nombre}
-                              </option>
-                            ))}
-                        </optgroup>
-                      )}
-                    </select>
+                      onChange={val => setMovementDestTransferId(val)}
+                      options={[
+                        ...data.billeteraItems
+                          .filter(b => `billetera:${b.id}` !== movementSourceId && b.id !== movementSourceId)
+                          .map(b => ({
+                            value: `billetera:${b.id}`,
+                            label: b.nombre,
+                            group: 'Billetera'
+                          })),
+                        ...(data.portfolioItems || [])
+                          .filter(p => `portfolio:${p.id}` !== movementSourceId && p.id !== movementSourceId)
+                          .map(p => ({
+                            value: `portfolio:${p.id}`,
+                            label: p.nombre,
+                            group: 'Portafolio'
+                          }))
+                      ]}
+                    />
                   </div>
 
                   {(() => {
@@ -919,18 +898,14 @@ export const BilleteraView: React.FC = () => {
                   <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
                     {movementType === 'income' ? 'Cuenta Destino' : 'Cuenta Origen'}
                   </label>
-                  <select
+                  <CustomSelect
                     value={movementSourceId}
-                    onChange={e => setMovementSourceId(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
-                    required
-                  >
-                    {data.billeteraItems.map(b => (
-                      <option key={b.id} value={`billetera:${b.id}`}>
-                        {b.nombre}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={val => setMovementSourceId(val)}
+                    options={data.billeteraItems.map(b => ({
+                      value: `billetera:${b.id}`,
+                      label: b.nombre
+                    }))}
+                  />
                 </div>
               )}
 
@@ -973,18 +948,14 @@ export const BilleteraView: React.FC = () => {
 
                   {incomeOriginType === 'deuda' && (
                     <div className="animate-fadeIn mt-2">
-                      <select
+                      <CustomSelect
                         value={incomeOriginDeudaId}
-                        onChange={e => setIncomeOriginDeudaId(e.target.value)}
-                        className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
-                        required
-                      >
-                        {deudasPorCobrar.map(d => (
-                          <option key={d.id} value={d.id}>
-                            {d.nombre} {d.monto !== undefined ? `(${formatCurrency(d.monto)})` : ''}
-                          </option>
-                        ))}
-                      </select>
+                        onChange={val => setIncomeOriginDeudaId(val)}
+                        options={deudasPorCobrar.map(d => ({
+                          value: d.id,
+                          label: `${d.nombre} ${d.monto !== undefined ? `(${formatCurrency(d.monto)})` : ''}`
+                        }))}
+                      />
                     </div>
                   )}
                 </div>
@@ -1032,31 +1003,22 @@ export const BilleteraView: React.FC = () => {
 
                   {movementDestType === 'payment' && (
                     <div className="animate-fadeIn mt-2">
-                      <select
+                      <CustomSelect
                         value={movementDestId}
-                        onChange={e => setMovementDestId(e.target.value)}
-                        className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
-                        required
-                      >
-                        {data.creditCards.length > 0 && (
-                          <optgroup label="Tarjetas de Crédito">
-                            {data.creditCards.map(c => (
-                              <option key={c.id} value={`card:${c.id}`}>
-                                {c.name}
-                              </option>
-                            ))}
-                          </optgroup>
-                        )}
-                        {deudasPorPagar.length > 0 && (
-                          <optgroup label="Deudas">
-                            {deudasPorPagar.map(d => (
-                              <option key={d.id} value={`deuda:${d.id}`}>
-                                {d.nombre}
-                              </option>
-                            ))}
-                          </optgroup>
-                        )}
-                      </select>
+                        onChange={val => setMovementDestId(val)}
+                        options={[
+                          ...data.creditCards.map(c => ({
+                            value: `card:${c.id}`,
+                            label: c.name,
+                            group: 'Tarjetas de Crédito'
+                          })),
+                          ...deudasPorPagar.map(d => ({
+                            value: `deuda:${d.id}`,
+                            label: d.nombre,
+                            group: 'Deudas'
+                          }))
+                        ]}
+                      />
                     </div>
                   )}
                 </div>

@@ -5,7 +5,16 @@ import { HousingExpense, ObligationItem } from '../../models/finance';
 import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import { AmountCalculatorInput } from '../../components/ui/AmountCalculatorInput';
 import { InfoModal, InfoButton } from '../../components/ui/InfoModal';
+import { CustomSelect } from '../../components/ui/CustomSelect';
 import { SuscripcionesView } from '../deudas/DeudasView';
+
+const DAY_OPTIONS = [
+  { value: '', label: 'Seleccionar día' },
+  ...Array.from({ length: 31 }, (_, i) => ({
+    value: (i + 1).toString(),
+    label: `Día ${i + 1}`
+  }))
+];
 import {
   Home,
   Layers,
@@ -615,18 +624,11 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
                 <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
                   Fecha Límite de Pago
                 </label>
-                <select
+                <CustomSelect
                   value={housingPaymentDay}
-                  onChange={e => setHousingPaymentDay(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
-                >
-                  <option value="">Seleccionar día</option>
-                  {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
-                    <option key={day} value={day.toString()}>
-                      Día {day}
-                    </option>
-                  ))}
-                </select>
+                  onChange={val => setHousingPaymentDay(val)}
+                  options={DAY_OPTIONS}
+                />
               </div>
 
               <div className="flex items-center gap-2 pt-3">
@@ -694,18 +696,11 @@ export const GastosFijosView: React.FC<{ hideHeader?: boolean }> = ({ hideHeader
                 <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
                   Fecha Límite de Pago
                 </label>
-                <select
+                <CustomSelect
                   value={obligationPaymentDay}
-                  onChange={e => setObligationPaymentDay(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
-                >
-                  <option value="">Seleccionar día</option>
-                  {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
-                    <option key={day} value={day.toString()}>
-                      Día {day}
-                    </option>
-                  ))}
-                </select>
+                  onChange={val => setObligationPaymentDay(val)}
+                  options={DAY_OPTIONS}
+                />
               </div>
 
               <div className="flex items-center gap-2 pt-3">

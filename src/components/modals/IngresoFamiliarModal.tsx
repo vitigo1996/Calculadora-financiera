@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useFinance } from '../../context/FinanceContext';
 import { formatCurrency } from '../../services/financeCalculations';
 import { PersonProfile, ExpenseSplitMethod } from '../../models/finance';
+import { CustomSelect } from '../ui/CustomSelect';
 import {
   Users,
   Save,
@@ -134,16 +135,16 @@ export const IngresoFamiliarModal: React.FC<IngresoFamiliarModalProps> = ({ isOp
             <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
               Número de Aportantes
             </label>
-            <select
+            <CustomSelect
               value={personCount}
-              onChange={e => handlePersonCountChange(parseInt(e.target.value))}
-              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-4 py-2.5 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
-            >
-              <option value={1}>1 Persona</option>
-              <option value={2}>2 Personas</option>
-              <option value={3}>3 Personas</option>
-              <option value={4}>4 Personas</option>
-            </select>
+              onChange={val => handlePersonCountChange(Number(val))}
+              options={[
+                { value: 1, label: '1 Persona' },
+                { value: 2, label: '2 Personas' },
+                { value: 3, label: '3 Personas' },
+                { value: 4, label: '4 Personas' }
+              ]}
+            />
           </div>
 
           {/* 2. Lista de Personas: Solo Nombre, Ingreso y Porcentaje */}
@@ -221,15 +222,16 @@ export const IngresoFamiliarModal: React.FC<IngresoFamiliarModalProps> = ({ isOp
               <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1 flex items-center gap-1">
                 <Sliders className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" /> Método de Reparto
               </label>
-              <select
+              <CustomSelect
                 value={splitMethod}
-                onChange={e => setLocalSplitMethod(e.target.value as ExpenseSplitMethod)}
-                className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
-              >
-                <option value="proportional">Proporcional a Ingresos (%)</option>
-                <option value="equal">50 / 50 Equitativo</option>
-                <option value="equal_remaining">Excedente Libre Equitativo</option>
-              </select>
+                onChange={val => setLocalSplitMethod(val as ExpenseSplitMethod)}
+                options={[
+                  { value: 'proportional', label: 'Proporcional a Ingresos (%)' },
+                  { value: 'equal', label: '50 / 50 Equitativo' },
+                  { value: 'equal_remaining', label: 'Excedente Libre Equitativo' }
+                ]}
+                size="sm"
+              />
             </div>
           </div>
 

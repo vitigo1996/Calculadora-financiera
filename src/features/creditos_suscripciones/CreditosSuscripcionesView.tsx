@@ -10,6 +10,15 @@ import { getIconComponent, IconPickerModal } from '../../components/ui/IconPicke
 import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import { AmountCalculatorInput } from '../../components/ui/AmountCalculatorInput';
 import { InfoModal, InfoButton } from '../../components/ui/InfoModal';
+import { CustomSelect } from '../../components/ui/CustomSelect';
+
+const DAY_OPTIONS = [
+  { value: '', label: 'Seleccionar día' },
+  ...Array.from({ length: 31 }, (_, i) => ({
+    value: (i + 1).toString(),
+    label: `Día ${i + 1}`
+  }))
+];
 import {
   CreditCard,
   Edit2,
@@ -585,18 +594,11 @@ export const CreditosSuscripcionesView: React.FC = () => {
                 <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
                   Día de Pago
                 </label>
-                <select
+                <CustomSelect
                   value={cardPaymentDay}
-                  onChange={e => setCardPaymentDay(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
-                >
-                  <option value="">Seleccionar día</option>
-                  {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
-                    <option key={day} value={day.toString()}>
-                      Día {day}
-                    </option>
-                  ))}
-                </select>
+                  onChange={val => setCardPaymentDay(val)}
+                  options={DAY_OPTIONS}
+                />
               </div>
 
               <div className="flex items-center gap-2 pt-3">
