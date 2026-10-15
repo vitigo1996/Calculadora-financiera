@@ -130,7 +130,7 @@ export const AjustesView: React.FC = () => {
             ]}
             fullWidth={false}
             align="right"
-            className="w-28"
+            className="w-44 sm:w-48"
           />
         </div>
 

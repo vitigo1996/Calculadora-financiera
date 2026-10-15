@@ -230,7 +230,6 @@ export const IngresoFamiliarModal: React.FC<IngresoFamiliarModalProps> = ({ isOp
                   { value: 'equal', label: '50 / 50 Equitativo' },
                   { value: 'equal_remaining', label: 'Excedente Libre Equitativo' }
                 ]}
-                size="sm"
               />
             </div>
           </div>

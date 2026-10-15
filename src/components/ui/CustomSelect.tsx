@@ -142,7 +142,7 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
                       onChange(opt.value);
                       setIsOpen(false);
                     }}
-                    className={`w-full px-3 py-2 rounded-xl text-xs flex items-center justify-between transition-colors text-left ${
+                    className={`w-full px-3 py-2.5 rounded-xl text-xs flex items-center justify-between transition-colors text-left ${
                       isSelected
                         ? 'bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 font-bold'
                         : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/80 font-medium'
