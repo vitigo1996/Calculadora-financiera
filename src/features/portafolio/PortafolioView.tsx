@@ -275,8 +275,8 @@ export const PortafolioView: React.FC = () => {
           onClick={() => setIsAnalysisExpanded(!isAnalysisExpanded)}
           className="w-full p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors text-left"
         >
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-200/60 dark:border-blue-800/40 shadow-xs flex-shrink-0">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-indigo-600 dark:bg-indigo-600 text-white border-2 border-indigo-400 dark:border-indigo-400 flex items-center justify-center shadow-xs flex-shrink-0">
               <PieChartIcon className="w-4 h-4" />
             </div>
             <div className="flex items-center gap-2">
@@ -293,56 +293,31 @@ export const PortafolioView: React.FC = () => {
           />
         </button>
 
-        {/* Menú Desplegable con subpestañas superiores y contenido */}
+        {/* Menú Desplegable con selector y contenido */}
         {isAnalysisExpanded && (
           <div className="border-t border-slate-200 dark:border-slate-800 p-4 space-y-4 animate-fadeIn">
-            {/* Pestañas en la parte superior: Dinero Disponible | Distribución de Activos */}
-            <div className="bg-slate-200/80 dark:bg-slate-800 p-1 rounded-2xl flex items-center gap-1 shadow-inner border border-slate-300/80 dark:border-slate-700/60 w-full">
-              <button
-                type="button"
-                onClick={() => setActiveAnalysisTab('disponible')}
-                className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
-                  activeAnalysisTab === 'disponible'
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
+            {/* Selector Desplegable: Disponible / Activos */}
+            <div className="relative">
+              <select
+                value={activeAnalysisTab}
+                onChange={(e) => setActiveAnalysisTab(e.target.value as 'disponible' | 'activos')}
+                className="w-full px-4 py-2.5 rounded-2xl text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-white border border-slate-300 dark:border-slate-700 shadow-sm focus:outline-none cursor-pointer appearance-none pr-10"
               >
-                <Wallet className="w-4 h-4" />
-                <span>Dinero Disponible</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveAnalysisTab('activos')}
-                className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
-                  activeAnalysisTab === 'activos'
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
-              >
-                <PieChartIcon className="w-4 h-4" />
-                <span>Distribución de Activos</span>
-              </button>
+                <option value="disponible">Disponible</option>
+                <option value="activos">Activos</option>
+              </select>
+              <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
 
-            {/* Contenido según la subpestaña seleccionada */}
+            {/* Contenido según la opción seleccionada */}
             {activeAnalysisTab === 'disponible' ? (
               <div className="space-y-4 pt-1">
-                <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2">
-                  <span className="text-xs font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                    <Wallet className="w-4 h-4 text-blue-600 dark:text-blue-400" /> Disponible en Billeteras
-                  </span>
-                  <span className="text-xs font-mono font-bold text-slate-800 dark:text-white">
-                    Total: {formatCurrency(totalDisponible, baseCurrency)}
-                  </span>
-                </div>
-
                 {billeteraList.length === 0 ? (
                   <div className="p-6 text-center text-slate-400 dark:text-slate-500 text-xs">
                     No tienes cuentas de billetera registradas.
                   </div>
                 ) : (
-                  <div className="space-y-4 pt-1">
+                  <div className="space-y-4">
                     {billeteraList.map((item, idx) => {
                       const valBase = convertToBase(item.saldo || 0, item.moneda || 'COP', baseCurrency, dolarRate);
                       const percentage = totalDisponible > 0 ? (valBase / totalDisponible) * 100 : 0;
@@ -395,15 +370,6 @@ export const PortafolioView: React.FC = () => {
                 </div>
               ) : (
                 <div className="space-y-4 pt-1">
-                  <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2">
-                    <span className="text-xs font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                      <PieChartIcon className="w-4 h-4 text-blue-600 dark:text-blue-400" /> Distribución de Activos
-                    </span>
-                    <span className="text-xs font-mono font-bold text-slate-800 dark:text-white">
-                      Total: {formatCurrency(port.totalPortafolio, baseCurrency)}
-                    </span>
-                  </div>
-
                   {/* Gráfica Donut */}
                   <div className="h-52 flex items-center justify-center">
                     <ResponsiveContainer width="100%" height="100%">
