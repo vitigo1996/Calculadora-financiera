@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useFinance } from '../../context/FinanceContext';
 import { formatCurrency, convertToBase } from '../../services/financeCalculations';
 import { PortfolioAccountItem } from '../../models/finance';
@@ -44,7 +44,26 @@ export const PortafolioView: React.FC = () => {
   // Desplegable de Análisis y Pestañas
   const [isAnalysisExpanded, setIsAnalysisExpanded] = useState(false);
   const [activeAnalysisTab, setActiveAnalysisTab] = useState<'disponible' | 'activos'>('disponible');
+  const [isTabDropdownOpen, setIsTabDropdownOpen] = useState(false);
+  const tabDropdownRef = useRef<HTMLDivElement>(null);
   const [infoModalTitle, setInfoModalTitle] = useState<string | null>(null);
+
+  // Cerrar el selector desplegable de análisis al hacer clic fuera
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      if (tabDropdownRef.current && !tabDropdownRef.current.contains(event.target as Node)) {
+        setIsTabDropdownOpen(false);
+      }
+    };
+    if (isTabDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('touchstart', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [isTabDropdownOpen]);
 
   // Edit states
   const [isEditingPortfolio, setIsEditingPortfolio] = useState(false);
@@ -269,11 +288,11 @@ export const PortafolioView: React.FC = () => {
       </div>
 
       {/* Botón Desplegable de Análisis */}
-      <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
+      <div className={`bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm transition-colors ${isAnalysisExpanded ? '' : 'overflow-hidden'}`}>
         <button
           type="button"
           onClick={() => setIsAnalysisExpanded(!isAnalysisExpanded)}
-          className="w-full p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors text-left"
+          className={`w-full p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors text-left ${isAnalysisExpanded ? 'rounded-t-3xl' : 'rounded-3xl'}`}
         >
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-indigo-600 dark:bg-indigo-600 text-white border-2 border-indigo-400 dark:border-indigo-400 flex items-center justify-center shadow-xs flex-shrink-0">
@@ -296,17 +315,76 @@ export const PortafolioView: React.FC = () => {
         {/* Menú Desplegable con selector y contenido */}
         {isAnalysisExpanded && (
           <div className="border-t border-slate-200 dark:border-slate-800 p-4 space-y-4 animate-fadeIn">
-            {/* Selector Desplegable: Disponible / Activos */}
-            <div className="relative">
-              <select
-                value={activeAnalysisTab}
-                onChange={(e) => setActiveAnalysisTab(e.target.value as 'disponible' | 'activos')}
-                className="w-full px-4 py-2.5 rounded-2xl text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-white border border-slate-300 dark:border-slate-700 shadow-sm focus:outline-none cursor-pointer appearance-none pr-10"
+            {/* Selector Desplegable personalizado acorde al diseño de la aplicación */}
+            <div ref={tabDropdownRef} className="relative w-full">
+              <button
+                type="button"
+                onClick={() => setIsTabDropdownOpen(!isTabDropdownOpen)}
+                className="w-full px-4 py-2.5 rounded-2xl text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-white border border-slate-300 dark:border-slate-700 shadow-xs flex items-center justify-between hover:bg-slate-200/60 dark:hover:bg-slate-700/60 transition-colors active:scale-[0.99] cursor-pointer"
               >
-                <option value="disponible">Disponible</option>
-                <option value="activos">Activos</option>
-              </select>
-              <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <div className="flex items-center gap-2.5">
+                  {activeAnalysisTab === 'disponible' ? (
+                    <Wallet className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                  ) : (
+                    <PieChartIcon className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                  )}
+                  <span className="font-bold text-slate-800 dark:text-white">
+                    {activeAnalysisTab === 'disponible' ? 'Disponible' : 'Activos'}
+                  </span>
+                </div>
+                <ChevronDown
+                  className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${
+                    isTabDropdownOpen ? 'rotate-180 text-blue-600 dark:text-blue-400' : ''
+                  }`}
+                />
+              </button>
+
+              {/* Menú de opciones desplegable estilizado */}
+              {isTabDropdownOpen && (
+                <div className="absolute top-full left-0 right-0 mt-1.5 z-40 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl overflow-hidden p-1.5 space-y-1 animate-scaleUp">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveAnalysisTab('disponible');
+                      setIsTabDropdownOpen(false);
+                    }}
+                    className={`w-full px-3 py-2.5 rounded-xl text-xs flex items-center justify-between transition-colors ${
+                      activeAnalysisTab === 'disponible'
+                        ? 'bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 font-bold'
+                        : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/80 font-medium'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Wallet className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                      <span>Disponible</span>
+                    </div>
+                    {activeAnalysisTab === 'disponible' && (
+                      <Check className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveAnalysisTab('activos');
+                      setIsTabDropdownOpen(false);
+                    }}
+                    className={`w-full px-3 py-2.5 rounded-xl text-xs flex items-center justify-between transition-colors ${
+                      activeAnalysisTab === 'activos'
+                        ? 'bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 font-bold'
+                        : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/80 font-medium'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <PieChartIcon className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                      <span>Activos</span>
+                    </div>
+                    {activeAnalysisTab === 'activos' && (
+                      <Check className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                    )}
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Contenido según la opción seleccionada */}
