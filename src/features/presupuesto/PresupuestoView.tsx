@@ -226,14 +226,9 @@ export const PresupuestoView: React.FC = () => {
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
           <div className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-3xl p-5 max-w-sm w-full shadow-2xl animate-scaleUp max-h-[85vh] flex flex-col">
             <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
-              <div>
-                <h3 className="font-bold text-sm text-slate-900 dark:text-white">
-                  Gastos {fortnightDetail === '1st' ? 'Mitad de Mes (1ª mitad)' : 'Fin de Mes (2ª mitad)'}
-                </h3>
-                <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">
-                  {fortnightDetail === '1st' ? firstHalfItems.length : secondHalfItems.length} {((fortnightDetail === '1st' ? firstHalfItems.length : secondHalfItems.length) === 1) ? 'pago' : 'pagos'}
-                </span>
-              </div>
+              <h3 className="font-bold text-sm text-slate-900 dark:text-white">
+                {fortnightDetail === '1st' ? 'Mitad de Mes' : 'Fin de Mes'}
+              </h3>
               <button
                 type="button"
                 onClick={() => setFortnightDetail(null)}
@@ -243,65 +238,37 @@ export const PresupuestoView: React.FC = () => {
               </button>
             </div>
 
-            <div className="overflow-y-auto py-3 space-y-2 flex-1 pr-1 scrollbar-thin">
+            <div className="overflow-y-auto py-2 space-y-1 flex-1 pr-1 scrollbar-thin">
               {halfSalud > 0 && (
-                <div className="flex items-center justify-between text-xs p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-950/40 border border-slate-200/80 dark:border-slate-800/60">
-                  <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center flex-shrink-0">
-                      <ShieldCheck className="w-3.5 h-3.5" />
-                    </div>
-                    <div>
-                      <span className="text-slate-800 dark:text-white font-bold block">Deducciones de Ley (50%)</span>
-                      <span className="text-[10px] text-slate-400">Salud y Pensión</span>
-                    </div>
-                  </div>
+                <div className="flex items-center justify-between text-xs py-2 border-b border-slate-100 dark:border-slate-800/60">
+                  <span className="text-slate-700 dark:text-slate-300 font-medium truncate">
+                    Deducciones de Ley (50%)
+                  </span>
                   <span className="font-mono font-bold text-slate-900 dark:text-white flex-shrink-0 ml-2">
                     {formatCurrency(halfSalud)}
                   </span>
                 </div>
               )}
 
-              {(fortnightDetail === '1st' ? firstHalfItems : secondHalfItems).map(item => {
-                const Icon = item.icon;
-                return (
-                  <div
-                    key={item.id}
-                    className="flex items-center justify-between text-xs p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-950/40 border border-slate-200/80 dark:border-slate-800/60"
-                  >
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
-                      <div className="w-7 h-7 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center flex-shrink-0">
-                        <Icon className="w-3.5 h-3.5" />
-                      </div>
-                      <div className="min-w-0">
-                        <span className="font-bold text-slate-800 dark:text-white truncate block">{item.name}</span>
-                        <div className="flex items-center gap-1.5 text-[10px] text-slate-400 dark:text-slate-500">
-                          <span>{item.type}</span>
-                          <span>•</span>
-                          <span className="font-mono font-semibold text-slate-600 dark:text-slate-300">
-                            {item.paymentDay ? `Día ${item.paymentDay}` : 'Sin fecha'}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <span className="font-mono font-bold text-slate-900 dark:text-white flex-shrink-0 ml-2">
-                      {formatCurrency(item.amount)}
-                    </span>
-                  </div>
-                );
-              })}
+              {(fortnightDetail === '1st' ? firstHalfItems : secondHalfItems).map(item => (
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between text-xs py-2 border-b border-slate-100 dark:border-slate-800/60"
+                >
+                  <span className="text-slate-700 dark:text-slate-300 font-medium truncate">
+                    {item.name}
+                  </span>
+                  <span className="font-mono font-bold text-slate-900 dark:text-white flex-shrink-0 ml-2">
+                    {formatCurrency(item.amount)}
+                  </span>
+                </div>
+              ))}
 
               {(fortnightDetail === '1st' ? firstHalfItems : secondHalfItems).length === 0 && halfSalud === 0 && (
                 <div className="p-6 text-center text-xs text-slate-400 dark:text-slate-500">
                   No hay gastos asignados para este periodo.
                 </div>
               )}
-            </div>
-
-            <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
-              <span className="font-bold text-xs text-slate-800 dark:text-white uppercase tracking-wider">Total</span>
-              <span className="font-mono font-black text-sm text-blue-700 dark:text-blue-400">
-                {formatCurrency(fortnightDetail === '1st' ? totalFirstHalf : totalSecondHalf)}
-              </span>
             </div>
           </div>
         </div>
