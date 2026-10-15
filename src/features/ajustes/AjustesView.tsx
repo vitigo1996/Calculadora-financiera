@@ -78,10 +78,10 @@ export const AjustesView: React.FC = () => {
   return (
     <div className="space-y-6 animate-fadeIn pb-24">
       {/* Contenedor Principal Unificado con divisiones idénticas */}
-      <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm overflow-hidden transition-colors divide-y divide-slate-200 dark:divide-slate-800">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800 shadow-sm transition-colors divide-y divide-slate-200 dark:divide-slate-800">
         
         {/* 1. MODO VISUAL */}
-        <div className="p-4 flex items-center justify-between">
+        <div className="p-4 flex items-center justify-between rounded-t-3xl">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-200/60 dark:border-blue-800/40 shadow-xs flex-shrink-0">
               {theme === 'dark' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
@@ -111,7 +111,7 @@ export const AjustesView: React.FC = () => {
         </div>
 
         {/* 2. MONEDA BASE */}
-        <div className="p-4 flex items-center justify-between">
+        <div className="p-4 flex items-center justify-between relative z-20">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-200/60 dark:border-blue-800/40 shadow-xs flex-shrink-0">
               <Coins className="w-4 h-4" />
@@ -193,7 +193,7 @@ export const AjustesView: React.FC = () => {
         </div>
 
         {/* 4. MÉTODO DE REPARTO */}
-        <div className="p-4 flex items-center justify-between gap-2 sm:gap-3">
+        <div className="p-4 flex items-center justify-between gap-2 sm:gap-3 relative z-30">
           <div className="flex items-center gap-3 min-w-0 flex-1">
             <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-200/60 dark:border-blue-800/40 shadow-xs flex-shrink-0">
               <Sliders className="w-4 h-4" />
@@ -224,7 +224,7 @@ export const AjustesView: React.FC = () => {
         <button
           type="button"
           onClick={() => setShowResetConfirm(true)}
-          className="w-full p-4 flex items-center justify-between hover:bg-rose-50/50 dark:hover:bg-rose-950/30 transition-colors text-left group"
+          className="w-full p-4 flex items-center justify-between hover:bg-rose-50/50 dark:hover:bg-rose-950/30 transition-colors text-left group rounded-b-3xl"
         >
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-200/60 dark:border-blue-800/40 shadow-xs flex-shrink-0">

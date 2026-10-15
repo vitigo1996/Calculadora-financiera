@@ -94,7 +94,7 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
   return (
     <div
       ref={containerRef}
-      className={`relative ${fullWidth ? 'w-full' : 'inline-block'} ${className}`}
+      className={`relative ${isOpen ? 'z-50' : 'z-auto'} ${fullWidth ? 'w-full' : 'inline-block'} ${className}`}
     >
       <button
         type="button"
