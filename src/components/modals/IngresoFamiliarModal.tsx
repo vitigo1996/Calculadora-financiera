@@ -227,8 +227,7 @@ export const IngresoFamiliarModal: React.FC<IngresoFamiliarModalProps> = ({ isOp
                 onChange={val => setLocalSplitMethod(val as ExpenseSplitMethod)}
                 options={[
                   { value: 'proportional', label: 'Proporcional a Ingresos (%)' },
-                  { value: 'equal', label: '50 / 50 Equitativo' },
-                  { value: 'equal_remaining', label: 'Excedente Libre Equitativo' }
+                  { value: 'equal', label: '50 / 50 Equitativo' }
                 ]}
               />
             </div>

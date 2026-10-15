@@ -119,8 +119,8 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
 
       {isOpen && (
         <div
-          className={`absolute top-full mt-1.5 z-50 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl overflow-hidden p-1.5 space-y-1 animate-scaleUp max-h-60 overflow-y-auto scrollbar-thin ${
-            fullWidth ? 'w-full min-w-full' : 'min-w-[150px]'
+          className={`absolute top-full mt-1.5 z-50 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl overflow-hidden p-1.5 space-y-1 animate-scaleUp max-h-60 overflow-y-auto scrollbar-thin ${
+            fullWidth ? 'w-full min-w-full' : 'min-w-full w-max'
           } ${align === 'right' ? 'right-0' : 'left-0'} ${dropdownClassName}`}
         >
           {groupedOptions.map((g, gIdx) => (

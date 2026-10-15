@@ -111,7 +111,7 @@ export const AjustesView: React.FC = () => {
         </div>
 
         {/* 2. MONEDA BASE */}
-        <div className="p-4 flex items-center justify-between relative z-20">
+        <div className="p-4 flex items-center justify-between relative z-40">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-200/60 dark:border-blue-800/40 shadow-xs flex-shrink-0">
               <Coins className="w-4 h-4" />
@@ -130,7 +130,7 @@ export const AjustesView: React.FC = () => {
             ]}
             fullWidth={false}
             align="right"
-            className="w-44 sm:w-48"
+            className="w-28"
           />
         </div>
 
@@ -150,8 +150,13 @@ export const AjustesView: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex items-center gap-1.5 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-white transition-colors">
-              <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isIngresosExpanded ? 'rotate-180' : ''}`} />
+            <div className="flex items-center gap-2">
+              <span className="font-mono font-bold text-xs sm:text-sm text-blue-600 dark:text-blue-400">
+                {formatCurrency(totalCombinedIncome)}
+              </span>
+              <div className="flex items-center text-slate-400 group-hover:text-slate-600 dark:group-hover:text-white transition-colors">
+                <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isIngresosExpanded ? 'rotate-180 text-blue-600 dark:text-blue-400' : ''}`} />
+              </div>
             </div>
           </button>
 
@@ -178,16 +183,6 @@ export const AjustesView: React.FC = () => {
                   </div>
                 );
               })}
-
-              {/* Total al final del submenú desplegado */}
-              <div className="px-4 py-3.5 bg-blue-50/60 dark:bg-blue-950/30 flex items-center justify-between gap-3">
-                <span className="font-bold text-slate-800 dark:text-white text-xs uppercase tracking-wider">
-                  Ingreso Total
-                </span>
-                <span className="font-mono font-black text-sm text-blue-700 dark:text-blue-300">
-                  {formatCurrency(totalCombinedIncome)}
-                </span>
-              </div>
             </div>
           )}
         </div>
@@ -211,8 +206,7 @@ export const AjustesView: React.FC = () => {
             onChange={(val) => updateExpenseSplitMethod(val as ExpenseSplitMethod)}
             options={[
               { value: 'proportional', label: 'Proporcional (%)' },
-              { value: 'equal', label: '50 / 50 Equitativo' },
-              { value: 'equal_remaining', label: 'Excedente Libre' }
+              { value: 'equal', label: '50 / 50 Equitativo' }
             ]}
             fullWidth={false}
             align="right"

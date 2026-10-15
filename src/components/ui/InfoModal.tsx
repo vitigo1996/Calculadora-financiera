@@ -13,7 +13,7 @@ export const InfoModal: React.FC<InfoModalProps> = ({ isOpen, title, onClose }) 
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
       <div className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-3xl p-6 max-w-sm w-full shadow-2xl animate-scaleUp text-center space-y-4">
         <div className="w-12 h-12 mx-auto rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xl font-black font-mono border border-blue-200 dark:border-blue-800/60 shadow-xs">
-          !
+          ?
         </div>
         <div>
           <h3 className="text-base font-bold text-slate-900 dark:text-white">
@@ -45,6 +45,6 @@ export const InfoButton: React.FC<{ onClick: (e?: React.MouseEvent) => void }> =
     className="w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 font-bold text-xs flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-xs flex-shrink-0"
     title="Más información"
   >
-    !
+    ?
   </button>
 );
