@@ -216,14 +216,14 @@ export function calculateAllFinances(data: AppFinanceData): CalculatedSummary {
   }));
   const totalMonthlySubs = processedSubs.reduce((sum, s) => sum + s.monthlyCost, 0);
 
-  // M7: Total Gastos del Mes
-  const m7_totalGastos = m3_saludPension + m4_vivienda + m6_obligaciones + m5_tarjetas;
+  // M7: Total Gastos del Mes (Deducciones de ley excluidas de presupuesto según requerimiento)
+  const m7_totalGastos = m4_vivienda + m6_obligaciones + m5_tarjetas;
 
   // M9: Mitad de mes (Vencimientos del 16 al último día del mes, pagados con la quincena del 15)
-  const m9_mitadDeMes = (m3_saludPension / 2) + mitadDeMesHousing + mitadDeMesObligations + mitadDeMesCards;
+  const m9_mitadDeMes = mitadDeMesHousing + mitadDeMesObligations + mitadDeMesCards;
 
   // M10: Fin de mes (Vencimientos del 1 al 15, pagados con la quincena de fin de mes)
-  const m10_finDeMes = (m3_saludPension / 2) + finDeMesHousing + finDeMesObligations + finDeMesCards;
+  const m10_finDeMes = finDeMesHousing + finDeMesObligations + finDeMesCards;
 
   // M11: Disponible del Mes
   const m11_disponible = p1Income - m7_totalGastos;

@@ -433,10 +433,105 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const deleteExpenseMovement = (id: string) => {
-    setData(prev => ({
-      ...prev,
-      expenseMovements: (prev.expenseMovements || []).filter(m => m.id !== id)
-    }));
+    setData(prev => {
+      const movement = (prev.expenseMovements || []).find(m => m.id === id);
+      if (!movement) return prev;
+
+      const remainingMovements = (prev.expenseMovements || []).filter(m => m.id !== id);
+
+      const isIncome = movement.type === 'income';
+      const isTransfer = movement.type === 'transfer';
+      const isSourcePortfolio = movement.sourceAccountId?.startsWith('portfolio:');
+      const rawSourceId = movement.sourceAccountId?.replace('portfolio:', '').replace('billetera:', '');
+      const isDestPortfolio = movement.destinationId?.startsWith('portfolio:');
+      const rawDestId = movement.destinationId?.replace('portfolio:', '').replace('billetera:', '');
+
+      // Revertir saldo de billetera
+      let updatedBilletera = (prev.billeteraItems || []).map(acc => {
+        if (!isSourcePortfolio && (acc.id === rawSourceId || acc.id === movement.sourceAccountId)) {
+          if (isIncome) {
+            return { ...acc, saldo: Math.max(0, acc.saldo - movement.amount) };
+          } else {
+            return { ...acc, saldo: acc.saldo + movement.amount };
+          }
+        }
+        if (isTransfer && !isDestPortfolio && (acc.id === rawDestId || acc.id === movement.destinationId)) {
+          return { ...acc, saldo: Math.max(0, acc.saldo - movement.amount) };
+        }
+        return acc;
+      });
+
+      // Revertir saldo de portafolio
+      let updatedPortfolio = (prev.portfolioItems || []).map(port => {
+        if (isSourcePortfolio && (port.id === rawSourceId || port.id === movement.sourceAccountId)) {
+          if (isIncome) {
+            return { ...port, saldo: Math.max(0, port.saldo - movement.amount) };
+          } else {
+            return { ...port, saldo: port.saldo + movement.amount };
+          }
+        }
+        if (isTransfer && isDestPortfolio && (port.id === rawDestId || port.id === movement.destinationId)) {
+          return { ...port, saldo: Math.max(0, port.saldo - movement.amount) };
+        }
+        return port;
+      });
+
+      // Revertir abono a tarjeta si el movimiento pagaba una tarjeta
+      let updatedCreditCards = prev.creditCards;
+      if (!isIncome && !isTransfer && movement.destinationType === 'card' && movement.destinationId) {
+        updatedCreditCards = (prev.creditCards || []).map(c => {
+          if (c.id === movement.destinationId) {
+            let amountToRemove = movement.amount;
+            const updatedPayments: CreditCardPayment[] = [];
+            for (const pay of (c.payments || [])) {
+              if (amountToRemove <= 0) {
+                updatedPayments.push(pay);
+              } else if (pay.amount <= amountToRemove) {
+                amountToRemove -= pay.amount;
+              } else {
+                updatedPayments.push({ ...pay, amount: pay.amount - amountToRemove });
+                amountToRemove = 0;
+              }
+            }
+            return {
+              ...c,
+              payments: updatedPayments
+            };
+          }
+          return c;
+        });
+      }
+
+      // Revertir deuda u obligación
+      let updatedDeudas = prev.deudaItems;
+      let updatedObligations = prev.obligations;
+      if (!isIncome && !isTransfer && (movement.destinationType === 'deuda' || movement.destinationType === 'obligation') && movement.destinationId) {
+        const destId = movement.destinationId;
+        const rawId = destId.startsWith('d-') ? destId.replace('d-', '') : (destId.startsWith('o-') ? destId.replace('o-', '') : destId);
+        updatedDeudas = (prev.deudaItems || []).map(d => {
+          if (d.id === destId || d.id === rawId) {
+            return { ...d, monto: (d.monto || 0) + movement.amount };
+          }
+          return d;
+        });
+        updatedObligations = (prev.obligations || []).map(ob => {
+          if ((ob.id === destId || ob.id === rawId) && ob.totalDebtBalance !== undefined) {
+            return { ...ob, totalDebtBalance: ob.totalDebtBalance + movement.amount };
+          }
+          return ob;
+        });
+      }
+
+      return {
+        ...prev,
+        billeteraItems: updatedBilletera,
+        portfolioItems: updatedPortfolio,
+        creditCards: updatedCreditCards,
+        deudaItems: updatedDeudas,
+        obligations: updatedObligations,
+        expenseMovements: remainingMovements
+      };
+    });
   };
 
   const reorderExpenseMovements = (fromIndex: number, toIndex: number) => {
@@ -783,74 +878,8 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }));
   };
 
-  // Eliminar Registro (Quitar el registro sin alterar el saldo neto de la tarjeta, absorbiendo pagos realizados)
-  const deleteCardPurchaseRecord = (cardId: string, purchaseId: string) => {
-    setData(prev => ({
-      ...prev,
-      creditCards: prev.creditCards.map(c => {
-        if (c.id === cardId) {
-          const targetPurchase = (c.purchases || []).find(p => p.id === purchaseId);
-          if (!targetPurchase) return c;
-
-          const remainingPurchases = (c.purchases || []).filter(p => p.id !== purchaseId);
-
-          let amountToRetire = targetPurchase.amount;
-          const updatedPayments: CreditCardPayment[] = [];
-
-          // Consumir pagos aplicados a este registro para que no descuenten de compras futuras
-          for (const pay of (c.payments || [])) {
-            if (amountToRetire <= 0) {
-              updatedPayments.push(pay);
-            } else if (pay.amount <= amountToRetire) {
-              amountToRetire -= pay.amount;
-            } else {
-              updatedPayments.push({
-                ...pay,
-                amount: pay.amount - amountToRetire
-              });
-              amountToRetire = 0;
-            }
-          }
-
-          const totalRetired = targetPurchase.amount - amountToRetire;
-
-          let newCutoff = c.billingCutoffAmount;
-          let newCutoffDate = c.billingCutoffDate;
-          let newBase = c.cutoffBasePayments;
-
-          if (newCutoff !== undefined) {
-            const remainingPreCutoff = remainingPurchases.filter(p => !p.isAfterCutoff);
-            const remainingPreCutoffSum = remainingPreCutoff.reduce((sum, p) => sum + (p.amount || 0), 0);
-
-            if (remainingPreCutoff.length === 0 || remainingPreCutoffSum <= 0) {
-              // Si ya no quedan compras previas al corte, se elimina por completo el corte facturado
-              newCutoff = undefined;
-              newCutoffDate = undefined;
-              newBase = undefined;
-            } else if (!targetPurchase.isAfterCutoff) {
-              newBase = Math.max(0, (newBase || 0) - totalRetired);
-              newCutoff = Math.max(0, remainingPreCutoffSum - (newBase || 0));
-              if (newCutoff <= 0) {
-                newCutoff = undefined;
-                newCutoffDate = undefined;
-                newBase = undefined;
-              }
-            }
-          }
-
-          return {
-            ...c,
-            billingCutoffAmount: newCutoff,
-            billingCutoffDate: newCutoffDate,
-            cutoffBasePayments: newBase,
-            payments: updatedPayments,
-            purchases: remainingPurchases
-          };
-        }
-        return c;
-      })
-    }));
-  };
+  // Eliminar Registro (Anular la compra y restaurar el cupo disponible / disminuir deuda)
+  const deleteCardPurchaseRecord = cancelCardPurchase;
 
   const deleteCardPurchase = cancelCardPurchase;
 
