@@ -74,11 +74,11 @@ export const AmountCalculatorInput: React.FC<AmountCalculatorInputProps> = ({
         {/* Modal de Calculadora Centrado en Pantalla */}
         {showPopup && (
           <div
-            className="fixed inset-0 z-[60] backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn"
+            className="fixed inset-0 z-[60] backdrop-blur-sm overflow-y-auto p-4 pb-64 sm:pb-8 flex justify-center items-start sm:items-center animate-fadeIn modal-backdrop-scroll"
             onClick={() => setShowPopup(false)}
           >
             <div
-              className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-3xl p-5 shadow-2xl space-y-4 w-full max-w-xs animate-scaleUp"
+              className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-3xl p-5 shadow-2xl space-y-4 w-full max-w-xs animate-scaleUp my-auto modal-card-scroll"
               onClick={e => e.stopPropagation()}
             >
               <div className="flex items-center justify-between">

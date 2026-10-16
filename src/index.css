@@ -56,3 +56,15 @@
 .safe-area-pb {
   padding-bottom: env(safe-area-inset-bottom, 1rem);
 }
+
+/* Soporte para desplazamiento fluido de ventanas de edición con teclado activo */
+.modal-backdrop-scroll {
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+html.keyboard-active .modal-card-scroll,
+html.input-focused .modal-card-scroll {
+  margin-bottom: max(18rem, var(--keyboard-inset, 18rem)) !important;
+  transition: margin-bottom 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}

@@ -219,8 +219,8 @@ export const IconPickerModal: React.FC<IconPickerModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-3xl p-5 max-w-md w-full shadow-2xl animate-scaleUp max-h-[85vh] flex flex-col my-auto">
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm overflow-y-auto p-4 pb-64 sm:pb-8 flex justify-center items-start sm:items-center modal-backdrop-scroll">
+      <div className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-3xl p-5 max-w-md w-full shadow-2xl animate-scaleUp max-h-[85vh] flex flex-col my-auto modal-card-scroll">
         <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3 mb-3">
           <h3 className="text-base font-bold text-slate-800 dark:text-white">
             {title}

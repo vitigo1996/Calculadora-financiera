@@ -10,6 +10,59 @@ import { AjustesView } from './features/ajustes/AjustesView';
 export const AppContent: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('billetera');
 
+  // Detección reactiva de teclado y campos de texto para permitir desplazamiento cómodo
+  React.useEffect(() => {
+    const handleViewportChange = () => {
+      const vh = window.innerHeight;
+      const currentH = window.visualViewport ? window.visualViewport.height : vh;
+      const diff = vh - currentH;
+      const isKeyboardOpen = diff > 130;
+
+      document.documentElement.classList.toggle('keyboard-active', isKeyboardOpen);
+      if (isKeyboardOpen) {
+        document.documentElement.style.setProperty('--keyboard-inset', `${diff}px`);
+      } else {
+        document.documentElement.style.removeProperty('--keyboard-inset');
+      }
+    };
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleViewportChange);
+      window.visualViewport.addEventListener('scroll', handleViewportChange);
+    }
+
+    const onFocusIn = (e: FocusEvent) => {
+      const target = e.target as HTMLElement;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+        document.documentElement.classList.add('input-focused');
+        setTimeout(() => {
+          target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 220);
+      }
+    };
+
+    const onFocusOut = () => {
+      setTimeout(() => {
+        const active = document.activeElement as HTMLElement;
+        if (!active || (active.tagName !== 'INPUT' && active.tagName !== 'TEXTAREA' && !active.isContentEditable)) {
+          document.documentElement.classList.remove('input-focused');
+        }
+      }, 150);
+    };
+
+    window.addEventListener('focusin', onFocusIn);
+    window.addEventListener('focusout', onFocusOut);
+
+    return () => {
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', handleViewportChange);
+        window.visualViewport.removeEventListener('scroll', handleViewportChange);
+      }
+      window.removeEventListener('focusin', onFocusIn);
+      window.removeEventListener('focusout', onFocusOut);
+    };
+  }, []);
+
   const renderActiveView = () => {
     switch (activeTab) {
       case 'billetera':
