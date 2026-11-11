@@ -3,7 +3,8 @@ import { useFinance } from '../../context/FinanceContext';
 import {
   formatCurrency,
   calculateCardPurchasesTotal,
-  calculateCardPaymentDue
+  calculateCardPaymentDue,
+  isWithinMonths
 } from '../../services/financeCalculations';
 import { CreditCardItem } from '../../models/finance';
 import { getIconComponent, getIconLabel, normalizeIconId, ALL_ICON_ITEMS, IconPickerModal } from '../../components/ui/IconPicker';
@@ -80,8 +81,9 @@ export const CreditosSuscripcionesView: React.FC = () => {
     type?: 'purchase_item' | 'purchase_form';
   } | null>(null);
 
-  // Filtro por categoría en compras
+  // Filtros en compras: categoría y tiempo (1 mes, 2 meses, 3 meses)
   const [cardCategoryFilter, setCardCategoryFilter] = useState<string>('all');
+  const [cardTimeFilter, setCardTimeFilter] = useState<string>('all');
 
   // Modal: Add / Edit Credit Card
   const [showCardModal, setShowCardModal] = useState(false);
@@ -404,12 +406,18 @@ export const CreditosSuscripcionesView: React.FC = () => {
             </div>
           </div>
 
-          {/* Desplegable de Filtro de Categoría en el mismo espacio horizontal */}
+          {/* Desplegable de Filtro de Categoría y Desplegable de Tiempo al lado */}
           {(() => {
             const list = (selectedCard.purchases || []).filter(p => !p.hidden);
             if (list.length === 0) return null;
+
+            // 1. Filtrar por tiempo (1 mes, 2 meses, 3 meses o todo)
+            const timeFiltered = cardTimeFilter === 'all'
+              ? list
+              : list.filter(p => isWithinMonths(p.date, parseInt(cardTimeFilter, 10)));
+
             const counts: Record<string, number> = {};
-            for (const p of list) {
+            for (const p of timeFiltered) {
               const catId = normalizeIconId(p.icon || 'compras');
               counts[catId] = (counts[catId] || 0) + 1;
             }
@@ -419,27 +427,48 @@ export const CreditosSuscripcionesView: React.FC = () => {
               .sort((a, b) => b.count - a.count);
 
             return (
-              <div className="px-4 py-2 bg-slate-50 dark:bg-slate-900/60 border-b border-slate-200 dark:border-slate-800">
-                <CustomSelect
-                  value={cardCategoryFilter}
-                  onChange={(val) => {
-                    setCardCategoryFilter(val);
-                    setVisiblePurchasesCount(10);
-                  }}
-                  size="sm"
-                  options={[
-                    {
-                      value: 'all',
-                      label: `Todas las compras (${list.length})`,
-                      icon: Filter
-                    },
-                    ...activeOptions.map(cat => ({
-                      value: cat.id,
-                      label: `${cat.label} (${cat.count})`,
-                      icon: cat.icon
-                    }))
-                  ]}
-                />
+              <div className="px-3.5 py-2 bg-slate-50 dark:bg-slate-900/60 border-b border-slate-200 dark:border-slate-800 flex items-center gap-2">
+                {/* Desplegable de Categoría */}
+                <div className="flex-1 min-w-0">
+                  <CustomSelect
+                    value={cardCategoryFilter}
+                    onChange={(val) => {
+                      setCardCategoryFilter(val);
+                      setVisiblePurchasesCount(10);
+                    }}
+                    size="sm"
+                    options={[
+                      {
+                        value: 'all',
+                        label: `Todas (${timeFiltered.length})`,
+                        icon: Filter
+                      },
+                      ...activeOptions.map(cat => ({
+                        value: cat.id,
+                        label: `${cat.label} (${cat.count})`,
+                        icon: cat.icon
+                      }))
+                    ]}
+                  />
+                </div>
+
+                {/* Desplegable de Tiempo (1 mes, 2 meses, 3 meses) */}
+                <div className="w-32 sm:w-36 flex-shrink-0">
+                  <CustomSelect
+                    value={cardTimeFilter}
+                    onChange={(val) => {
+                      setCardTimeFilter(val);
+                      setVisiblePurchasesCount(10);
+                    }}
+                    size="sm"
+                    options={[
+                      { value: 'all', label: 'Todo', icon: Calendar },
+                      { value: '1', label: '1 mes', icon: Calendar },
+                      { value: '2', label: '2 meses', icon: Calendar },
+                      { value: '3', label: '3 meses', icon: Calendar }
+                    ]}
+                  />
+                </div>
               </div>
             );
           })()}
@@ -456,20 +485,27 @@ export const CreditosSuscripcionesView: React.FC = () => {
                 );
               }
 
-              const visiblePurchases = cardCategoryFilter === 'all'
+              const timeFiltered = cardTimeFilter === 'all'
                 ? allVisible
-                : allVisible.filter(p => normalizeIconId(p.icon || 'compras') === cardCategoryFilter);
+                : allVisible.filter(p => isWithinMonths(p.date, parseInt(cardTimeFilter, 10)));
+
+              const visiblePurchases = cardCategoryFilter === 'all'
+                ? timeFiltered
+                : timeFiltered.filter(p => normalizeIconId(p.icon || 'compras') === cardCategoryFilter);
 
               if (visiblePurchases.length === 0) {
                 return (
                   <div className="p-8 text-center text-slate-400 dark:text-slate-500 text-xs">
-                    No hay compras registradas en esta categoría.{' '}
+                    No hay compras con los filtros seleccionados.{' '}
                     <button
                       type="button"
-                      onClick={() => setCardCategoryFilter('all')}
-                      className="text-blue-600 dark:text-blue-400 font-bold underline ml-1"
+                      onClick={() => {
+                        setCardCategoryFilter('all');
+                        setCardTimeFilter('all');
+                      }}
+                      className="text-blue-600 dark:text-blue-400 font-bold underline ml-1 cursor-pointer"
                     >
-                      Ver todas
+                      Restablecer filtros
                     </button>
                   </div>
                 );
@@ -615,9 +651,12 @@ export const CreditosSuscripcionesView: React.FC = () => {
           {/* Botón Cargar Más Compras */}
           {(() => {
             const allVisible = (selectedCard.purchases || []).filter(p => !p.hidden);
-            const visibleList = cardCategoryFilter === 'all'
+            const timeFiltered = cardTimeFilter === 'all'
               ? allVisible
-              : allVisible.filter(p => normalizeIconId(p.icon || 'compras') === cardCategoryFilter);
+              : allVisible.filter(p => isWithinMonths(p.date, parseInt(cardTimeFilter, 10)));
+            const visibleList = cardCategoryFilter === 'all'
+              ? timeFiltered
+              : timeFiltered.filter(p => normalizeIconId(p.icon || 'compras') === cardCategoryFilter);
 
             if (visibleList.length > visiblePurchasesCount) {
               return (

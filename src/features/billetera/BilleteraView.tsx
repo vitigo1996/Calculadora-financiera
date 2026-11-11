@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useFinance } from '../../context/FinanceContext';
-import { formatCurrency, calculateCardPurchasesTotal } from '../../services/financeCalculations';
+import { formatCurrency, calculateCardPurchasesTotal, isWithinMonths } from '../../services/financeCalculations';
 import { BilleteraAccountItem } from '../../models/finance';
 import { getIconComponent, getIconLabel, normalizeIconId, ALL_ICON_ITEMS, IconPickerModal } from '../../components/ui/IconPicker';
 import { predictCategory } from '../../services/categoryPredictor';
@@ -76,8 +76,9 @@ export const BilleteraView: React.FC = () => {
   // Pagination for movements (10 records at a time)
   const [visibleMovementsCount, setVisibleMovementsCount] = useState(10);
 
-  // Filtro por categoría en lista de movimientos
+  // Filtros en lista de movimientos: categoría y tiempo (1 mes, 2 meses, 3 meses)
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [timeFilter, setTimeFilter] = useState<string>('all');
 
   // Billetera State & Modals
   const [showAddBilleteraModal, setShowAddBilleteraModal] = useState(false);
@@ -280,10 +281,17 @@ export const BilleteraView: React.FC = () => {
 
   const movements = data.expenseMovements || [];
 
-  // Categorías presentes en movimientos para la barra de filtros
+  // 1. Filtrar por tiempo (1 mes, 2 meses, 3 meses o todo)
+  const timeFilteredMovements = React.useMemo(() => {
+    if (timeFilter === 'all') return movements;
+    const months = parseInt(timeFilter, 10);
+    return movements.filter(mov => isWithinMonths(mov.date, months));
+  }, [movements, timeFilter]);
+
+  // 2. Conteo de categorías presentes en los movimientos del período seleccionado
   const categoryCounts = React.useMemo(() => {
     const counts: Record<string, number> = {};
-    for (const mov of movements) {
+    for (const mov of timeFilteredMovements) {
       const isInc = mov.type === 'income';
       const isTrans = mov.type === 'transfer';
       const catId = normalizeIconId(mov.icon || (isInc ? 'pago' : isTrans ? 'transferencia' : 'compras'));
@@ -296,17 +304,18 @@ export const BilleteraView: React.FC = () => {
         count: counts[item.id] || 0
       }))
       .sort((a, b) => b.count - a.count);
-  }, [movements]);
+  }, [timeFilteredMovements]);
 
+  // 3. Filtrar por categoría sobre los movimientos del período
   const filteredMovements = React.useMemo(() => {
-    if (categoryFilter === 'all') return movements;
-    return movements.filter(mov => {
+    if (categoryFilter === 'all') return timeFilteredMovements;
+    return timeFilteredMovements.filter(mov => {
       const isInc = mov.type === 'income';
       const isTrans = mov.type === 'transfer';
       const catId = normalizeIconId(mov.icon || (isInc ? 'pago' : isTrans ? 'transferencia' : 'compras'));
       return catId === categoryFilter;
     });
-  }, [movements, categoryFilter]);
+  }, [timeFilteredMovements, categoryFilter]);
 
   return (
     <div className="space-y-6 pb-2 animate-fadeIn">
@@ -521,29 +530,50 @@ export const BilleteraView: React.FC = () => {
               </div>
             </div>
 
-            {/* Desplegable de Filtro de Categoría en el mismo espacio horizontal */}
+            {/* Barra con Desplegable de Categoría y Desplegable de Tiempo al lado */}
             {movements.length > 0 && (
-              <div className="px-4 py-2 bg-slate-50 dark:bg-slate-900/60 border-b border-slate-200 dark:border-slate-800">
-                <CustomSelect
-                  value={categoryFilter}
-                  onChange={(val) => {
-                    setCategoryFilter(val);
-                    setVisibleMovementsCount(10);
-                  }}
-                  size="sm"
-                  options={[
-                    {
-                      value: 'all',
-                      label: `Todas las categorías (${movements.length})`,
-                      icon: Filter
-                    },
-                    ...categoryCounts.map(cat => ({
-                      value: cat.id,
-                      label: `${cat.label} (${cat.count})`,
-                      icon: cat.icon
-                    }))
-                  ]}
-                />
+              <div className="px-3.5 py-2 bg-slate-50 dark:bg-slate-900/60 border-b border-slate-200 dark:border-slate-800 flex items-center gap-2">
+                {/* Desplegable de Categoría */}
+                <div className="flex-1 min-w-0">
+                  <CustomSelect
+                    value={categoryFilter}
+                    onChange={(val) => {
+                      setCategoryFilter(val);
+                      setVisibleMovementsCount(10);
+                    }}
+                    size="sm"
+                    options={[
+                      {
+                        value: 'all',
+                        label: `Todas (${timeFilteredMovements.length})`,
+                        icon: Filter
+                      },
+                      ...categoryCounts.map(cat => ({
+                        value: cat.id,
+                        label: `${cat.label} (${cat.count})`,
+                        icon: cat.icon
+                      }))
+                    ]}
+                  />
+                </div>
+
+                {/* Desplegable de Tiempo (1 mes, 2 meses, 3 meses) */}
+                <div className="w-32 sm:w-36 flex-shrink-0">
+                  <CustomSelect
+                    value={timeFilter}
+                    onChange={(val) => {
+                      setTimeFilter(val);
+                      setVisibleMovementsCount(10);
+                    }}
+                    size="sm"
+                    options={[
+                      { value: 'all', label: 'Todo', icon: Calendar },
+                      { value: '1', label: '1 mes', icon: Calendar },
+                      { value: '2', label: '2 meses', icon: Calendar },
+                      { value: '3', label: '3 meses', icon: Calendar }
+                    ]}
+                  />
+                </div>
               </div>
             )}
 
@@ -554,13 +584,16 @@ export const BilleteraView: React.FC = () => {
                 </div>
               ) : filteredMovements.length === 0 ? (
                 <div className="p-8 text-center text-slate-400 dark:text-slate-500 text-xs">
-                  No hay movimientos registrados en esta categoría.{' '}
+                  No hay movimientos con los filtros seleccionados.{' '}
                   <button
                     type="button"
-                    onClick={() => setCategoryFilter('all')}
-                    className="text-blue-600 dark:text-blue-400 font-bold underline ml-1"
+                    onClick={() => {
+                      setCategoryFilter('all');
+                      setTimeFilter('all');
+                    }}
+                    className="text-blue-600 dark:text-blue-400 font-bold underline ml-1 cursor-pointer"
                   >
-                    Ver todos
+                    Restablecer filtros
                   </button>
                 </div>
               ) : (

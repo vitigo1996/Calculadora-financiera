@@ -372,3 +372,18 @@ export function formatCurrency(amount: number, currency: 'COP' | 'USD' = 'COP'):
   }
   return `$${Math.round(amount || 0).toLocaleString('es-CO')}`;
 }
+
+/**
+ * Verifica si una fecha está dentro de los últimos N meses respecto a la fecha actual.
+ * Si months es null/undefined/0 o <= 0, retorna true (sin límite).
+ */
+export function isWithinMonths(dateStr?: string, months?: number): boolean {
+  if (!months || months <= 0) return true;
+  if (!dateStr) return true;
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return true;
+
+  const now = new Date();
+  const cutoff = new Date(now.getFullYear(), now.getMonth() - months, now.getDate(), 0, 0, 0, 0);
+  return d >= cutoff;
+}
