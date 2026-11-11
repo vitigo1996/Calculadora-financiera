@@ -1,48 +1,35 @@
 import React from 'react';
 import {
-  Wallet,
-  Building2,
-  CreditCard,
   Banknote,
-  PiggyBank,
+  CreditCard,
   TrendingUp,
-  LineChart,
-  Bitcoin,
-  ShieldCheck,
+  PiggyBank,
+  ArrowLeftRight,
   ShoppingCart,
   Utensils,
   Coffee,
-  Pizza,
-  Wine,
+  Bike,
+  Key,
   Home,
   Zap,
-  Droplet,
-  Wifi,
-  Hammer,
-  Car,
   Fuel,
   Bus,
-  Plane,
-  Navigation,
-  PartyPopper,
-  Gamepad2,
-  Film,
-  Tv,
-  Music,
+  Wrench,
   Ticket,
-  ShoppingBag,
-  Dumbbell,
-  HeartPulse,
+  Navigation,
+  Car,
+  Gamepad2,
+  Tv,
+  PartyPopper,
+  Palmtree,
   Sparkles,
-  Gift,
+  ShoppingBag,
+  HeartPulse,
   GraduationCap,
   PawPrint,
-  ShieldAlert,
-  Scale,
-  AlertCircle,
-  Briefcase,
   X,
-  ChevronRight
+  ChevronRight,
+  Sparkle
 } from 'lucide-react';
 
 export interface IconItem {
@@ -58,105 +45,148 @@ export interface IconCategory {
 
 export const ICON_CATEGORIES: IconCategory[] = [
   {
-    title: 'Finanzas & Dinero',
+    title: 'Finanzas',
     items: [
-      { id: 'wallet', label: 'Billetera', icon: Wallet },
-      { id: 'building', label: 'Banco', icon: Building2 },
-      { id: 'credit_card', label: 'Tarjeta', icon: CreditCard },
-      { id: 'banknote', label: 'Efectivo', icon: Banknote },
-      { id: 'ahorro', label: 'Ahorro', icon: PiggyBank },
+      { id: 'pago', label: 'Pago', icon: Banknote },
+      { id: 'tarjeta', label: 'Tarjeta', icon: CreditCard },
       { id: 'inversion', label: 'Inversión', icon: TrendingUp },
-      { id: 'etf', label: 'ETF', icon: LineChart },
-      { id: 'bitcoin', label: 'Cripto', icon: Bitcoin },
-      { id: 'shield_check', label: 'Emergencia', icon: ShieldCheck },
+      { id: 'ahorro', label: 'Ahorro', icon: PiggyBank },
+      { id: 'transferencia', label: 'Transferencia', icon: ArrowLeftRight },
     ]
   },
   {
-    title: 'Alimentación & Salidas',
+    title: 'Alimentación',
     items: [
-      { id: 'shopping_cart', label: 'Mercado', icon: ShoppingCart },
-      { id: 'utensils', label: 'Restaurante', icon: Utensils },
-      { id: 'coffee', label: 'Café & Snacks', icon: Coffee },
-      { id: 'pizza', label: 'Comida Rápida', icon: Pizza },
-      { id: 'wine', label: 'Bar & Licores', icon: Wine },
+      { id: 'mercado', label: 'Mercado', icon: ShoppingCart },
+      { id: 'restaurante', label: 'Restaurante', icon: Utensils },
+      { id: 'bebidas', label: 'Bebidas', icon: Coffee },
+      { id: 'domicilio', label: 'Domicilio', icon: Bike },
     ]
   },
   {
-    title: 'Hogar & Servicios',
+    title: 'Hogar',
     items: [
-      { id: 'home', label: 'Vivienda', icon: Home },
-      { id: 'zap', label: 'Energía / Luz', icon: Zap },
-      { id: 'droplet', label: 'Agua', icon: Droplet },
-      { id: 'wifi', label: 'Internet', icon: Wifi },
-      { id: 'hammer', label: 'Mantenimiento', icon: Hammer },
+      { id: 'arriendo', label: 'Arriendo', icon: Key },
+      { id: 'hipoteca', label: 'Hipoteca', icon: Home },
+      { id: 'servicios', label: 'Servicios', icon: Zap },
     ]
   },
   {
-    title: 'Transporte & Viajes',
+    title: 'Transporte',
     items: [
-      { id: 'car', label: 'Vehículo', icon: Car },
-      { id: 'fuel', label: 'Gasolina', icon: Fuel },
-      { id: 'bus', label: 'Transporte', icon: Bus },
-      { id: 'navigation', label: 'Taxi / Apps', icon: Navigation },
-      { id: 'plane', label: 'Viajes', icon: Plane },
+      { id: 'gasolina', label: 'Gasolina', icon: Fuel },
+      { id: 'publico', label: 'Público', icon: Bus },
+      { id: 'mantenimiento', label: 'Mantenimiento', icon: Wrench },
+      { id: 'tiquetes', label: 'Tiquetes', icon: Ticket },
+      { id: 'apps', label: 'Apps', icon: Navigation },
+      { id: 'parqueadero', label: 'Parqueadero', icon: Car },
     ]
   },
   {
-    title: 'Entretenimiento & Ocio',
+    title: 'Entretenimiento',
     items: [
-      { id: 'diversion', label: 'Diversión', icon: PartyPopper },
       { id: 'juegos', label: 'Juegos', icon: Gamepad2 },
-      { id: 'film', label: 'Cine & Streaming', icon: Film },
-      { id: 'tv', label: 'Suscripciones', icon: Tv },
-      { id: 'music', label: 'Música', icon: Music },
-      { id: 'ticket', label: 'Eventos', icon: Ticket },
+      { id: 'suscripciones', label: 'Suscripciones', icon: Tv },
+      { id: 'eventos', label: 'Eventos', icon: PartyPopper },
+      { id: 'paseos', label: 'Paseos', icon: Palmtree },
+      { id: 'salidas', label: 'Salidas', icon: Sparkles },
     ]
   },
   {
-    title: 'Estilo de Vida & Bienestar',
+    title: 'General',
     items: [
-      { id: 'shopping_bag', label: 'Compras & Ropa', icon: ShoppingBag },
-      { id: 'regalo', label: 'Regalo', icon: Gift },
-      { id: 'dumbbell', label: 'Gimnasio / Deporte', icon: Dumbbell },
-      { id: 'heart_pulse', label: 'Salud', icon: HeartPulse },
-      { id: 'sparkles', label: 'Cuidado Personal', icon: Sparkles },
-      { id: 'graduation_cap', label: 'Educación', icon: GraduationCap },
-      { id: 'paw_print', label: 'Mascotas', icon: PawPrint },
-    ]
-  },
-  {
-    title: 'Obligaciones & Deudas',
-    items: [
-      { id: 'shield_alert', label: 'Deuda', icon: ShieldAlert },
-      { id: 'scale', label: 'Impuestos', icon: Scale },
-      { id: 'alert_circle', label: 'Multas / Otros', icon: AlertCircle },
-      { id: 'briefcase', label: 'Trabajo / Nómina', icon: Briefcase },
+      { id: 'compras', label: 'Compras', icon: ShoppingBag },
+      { id: 'salud', label: 'Salud', icon: HeartPulse },
+      { id: 'educacion', label: 'Educación', icon: GraduationCap },
+      { id: 'mascota', label: 'Mascota', icon: PawPrint },
     ]
   }
 ];
 
-export function getIconComponent(iconId?: string): React.ComponentType<{ className?: string }> {
-  if (!iconId) return Wallet;
-  // Compatibility map for old ids if present
-  if (iconId === 'piggy_bank') return PiggyBank;
-  if (iconId === 'line_chart' || iconId === 'candlestick') return TrendingUp;
-  if (iconId === 'coins' || iconId === 'circle_dollar' || iconId === 'dollar_sign') return Banknote;
-  if (iconId === 'file_text' || iconId === 'receipt') return ShieldAlert;
+// Flat list of all current icon items
+export const ALL_ICON_ITEMS: IconItem[] = ICON_CATEGORIES.flatMap(cat => cat.items);
 
-  for (const cat of ICON_CATEGORIES) {
-    const found = cat.items.find(i => i.id === iconId);
-    if (found) return found.icon;
+// Normalization / alias map for legacy saved icons
+const LEGACY_ICON_ALIAS_MAP: Record<string, string> = {
+  // Finanzas
+  wallet: 'pago',
+  building: 'hipoteca',
+  credit_card: 'tarjeta',
+  banknote: 'pago',
+  coins: 'pago',
+  circle_dollar: 'pago',
+  dollar_sign: 'pago',
+  etf: 'inversion',
+  line_chart: 'inversion',
+  candlestick: 'inversion',
+  bitcoin: 'inversion',
+  shield_check: 'ahorro',
+  piggy_bank: 'ahorro',
+  layers: 'transferencia',
+
+  // Alimentación
+  shopping_cart: 'mercado',
+  utensils: 'restaurante',
+  coffee: 'bebidas',
+  pizza: 'domicilio',
+  wine: 'bebidas',
+
+  // Hogar
+  home: 'hipoteca',
+  zap: 'servicios',
+  droplet: 'servicios',
+  wifi: 'servicios',
+  hammer: 'mantenimiento',
+
+  // Transporte
+  car: 'parqueadero',
+  fuel: 'gasolina',
+  bus: 'publico',
+  navigation: 'apps',
+  plane: 'tiquetes',
+
+  // Entretenimiento
+  diversion: 'eventos',
+  film: 'suscripciones',
+  tv: 'suscripciones',
+  music: 'eventos',
+  ticket: 'tiquetes',
+
+  // General & Obligaciones
+  shopping_bag: 'compras',
+  regalo: 'compras',
+  dumbbell: 'salud',
+  heart_pulse: 'salud',
+  sparkles: 'salidas',
+  graduation_cap: 'educacion',
+  paw_print: 'mascota',
+  shield_alert: 'pago',
+  scale: 'pago',
+  alert_circle: 'pago',
+  briefcase: 'pago',
+  file_text: 'pago',
+  receipt: 'pago'
+};
+
+export function normalizeIconId(iconId?: string): string {
+  if (!iconId) return 'pago';
+  const clean = iconId.toLowerCase().trim();
+  if (ALL_ICON_ITEMS.some(i => i.id === clean)) {
+    return clean;
   }
-  return Wallet;
+  return LEGACY_ICON_ALIAS_MAP[clean] || 'pago';
+}
+
+export function getIconComponent(iconId?: string): React.ComponentType<{ className?: string }> {
+  const normalizedId = normalizeIconId(iconId);
+  const found = ALL_ICON_ITEMS.find(i => i.id === normalizedId);
+  return found ? found.icon : Banknote;
 }
 
 export function getIconLabel(iconId?: string): string {
-  if (!iconId) return 'Billetera';
-  for (const cat of ICON_CATEGORIES) {
-    const found = cat.items.find(i => i.id === iconId);
-    if (found) return found.label;
-  }
-  return 'Ícono';
+  const normalizedId = normalizeIconId(iconId);
+  const found = ALL_ICON_ITEMS.find(i => i.id === normalizedId);
+  return found ? found.label : 'Categoría';
 }
 
 interface IconPickerProps {
@@ -164,7 +194,9 @@ interface IconPickerProps {
   onSelectIcon: (iconId: string) => void;
 }
 
-export const IconPicker: React.FC<IconPickerProps> = ({ selectedIconId = 'wallet', onSelectIcon }) => {
+export const IconPicker: React.FC<IconPickerProps> = ({ selectedIconId = 'pago', onSelectIcon }) => {
+  const activeNormalized = normalizeIconId(selectedIconId);
+
   return (
     <div className="space-y-4 max-h-[60vh] overflow-y-auto p-1 pr-2 scrollbar-thin">
       {ICON_CATEGORIES.map((cat, idx) => (
@@ -175,7 +207,7 @@ export const IconPicker: React.FC<IconPickerProps> = ({ selectedIconId = 'wallet
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {cat.items.map(item => {
               const Icon = item.icon;
-              const isSelected = selectedIconId === item.id;
+              const isSelected = activeNormalized === item.id;
               return (
                 <button
                   key={item.id}
@@ -212,14 +244,14 @@ interface IconPickerModalProps {
 export const IconPickerModal: React.FC<IconPickerModalProps> = ({
   isOpen,
   onClose,
-  selectedIconId = 'wallet',
+  selectedIconId = 'pago',
   onSelectIcon,
   title = 'Seleccionar Categoría'
 }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm overflow-y-auto p-4 pb-64 sm:pb-8 flex justify-center items-start sm:items-center modal-backdrop-scroll">
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm overflow-y-auto p-4 pb-8 sm:p-6 flex justify-center items-start sm:items-center modal-backdrop-scroll">
       <div className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-3xl p-5 max-w-md w-full shadow-2xl animate-scaleUp max-h-[85vh] flex flex-col my-auto modal-card-scroll">
         <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3 mb-3">
           <h3 className="text-base font-bold text-slate-800 dark:text-white">
@@ -255,7 +287,7 @@ interface IconPickerTriggerProps {
 }
 
 export const IconPickerTrigger: React.FC<IconPickerTriggerProps> = ({
-  selectedIconId = 'wallet',
+  selectedIconId = 'pago',
   onClick,
   label = 'Ícono'
 }) => {

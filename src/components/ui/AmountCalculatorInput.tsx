@@ -74,7 +74,7 @@ export const AmountCalculatorInput: React.FC<AmountCalculatorInputProps> = ({
         {/* Modal de Calculadora Centrado en Pantalla */}
         {showPopup && (
           <div
-            className="fixed inset-0 z-[60] backdrop-blur-sm overflow-y-auto p-4 pb-64 sm:pb-8 flex justify-center items-start sm:items-center animate-fadeIn modal-backdrop-scroll"
+            className="fixed inset-0 z-[60] backdrop-blur-sm overflow-y-auto p-4 pb-8 sm:p-6 flex justify-center items-start sm:items-center animate-fadeIn modal-backdrop-scroll"
             onClick={() => setShowPopup(false)}
           >
             <div

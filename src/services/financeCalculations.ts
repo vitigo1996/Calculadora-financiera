@@ -68,9 +68,14 @@ export function calculateSubscriptionMonthlyCost(sub: SubscriptionItem): number 
 }
 
 export function calculateCardPurchasesTotal(cc: CreditCardItem): number {
-  const totalPurchases = (cc.purchases || []).reduce((sum, p) => sum + (p.amount || 0), 0);
+  const allPurchases = cc.purchases || [];
+  const paidPurchasesSum = allPurchases.filter(p => p.isPaid).reduce((sum, p) => sum + (p.amount || 0), 0);
+  const unpaidPurchasesSum = allPurchases.filter(p => !p.isPaid).reduce((sum, p) => sum + (p.amount || 0), 0);
   const totalPayments = (cc.payments || []).reduce((sum, pay) => sum + (pay.amount || 0), 0);
-  return Math.max(0, totalPurchases - totalPayments);
+
+  // Los pagos cubren los registros pagados; solo los registros no pagados menos pagos excedentes cuentan hacia la deuda
+  const extraPayments = Math.max(0, totalPayments - paidPurchasesSum);
+  return Math.max(0, unpaidPurchasesSum - extraPayments);
 }
 
 export function calculateCardPaymentDue(cc: CreditCardItem): number {

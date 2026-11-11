@@ -30,7 +30,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
   return (
     <>
-      <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm overflow-y-auto p-0 sm:p-4 pb-64 sm:pb-8 flex items-end sm:items-center justify-center modal-backdrop-scroll">
+      <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm overflow-y-auto p-0 sm:p-4 pb-8 flex items-end sm:items-center justify-center modal-backdrop-scroll">
         <div className="bg-white dark:bg-slate-900 border-t sm:border border-slate-300 dark:border-slate-800 rounded-t-3xl sm:rounded-3xl p-6 max-w-sm w-full shadow-2xl animate-scaleUp modal-card-scroll">
           {/* Header */}
           <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-200 dark:border-slate-800">

@@ -64,6 +64,7 @@ interface FinanceContextType {
   cancelCardPurchase: (cardId: string, purchaseId: string) => void;
   deleteCardPurchaseRecord: (cardId: string, purchaseId: string) => void;
   deleteCardPurchase: (cardId: string, purchaseId: string) => void;
+  toggleCardPurchasePaid: (cardId: string, purchaseId: string) => void;
   moveCardPurchase: (cardId: string, fromIndex: number, toIndex: number) => void;
   addHousingExpense: (item: { name: string; period?: PaymentPeriod; paymentDay?: number; totalAmount: number; moneda?: 'COP' | 'USD'; isShared?: boolean; icon?: string }) => void;
   updateHousingExpense: (id: string, updated: Partial<HousingExpense>) => void;
@@ -344,13 +345,31 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
             let newCutoffDate = c.billingCutoffDate;
             let newCutoffBasePayments = c.cutoffBasePayments;
 
-            // Si hay corte activo y los pagos cubren el monto facturado, se quita el corte
+            let updatedPurchases = c.purchases || [];
+            // Si hay corte activo y se hace el pago, todos los registros pagados con ese corte se marcan como pagados
             if (c.billingCutoffAmount !== undefined) {
               const paymentsSinceCutoff = Math.max(0, totalPayments - (c.cutoffBasePayments || 0));
               if (paymentsSinceCutoff >= c.billingCutoffAmount) {
+                // Pagado en su totalidad: los registros pre-corte quedan marcados como pagados
+                updatedPurchases = updatedPurchases.map(p => {
+                  if (!p.isAfterCutoff) {
+                    return { ...p, isPaid: true };
+                  }
+                  return { ...p, isAfterCutoff: false };
+                });
                 newCutoffAmount = undefined;
                 newCutoffDate = undefined;
                 newCutoffBasePayments = undefined;
+              } else if (paymentsSinceCutoff > 0) {
+                // Pago parcial hacia el corte
+                let remainingCoverage = paymentsSinceCutoff;
+                updatedPurchases = [...updatedPurchases].reverse().map(p => {
+                  if (!p.isAfterCutoff && !p.isPaid && remainingCoverage >= (p.amount || 0)) {
+                    remainingCoverage -= (p.amount || 0);
+                    return { ...p, isPaid: true };
+                  }
+                  return p;
+                }).reverse();
               }
             }
 
@@ -360,7 +379,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
               billingCutoffDate: newCutoffDate,
               cutoffBasePayments: newCutoffBasePayments,
               payments: updatedPayments,
-              purchases: newCutoffAmount === undefined ? (c.purchases || []).map(p => ({ ...p, isAfterCutoff: false })) : c.purchases
+              purchases: updatedPurchases
             };
           }
           return c;
@@ -713,21 +732,24 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }));
   };
 
-  // Pagar Corte de Tarjeta
+  // Pagar Corte de Tarjeta: marca todos los registros pre-corte como pagados y pasa los post-corte a actuales
   const payCardCutoff = (cardId: string) => {
     setData(prev => ({
       ...prev,
       creditCards: prev.creditCards.map(c => {
         if (c.id === cardId) {
-          const remainingPurchases = (c.purchases || [])
-            .filter(p => p.isAfterCutoff === true)
-            .map(p => ({ ...p, isAfterCutoff: false }));
+          const updatedPurchases = (c.purchases || []).map(p => {
+            if (!p.isAfterCutoff) {
+              return { ...p, isPaid: true };
+            }
+            return { ...p, isAfterCutoff: false };
+          });
           return {
             ...c,
             billingCutoffAmount: undefined,
             billingCutoffDate: undefined,
             cutoffBasePayments: undefined,
-            purchases: remainingPurchases
+            purchases: updatedPurchases
           };
         }
         return c;
@@ -882,6 +904,23 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const deleteCardPurchaseRecord = cancelCardPurchase;
 
   const deleteCardPurchase = cancelCardPurchase;
+
+  const toggleCardPurchasePaid = (cardId: string, purchaseId: string) => {
+    setData(prev => ({
+      ...prev,
+      creditCards: prev.creditCards.map(c => {
+        if (c.id === cardId) {
+          return {
+            ...c,
+            purchases: (c.purchases || []).map(p =>
+              p.id === purchaseId ? { ...p, isPaid: !p.isPaid } : p
+            )
+          };
+        }
+        return c;
+      })
+    }));
+  };
 
   const moveCardPurchase = (cardId: string, fromIndex: number, toIndex: number) => {
     setData(prev => ({
@@ -1145,6 +1184,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         cancelCardPurchase,
         deleteCardPurchaseRecord,
         deleteCardPurchase,
+        toggleCardPurchasePaid,
         moveCardPurchase,
         addHousingExpense,
         updateHousingExpense,
