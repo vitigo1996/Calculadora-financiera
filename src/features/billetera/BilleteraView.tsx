@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useFinance } from '../../context/FinanceContext';
 import { formatCurrency, calculateCardPurchasesTotal } from '../../services/financeCalculations';
 import { BilleteraAccountItem } from '../../models/finance';
-import { getIconComponent, getIconLabel, normalizeIconId, ALL_ICON_ITEMS, IconPickerModal, IconPickerTrigger } from '../../components/ui/IconPicker';
+import { getIconComponent, getIconLabel, normalizeIconId, ALL_ICON_ITEMS, IconPickerModal } from '../../components/ui/IconPicker';
 import { predictCategory } from '../../services/categoryPredictor';
 import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import { AmountCalculatorInput } from '../../components/ui/AmountCalculatorInput';
@@ -93,8 +93,6 @@ export const BilleteraView: React.FC = () => {
   const [movementName, setMovementName] = useState('');
   const [movementAmount, setMovementAmount] = useState('');
   const [movementIcon, setMovementIcon] = useState('compras');
-  const [isIconManuallyChosen, setIsIconManuallyChosen] = useState(false);
-  const [predictedCategory, setPredictedCategory] = useState<string | null>(null);
   const [movementSourceId, setMovementSourceId] = useState('');
   const [movementDestType, setMovementDestType] = useState<'none' | 'payment'>('none');
   const [movementDestId, setMovementDestId] = useState('');
@@ -156,8 +154,6 @@ export const BilleteraView: React.FC = () => {
     setMovementAmount('');
     setMovementType('expense');
     setMovementIcon('compras');
-    setIsIconManuallyChosen(false);
-    setPredictedCategory(null);
     const firstBilletera = data.billeteraItems[0] ? `billetera:${data.billeteraItems[0].id}` : '';
     setMovementSourceId(firstBilletera);
     setMovementDestType('none');
@@ -822,16 +818,8 @@ export const BilleteraView: React.FC = () => {
                 type="button"
                 onClick={() => {
                   setMovementType('expense');
-                  if (!isIconManuallyChosen) {
-                    const pred = predictCategory(movementName);
-                    if (pred) {
-                      setMovementIcon(pred);
-                      setPredictedCategory(pred);
-                    } else {
-                      setPredictedCategory(null);
-                      setMovementIcon('compras');
-                    }
-                  }
+                  const pred = predictCategory(movementName);
+                  setMovementIcon(pred || 'compras');
                 }}
                 className={`py-2.5 px-1.5 rounded-2xl text-xs font-bold border transition-all flex items-center justify-center gap-1 ${
                   movementType === 'expense'
@@ -847,16 +835,8 @@ export const BilleteraView: React.FC = () => {
                 type="button"
                 onClick={() => {
                   setMovementType('income');
-                  if (!isIconManuallyChosen) {
-                    const pred = predictCategory(movementName);
-                    if (pred) {
-                      setMovementIcon(pred);
-                      setPredictedCategory(pred);
-                    } else {
-                      setPredictedCategory(null);
-                      setMovementIcon('pago');
-                    }
-                  }
+                  const pred = predictCategory(movementName);
+                  setMovementIcon(pred || 'pago');
                 }}
                 className={`py-2.5 px-1.5 rounded-2xl text-xs font-bold border transition-all flex items-center justify-center gap-1 ${
                   movementType === 'income'
@@ -872,16 +852,8 @@ export const BilleteraView: React.FC = () => {
                 type="button"
                 onClick={() => {
                   setMovementType('transfer');
-                  if (!isIconManuallyChosen) {
-                    const pred = predictCategory(movementName);
-                    if (pred) {
-                      setMovementIcon(pred);
-                      setPredictedCategory(pred);
-                    } else {
-                      setPredictedCategory(null);
-                      setMovementIcon('transferencia');
-                    }
-                  }
+                  const pred = predictCategory(movementName);
+                  setMovementIcon(pred || 'transferencia');
                 }}
                 className={`py-2.5 px-1.5 rounded-2xl text-xs font-bold border transition-all flex items-center justify-center gap-1 ${
                   movementType === 'transfer'
@@ -905,15 +877,11 @@ export const BilleteraView: React.FC = () => {
                   onChange={e => {
                     const val = e.target.value;
                     setMovementName(val);
-                    if (!isIconManuallyChosen) {
-                      const pred = predictCategory(val);
-                      if (pred) {
-                        setMovementIcon(pred);
-                        setPredictedCategory(pred);
-                      } else {
-                        setPredictedCategory(null);
-                        setMovementIcon(movementType === 'income' ? 'pago' : movementType === 'transfer' ? 'transferencia' : 'compras');
-                      }
+                    const pred = predictCategory(val);
+                    if (pred) {
+                      setMovementIcon(pred);
+                    } else {
+                      setMovementIcon(movementType === 'income' ? 'pago' : movementType === 'transfer' ? 'transferencia' : 'compras');
                     }
                   }}
                   placeholder={
@@ -925,26 +893,7 @@ export const BilleteraView: React.FC = () => {
                   }
                   className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
                 />
-                {predictedCategory && (
-                  <div className="flex items-center gap-1.5 mt-1.5 px-1 animate-fadeIn">
-                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 rounded-full border border-blue-200 dark:border-blue-800/40">
-                      <Sparkles className="w-3 h-3 text-amber-500" />
-                      Sugerido: <strong>{getIconLabel(predictedCategory)}</strong>
-                    </span>
-                  </div>
-                )}
               </div>
-
-              {/* Selector de Categoría / Ícono */}
-              <IconPickerTrigger
-                label="Categoría"
-                selectedIconId={movementIcon}
-                onClick={() => setIconPickerTarget({
-                  currentIcon: movementIcon,
-                  title: 'Seleccionar Categoría',
-                  type: 'movement_form'
-                })}
-              />
 
               {/* Monto con Calculadora */}
               <AmountCalculatorInput
@@ -1218,9 +1167,6 @@ export const BilleteraView: React.FC = () => {
             if (!iconPickerTarget) return;
             if (iconPickerTarget.type === 'movement_item' && iconPickerTarget.targetId) {
               updateExpenseMovement(iconPickerTarget.targetId, { icon: newIcon });
-            } else if (iconPickerTarget.type === 'movement_form') {
-              setMovementIcon(newIcon);
-              setIsIconManuallyChosen(true);
             } else if (iconPickerTarget.type === 'billetera_form') {
               setBilleteraIcon(newIcon);
             } else if (iconPickerTarget.targetId) {

@@ -6,7 +6,7 @@ import {
   calculateCardPaymentDue
 } from '../../services/financeCalculations';
 import { CreditCardItem } from '../../models/finance';
-import { getIconComponent, getIconLabel, normalizeIconId, ALL_ICON_ITEMS, IconPickerModal, IconPickerTrigger } from '../../components/ui/IconPicker';
+import { getIconComponent, getIconLabel, normalizeIconId, ALL_ICON_ITEMS, IconPickerModal } from '../../components/ui/IconPicker';
 import { predictCategory } from '../../services/categoryPredictor';
 import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import { AmountCalculatorInput } from '../../components/ui/AmountCalculatorInput';
@@ -94,8 +94,6 @@ export const CreditosSuscripcionesView: React.FC = () => {
   const [purchaseConcept, setPurchaseConcept] = useState('');
   const [purchaseAmount, setPurchaseAmount] = useState('');
   const [purchaseIcon, setPurchaseIcon] = useState('compras');
-  const [isPurchaseIconManual, setIsPurchaseIconManual] = useState(false);
-  const [predictedPurchaseCategory, setPredictedPurchaseCategory] = useState<string | null>(null);
 
   // Selected card reference
   const selectedCard = data.creditCards.find(c => c.id === selectedCardId) || data.creditCards[0];
@@ -149,8 +147,6 @@ export const CreditosSuscripcionesView: React.FC = () => {
     setPurchaseConcept('');
     setPurchaseAmount('');
     setPurchaseIcon('compras');
-    setIsPurchaseIconManual(false);
-    setPredictedPurchaseCategory(null);
     setShowAddPurchaseModal(true);
   };
 
@@ -756,42 +752,15 @@ export const CreditosSuscripcionesView: React.FC = () => {
                   onChange={e => {
                     const val = e.target.value;
                     setPurchaseConcept(val);
-                    if (!isPurchaseIconManual) {
-                      const pred = predictCategory(val);
-                      if (pred) {
-                        setPurchaseIcon(pred);
-                        setPredictedPurchaseCategory(pred);
-                      } else {
-                        setPredictedPurchaseCategory(null);
-                        setPurchaseIcon('compras');
-                      }
-                    }
+                    const pred = predictCategory(val);
+                    setPurchaseIcon(pred || 'compras');
                   }}
                   placeholder="Ej. Compra 1, Servicio, Almuerzo"
                   className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
                   required
                   autoFocus
                 />
-                {predictedPurchaseCategory && (
-                  <div className="flex items-center gap-1.5 mt-1.5 px-1 animate-fadeIn">
-                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 rounded-full border border-blue-200 dark:border-blue-800/40">
-                      <Sparkles className="w-3 h-3 text-amber-500" />
-                      Sugerido: <strong>{getIconLabel(predictedPurchaseCategory)}</strong>
-                    </span>
-                  </div>
-                )}
               </div>
-
-              {/* Selector de Categoría */}
-              <IconPickerTrigger
-                label="Categoría"
-                selectedIconId={purchaseIcon}
-                onClick={() => setIconPickerTarget({
-                  currentIcon: purchaseIcon,
-                  title: 'Seleccionar Categoría',
-                  type: 'purchase_form'
-                })}
-              />
 
               {/* Monto con Calculadora */}
               <AmountCalculatorInput
@@ -833,10 +802,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
           title={iconPickerTarget.title}
           onSelectIcon={(newIcon) => {
             if (!iconPickerTarget || !selectedCard) return;
-            if (iconPickerTarget.type === 'purchase_form') {
-              setPurchaseIcon(newIcon);
-              setIsPurchaseIconManual(true);
-            } else if (iconPickerTarget.targetId) {
+            if (iconPickerTarget.targetId) {
               const existingP = (selectedCard.purchases || []).find(p => p.id === iconPickerTarget.targetId);
               if (existingP) {
                 updateCardPurchase(selectedCard.id, existingP.id, {
