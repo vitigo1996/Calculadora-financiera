@@ -49,7 +49,7 @@ interface FinanceContextType {
   deletePortfolioItem: (id: string) => void;
   movePortfolioItem: (index: number, direction: 'up' | 'down') => void;
   reorderPortfolioItems: (fromIndex: number, toIndex: number) => void;
-  addCreditCard: (item: { name: string; period?: PaymentPeriod; paymentDay?: number; creditLimit: number; moneda?: 'COP' | 'USD'; minPaymentOverride?: number }) => void;
+  addCreditCard: (item: { name: string; period?: PaymentPeriod; paymentDay?: number; cutoffDay?: number; creditLimit: number; moneda?: 'COP' | 'USD'; minPaymentOverride?: number }) => void;
   updateCreditCard: (id: string, updated: Partial<CreditCardItem>) => void;
   deleteCreditCard: (id: string) => void;
   moveCreditCard: (index: number, direction: 'up' | 'down') => void;
@@ -652,12 +652,13 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }));
   };
 
-  const addCreditCard = (card: { name: string; period?: PaymentPeriod; paymentDay?: number; creditLimit: number; moneda?: 'COP' | 'USD'; minPaymentOverride?: number }) => {
+  const addCreditCard = (card: { name: string; period?: PaymentPeriod; paymentDay?: number; cutoffDay?: number; creditLimit: number; moneda?: 'COP' | 'USD'; minPaymentOverride?: number }) => {
     const newCard: CreditCardItem = {
       id: `cc-${Date.now()}`,
       name: card.name,
       period: card.period || '1st_fortnight',
       paymentDay: card.paymentDay,
+      cutoffDay: card.cutoffDay,
       creditLimit: card.creditLimit,
       moneda: card.moneda || 'COP',
       minPaymentOverride: card.minPaymentOverride,

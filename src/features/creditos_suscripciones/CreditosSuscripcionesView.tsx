@@ -4,7 +4,8 @@ import {
   formatCurrency,
   calculateCardPurchasesTotal,
   calculateCardPaymentDue,
-  isWithinMonths
+  isWithinMonths,
+  isPurchaseBeforeCurrentBillingCycle
 } from '../../services/financeCalculations';
 import { CreditCardItem } from '../../models/finance';
 import { getIconComponent, getIconLabel, normalizeIconId, ALL_ICON_ITEMS, IconPickerModal } from '../../components/ui/IconPicker';
@@ -91,6 +92,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
   const [cardName, setCardName] = useState('');
   const [cardLimit, setCardLimit] = useState('');
   const [cardPaymentDay, setCardPaymentDay] = useState<string>('');
+  const [cardCutoffDay, setCardCutoffDay] = useState<string>('');
 
   // Modal: Add Purchase
   const [showAddPurchaseModal, setShowAddPurchaseModal] = useState(false);
@@ -106,6 +108,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
     setCardName('');
     setCardLimit('');
     setCardPaymentDay('');
+    setCardCutoffDay('');
     setEditingCardObj(null);
     setShowCardModal(true);
   };
@@ -116,6 +119,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
     setCardName(card.name);
     setCardLimit(card.creditLimit.toString());
     setCardPaymentDay(card.paymentDay !== undefined ? card.paymentDay.toString() : '');
+    setCardCutoffDay(card.cutoffDay !== undefined ? card.cutoffDay.toString() : '');
     setShowCardModal(true);
   };
 
@@ -124,20 +128,23 @@ export const CreditosSuscripcionesView: React.FC = () => {
     e.preventDefault();
     if (!cardName.trim()) return;
     const limit = parseFloat(cardLimit) || 0;
-    const dayVal = cardPaymentDay ? parseInt(cardPaymentDay, 10) : undefined;
+    const paymentDayVal = cardPaymentDay ? parseInt(cardPaymentDay, 10) : undefined;
+    const cutoffDayVal = cardCutoffDay ? parseInt(cardCutoffDay, 10) : undefined;
 
     if (editingCardObj) {
       updateCreditCard(editingCardObj.id, {
         name: cardName.trim(),
         creditLimit: limit,
-        paymentDay: dayVal,
+        paymentDay: paymentDayVal,
+        cutoffDay: cutoffDayVal,
         moneda: 'COP'
       });
     } else {
       addCreditCard({
         name: cardName.trim(),
         creditLimit: limit,
-        paymentDay: dayVal,
+        paymentDay: paymentDayVal,
+        cutoffDay: cutoffDayVal,
         moneda: 'COP'
       });
     }
@@ -333,7 +340,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
                     {/* Footer de Tarjeta: Cupo y Cupo Disp. */}
                     <div className={`pt-2.5 mt-2.5 border-t flex items-center justify-between text-xs ${isSelected ? 'border-blue-200 dark:border-slate-700 text-slate-500 dark:text-slate-400' : 'border-slate-200 dark:border-slate-800 text-slate-400'}`}>
                       <span className="text-slate-500 dark:text-slate-400">
-                        Cupo: <span className="font-mono font-medium text-slate-700 dark:text-slate-300">{formatCurrency(cc.creditLimit)}</span>
+                        {cc.cutoffDay ? `Corte: d. ${cc.cutoffDay}` : `Cupo: ${formatCurrency(cc.creditLimit)}`}
                       </span>
 
                       <span className="text-slate-500 dark:text-slate-400">
@@ -357,6 +364,16 @@ export const CreditosSuscripcionesView: React.FC = () => {
               <h3 className="text-base font-extrabold text-slate-800 dark:text-white uppercase tracking-wide">
                 {selectedCard.name.toUpperCase()}
               </h3>
+              {selectedCard.cutoffDay && (
+                <span className="text-xs px-2.5 py-0.5 rounded-full font-semibold bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/50">
+                  Corte: Día {selectedCard.cutoffDay}
+                </span>
+              )}
+              {selectedCard.paymentDay && (
+                <span className="text-xs px-2.5 py-0.5 rounded-full font-semibold bg-slate-200/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700">
+                  Pago: Día {selectedCard.paymentDay}
+                </span>
+              )}
             </div>
 
             {/* Botones de acción: Corte, Editar, Agregar (+) */}
@@ -511,11 +528,9 @@ export const CreditosSuscripcionesView: React.FC = () => {
                 );
               }
 
-              const hasCutoff = selectedCard.billingCutoffAmount !== undefined || Boolean(selectedCard.lastCutoffDate);
-
               return visiblePurchases.slice(0, visiblePurchasesCount).map((p, pIdx) => {
                 const PurchaseIcon = getIconComponent(p.icon || 'compras');
-                const isOldRecord = hasCutoff && !p.isAfterCutoff;
+                const isOldRecord = isPurchaseBeforeCurrentBillingCycle(p.date, selectedCard?.cutoffDay);
                 const formattedDate = p.date ? (() => {
                   const d = new Date(p.date);
                   return isNaN(d.getTime())
@@ -582,7 +597,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
                           {p.concept}
                         </h4>
 
-                        {/* Metadatos: Fecha, Estado de Corte */}
+                        {/* Metadatos: Fecha, Estado de Facturación */}
                         <div className="flex flex-col gap-0.5 mt-1 text-[11px] text-slate-500 dark:text-slate-400 leading-tight">
                           {formattedDate && (
                             <span className="inline-flex items-center gap-1 text-slate-400 dark:text-slate-500 font-medium">
@@ -591,9 +606,9 @@ export const CreditosSuscripcionesView: React.FC = () => {
                           )}
                           {isOldRecord ? (
                             <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-400 dark:text-slate-500">
-                              <Scissors className="w-3 h-3 flex-shrink-0" /> Anterior al corte
+                              <Scissors className="w-3 h-3 flex-shrink-0" /> Corte anterior
                             </span>
-                          ) : hasCutoff ? (
+                          ) : selectedCard?.cutoffDay ? (
                             <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
                               <Sparkles className="w-3 h-3 flex-shrink-0 text-amber-500" /> Corte actual
                             </span>
@@ -703,6 +718,18 @@ export const CreditosSuscripcionesView: React.FC = () => {
                 required
                 title="Ajuste"
               />
+
+              {/* Día de Inicio de Facturación / Corte */}
+              <div>
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                  Inicio de Facturación / Corte
+                </label>
+                <CustomSelect
+                  value={cardCutoffDay}
+                  onChange={val => setCardCutoffDay(val)}
+                  options={DAY_OPTIONS}
+                />
+              </div>
 
               {/* Día de Pago */}
               <div>

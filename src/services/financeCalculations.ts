@@ -382,3 +382,48 @@ export function isWithinMonths(dateStr?: string, months?: number): boolean {
   const cutoff = new Date(now.getFullYear(), now.getMonth() - months, now.getDate(), 0, 0, 0, 0);
   return d >= cutoff;
 }
+
+/**
+ * Calcula la fecha de inicio del ciclo de facturación actual de una tarjeta
+ * según su día de corte (cutoffDay). El período dura 1 mes.
+ * Si hoy es >= cutoffDay, el ciclo actual inició el cutoffDay del mes actual.
+ * Si hoy es < cutoffDay, el ciclo actual inició el cutoffDay del mes anterior.
+ */
+export function getCardBillingCycleStartDate(cutoffDay: number, referenceDate: Date = new Date()): Date {
+  const currentYear = referenceDate.getFullYear();
+  const currentMonth = referenceDate.getMonth();
+  const currentDay = referenceDate.getDate();
+
+  let cycleYear = currentYear;
+  let cycleMonth = currentMonth;
+
+  if (currentDay < cutoffDay) {
+    cycleMonth -= 1;
+    if (cycleMonth < 0) {
+      cycleMonth = 11;
+      cycleYear -= 1;
+    }
+  }
+
+  const maxDays = new Date(cycleYear, cycleMonth + 1, 0).getDate();
+  const safeDay = Math.min(cutoffDay, maxDays);
+
+  return new Date(cycleYear, cycleMonth, safeDay, 0, 0, 0, 0);
+}
+
+/**
+ * Determina si una compra es anterior al ciclo de facturación del mes actual
+ * (es decir, fecha de más de un mes anterior a la fecha de facturación actual).
+ */
+export function isPurchaseBeforeCurrentBillingCycle(
+  purchaseDateStr?: string,
+  cutoffDay?: number,
+  referenceDate: Date = new Date()
+): boolean {
+  if (!purchaseDateStr || !cutoffDay || cutoffDay <= 0) return false;
+  const pDate = new Date(purchaseDateStr);
+  if (isNaN(pDate.getTime())) return false;
+
+  const cycleStart = getCardBillingCycleStartDate(cutoffDay, referenceDate);
+  return pDate < cycleStart;
+}

@@ -88,6 +88,7 @@ export interface CreditCardItem {
   name: string;
   period?: PaymentPeriod;
   paymentDay?: number;
+  cutoffDay?: number;
   creditLimit: number;
   moneda?: 'COP' | 'USD';
   minPaymentOverride?: number;
