@@ -5,7 +5,8 @@ import {
   calculateCardPurchasesTotal,
   calculateCardPaymentDue,
   isWithinMonths,
-  isPurchaseBeforeCurrentMonthBillingDate
+  isPurchaseBeforeCurrentMonthBillingDate,
+  parsePurchaseDate
 } from '../../services/financeCalculations';
 import { CreditCardItem } from '../../models/finance';
 import { getIconComponent, getIconLabel, normalizeIconId, ALL_ICON_ITEMS, IconPickerModal } from '../../components/ui/IconPicker';
@@ -541,15 +542,15 @@ export const CreditosSuscripcionesView: React.FC = () => {
 
               return visiblePurchases.slice(0, visiblePurchasesCount).map((p, pIdx) => {
                 const PurchaseIcon = getIconComponent(p.icon || 'compras');
-                const isOldRecord = isPurchaseBeforeCurrentMonthBillingDate(p.date, selectedCard?.cutoffDay);
+                const isOldRecord = isPurchaseBeforeCurrentMonthBillingDate(p.date, selectedCard?.cutoffDay, undefined, p.id);
                 const formattedDate = p.date ? (() => {
-                  const d = new Date(p.date);
-                  return isNaN(d.getTime())
-                    ? p.date
-                    : d.toLocaleDateString('es-CO', {
+                  const d = parsePurchaseDate(p.date, p.id);
+                  return d
+                    ? d.toLocaleDateString('es-CO', {
                         day: 'numeric',
                         month: 'short'
-                      });
+                      })
+                    : p.date;
                 })() : '';
 
                 return (
@@ -574,7 +575,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
                     onDragEnd={() => setDraggedPurchaseIdx(null)}
                     className={`p-4 transition-colors flex items-center justify-between gap-3 ${
                       isOldRecord
-                        ? 'bg-slate-100/75 dark:bg-slate-950/60 opacity-60'
+                        ? 'bg-slate-100/90 dark:bg-slate-950/70 opacity-60'
                         : 'bg-white dark:bg-slate-900'
                     } ${isEditingPurchases ? 'cursor-move select-none' : ''}`}
                   >
@@ -596,7 +597,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
                         title="Click para cambiar categoría"
                         className={`w-10 h-10 rounded-2xl flex items-center justify-center border shadow-sm flex-shrink-0 mt-0.5 transition-transform ${
                           isOldRecord
-                            ? 'bg-slate-200/60 dark:bg-slate-800/60 text-slate-400 dark:text-slate-500 border-slate-300/50 dark:border-slate-700/50'
+                            ? 'bg-slate-200/80 dark:bg-slate-800/80 text-slate-400 dark:text-slate-500 border-slate-300/60 dark:border-slate-700/60'
                             : 'bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800/50 hover:scale-105 active:scale-95 cursor-pointer'
                         }`}
                       >

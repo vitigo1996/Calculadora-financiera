@@ -369,14 +369,106 @@ export function formatCurrency(amount: number, currency: 'COP' | 'USD' = 'COP'):
 }
 
 /**
+ * Parsea de forma segura cualquier formato de fecha de compra:
+ * - Cadenas ISO (ej. 2026-09-28T...)
+ * - Fechas con barras o guiones (ej. 28/09/2026, 28-09-2026, 2026/09/28)
+ * - Fechas en español (ej. '28 de sept', '28 sept', '28 sep.', '28 de septiembre de 2026')
+ * - Timestamps numéricos o en ID (ej. 'p-1727500000000')
+ */
+export function parsePurchaseDate(dateStr?: string | number, id?: string): Date | null {
+  if (typeof dateStr === 'number') {
+    const d = new Date(dateStr > 1e11 ? dateStr : dateStr * 1000);
+    if (!isNaN(d.getTime())) return d;
+  }
+
+  if (typeof dateStr === 'string' && dateStr.trim()) {
+    const trimmed = dateStr.trim();
+
+    // Timestamp numérico en cadena
+    if (/^\d{10,13}$/.test(trimmed)) {
+      const ts = parseInt(trimmed, 10);
+      const d = new Date(ts > 1e11 ? ts : ts * 1000);
+      if (!isNaN(d.getTime())) return d;
+    }
+
+    // Mapa de meses en español
+    const monthsMap: Record<string, number> = {
+      ene: 0, enero: 0,
+      feb: 1, febrero: 1,
+      mar: 2, marzo: 2,
+      abr: 3, abril: 3,
+      may: 4, mayo: 4,
+      jun: 5, junio: 5,
+      jul: 6, julio: 6,
+      ago: 7, agosto: 7,
+      sep: 8, sept: 8, septiembre: 8,
+      oct: 9, octubre: 9,
+      nov: 10, noviembre: 10,
+      dic: 11, diciembre: 11
+    };
+
+    // Formato DD/MM/YYYY o DD-MM-YYYY
+    const dmy = trimmed.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+    if (dmy) {
+      const day = parseInt(dmy[1], 10);
+      const month = parseInt(dmy[2], 10) - 1;
+      let year = parseInt(dmy[3], 10);
+      if (year < 100) year += 2000;
+      return new Date(year, month, day);
+    }
+
+    // Formato YYYY/MM/DD o YYYY-MM-DD
+    const ymd = trimmed.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+    if (ymd) {
+      const year = parseInt(ymd[1], 10);
+      const month = parseInt(ymd[2], 10) - 1;
+      const day = parseInt(ymd[3], 10);
+      return new Date(year, month, day);
+    }
+
+    // Formato en español: '28 de sept', '28 sept 2026', '28 de septiembre de 2026'
+    const cleanSp = trimmed.toLowerCase().replace(/[\.,]/g, '').replace(/\s+/g, ' ');
+    const spMatch = cleanSp.match(/^(\d{1,2})\s*(?:de\s+)?([a-z]+)(?:\s*(?:de\s+)?(\d{2,4}))?$/);
+    if (spMatch) {
+      const day = parseInt(spMatch[1], 10);
+      const mStr = spMatch[2];
+      const yStr = spMatch[3];
+      if (monthsMap[mStr] !== undefined) {
+        let year = yStr ? parseInt(yStr, 10) : new Date().getFullYear();
+        if (year < 100) year += 2000;
+        return new Date(year, monthsMap[mStr], day);
+      }
+    }
+
+    // Intento nativo estándar (ISO 8601, UTC, etc.)
+    const directDate = new Date(trimmed);
+    if (!isNaN(directDate.getTime())) {
+      return directDate;
+    }
+  }
+
+  // Si no hay fecha directa o falló, intentar extraer timestamp del ID (ej. 'p-1727500000000')
+  if (id && typeof id === 'string') {
+    const idMatch = id.match(/\b(\d{10,13})\b/);
+    if (idMatch) {
+      const ts = parseInt(idMatch[1], 10);
+      const d = new Date(ts > 1e11 ? ts : ts * 1000);
+      if (!isNaN(d.getTime())) return d;
+    }
+  }
+
+  return null;
+}
+
+/**
  * Verifica si una fecha está dentro de los últimos N meses respecto a la fecha actual.
  * Si months es null/undefined/0 o <= 0, retorna true (sin límite).
  */
 export function isWithinMonths(dateStr?: string, months?: number): boolean {
   if (!months || months <= 0) return true;
   if (!dateStr) return true;
-  const d = new Date(dateStr);
-  if (isNaN(d.getTime())) return true;
+  const d = parsePurchaseDate(dateStr);
+  if (!d) return true;
 
   const now = new Date();
   const cutoff = new Date(now.getFullYear(), now.getMonth() - months, now.getDate(), 0, 0, 0, 0);
@@ -416,16 +508,18 @@ export function getCardBillingCycleStartDate(cutoffDay: number, referenceDate: D
  * Si el día de corte es 15 y hoy es 12 de nov: el corte actual inició el 15 de oct.
  * Todo lo que esté entre el 15 de oct y hoy está en el corte actual (normal).
  * Todo lo que sea anterior al 15 de oct hacia atrás es registro viejo (en gris / tono tenue).
+ * Si un registro no tiene fecha o no es parseable, al haber día de corte configurado,
+ * se trata como registro anterior para que quede en gris.
  */
 export function isPurchaseBeforeCurrentMonthBillingDate(
   purchaseDateStr?: string,
   cutoffDay?: number,
-  now: Date = new Date()
+  now: Date = new Date(),
+  id?: string
 ): boolean {
-  if (!purchaseDateStr || !cutoffDay || cutoffDay <= 0) return false;
-  const pDate = new Date(purchaseDateStr);
-  if (isNaN(pDate.getTime())) return false;
-
+  if (!cutoffDay || cutoffDay <= 0) return false;
   const cycleStart = getCardBillingCycleStartDate(cutoffDay, now);
+  const pDate = parsePurchaseDate(purchaseDateStr, id);
+  if (!pDate) return true; // Todo registro anterior o sin fecha debe quedar en gris
   return pDate < cycleStart;
 }
