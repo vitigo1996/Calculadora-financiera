@@ -541,6 +541,16 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         });
       }
 
+      if (isIncome && movement.destinationType === 'deuda' && movement.destinationId) {
+        const debtId = movement.destinationId;
+        updatedDeudas = (prev.deudaItems || []).map(d => {
+          if (d.id === debtId) {
+            return { ...d, monto: (d.monto || 0) + movement.amount };
+          }
+          return d;
+        });
+      }
+
       return {
         ...prev,
         billeteraItems: updatedBilletera,

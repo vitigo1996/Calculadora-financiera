@@ -95,14 +95,13 @@ export const BilleteraView: React.FC = () => {
   const [movementName, setMovementName] = useState('');
   const [movementAmount, setMovementAmount] = useState('');
   const [movementIcon, setMovementIcon] = useState('compras');
-  const [movementSourceId, setMovementSourceId] = useState('');
-  const [movementDestType, setMovementDestType] = useState<'none' | 'payment'>('none');
-  const [movementDestId, setMovementDestId] = useState('');
-  const [movementDestTransferId, setMovementDestTransferId] = useState('');
-
-  // Origen de Ingreso (General vs Deuda a mi favor)
-  const [incomeOriginType, setIncomeOriginType] = useState<'general' | 'deuda'>('general');
-  const [incomeOriginDeudaId, setIncomeOriginDeudaId] = useState('');
+  
+  // Origen y Destino unificados
+  const [movementSourceId, setMovementSourceId] = useState(''); // Origen en Gasto y Transferencia
+  const [movementExpenseDestId, setMovementExpenseDestId] = useState('none'); // Destino en Gasto ('none' | 'card:id' | 'deuda:id')
+  const [movementIncomeOriginId, setMovementIncomeOriginId] = useState('general'); // Origen en Ingreso ('general' | 'deuda:id')
+  const [movementIncomeDestId, setMovementIncomeDestId] = useState(''); // Destino en Ingreso (billetera o portafolio)
+  const [movementDestTransferId, setMovementDestTransferId] = useState(''); // Destino en Transferencia
 
   const deudasPorPagar = (data.deudaItems || []).filter(d => d.tipo === 'por_pagar');
   const deudasPorCobrar = (data.deudaItems || []).filter(d => d.tipo === 'por_cobrar');
@@ -156,19 +155,23 @@ export const BilleteraView: React.FC = () => {
     setMovementAmount('');
     setMovementType('expense');
     setMovementIcon('compras');
-    const firstBilletera = data.billeteraItems[0] ? `billetera:${data.billeteraItems[0].id}` : '';
-    setMovementSourceId(firstBilletera);
-    setMovementDestType('none');
-    setIncomeOriginType('general');
-    setIncomeOriginDeudaId(deudasPorCobrar[0]?.id || '');
-    const firstTarget = data.creditCards[0]
-      ? `card:${data.creditCards[0].id}`
-      : (deudasPorPagar[0] ? `deuda:${deudasPorPagar[0].id}` : '');
-    setMovementDestId(firstTarget);
-    const secondTarget = data.billeteraItems[1]
-      ? `billetera:${data.billeteraItems[1].id}`
+
+    const firstAcc = data.billeteraItems[0]
+      ? `billetera:${data.billeteraItems[0].id}`
       : (data.portfolioItems[0] ? `portfolio:${data.portfolioItems[0].id}` : '');
-    setMovementDestTransferId(secondTarget);
+
+    setMovementSourceId(firstAcc);
+    setMovementExpenseDestId('none');
+    setMovementIncomeOriginId('general');
+    setMovementIncomeDestId(firstAcc);
+
+    const secondAcc = data.billeteraItems[1]
+      ? `billetera:${data.billeteraItems[1].id}`
+      : (data.portfolioItems[0] && `portfolio:${data.portfolioItems[0].id}` !== firstAcc
+          ? `portfolio:${data.portfolioItems[0].id}`
+          : (data.portfolioItems[1] ? `portfolio:${data.portfolioItems[1].id}` : ''));
+    setMovementDestTransferId(secondAcc);
+
     setShowAddMovementModal(true);
   };
 
@@ -178,20 +181,25 @@ export const BilleteraView: React.FC = () => {
     const amount = parseFloat(movementAmount) || 0;
     if (amount <= 0) return;
 
-    const sourceId = movementSourceId || (data.billeteraItems[0] ? `billetera:${data.billeteraItems[0].id}` : '');
-    const isSourcePortfolio = sourceId.startsWith('portfolio:');
-    const rawSourceId = sourceId.replace('portfolio:', '').replace('billetera:', '');
-    const sourceAccount = isSourcePortfolio
-      ? data.portfolioItems.find(p => p.id === rawSourceId)
-      : data.billeteraItems.find(b => b.id === rawSourceId);
+    let sourceId = '';
+    let destType: 'none' | 'card' | 'deuda' | 'portfolio' | 'account' = 'none';
+    let destId: string | undefined = undefined;
+    let destName: string | undefined = undefined;
 
-    // Negative balance warning
-    if (movementType === 'expense' || movementType === 'transfer') {
+    if (movementType === 'expense') {
+      sourceId = movementSourceId || (data.billeteraItems[0] ? `billetera:${data.billeteraItems[0].id}` : (data.portfolioItems[0] ? `portfolio:${data.portfolioItems[0].id}` : ''));
+      const isSourcePortfolio = sourceId.startsWith('portfolio:');
+      const rawSourceId = sourceId.replace('portfolio:', '').replace('billetera:', '');
+      const sourceAccount = isSourcePortfolio
+        ? (data.portfolioItems || []).find(p => p.id === rawSourceId)
+        : (data.billeteraItems || []).find(b => b.id === rawSourceId);
+
+      // Negative balance warning
       if (sourceAccount && (sourceAccount.saldo - amount < 0)) {
         setConfirmConfig({
           isOpen: true,
           title: 'Saldo Insuficiente en Origen',
-          message: `El movimiento de ${formatCurrency(amount)} supera el saldo actual de "${sourceAccount.nombre}" (${formatCurrency(sourceAccount.saldo)}). El saldo resultante sería negativo (${formatCurrency(sourceAccount.saldo - amount)}).\n\nPor favor corrige el valor o revisa los saldos antes de continuar.`,
+          message: `El movimiento de ${formatCurrency(amount, sourceAccount.moneda)} supera el saldo actual de "${sourceAccount.nombre}" (${formatCurrency(sourceAccount.saldo, sourceAccount.moneda)}). El saldo resultante sería negativo (${formatCurrency(sourceAccount.saldo - amount, sourceAccount.moneda)}).\n\nPor favor corrige el valor o revisa los saldos antes de continuar.`,
           confirmText: 'Entendido',
           cancelText: null,
           variant: 'danger',
@@ -199,70 +207,98 @@ export const BilleteraView: React.FC = () => {
         });
         return;
       }
-    }
 
-    let destType: 'none' | 'card' | 'deuda' | 'portfolio' | 'account' = 'none';
-    let destId: string | undefined = undefined;
-    let destName: string | undefined = undefined;
+      if (movementExpenseDestId && movementExpenseDestId !== 'none') {
+        if (movementExpenseDestId.startsWith('card:')) {
+          const cardId = movementExpenseDestId.replace('card:', '');
+          const card = data.creditCards.find(c => c.id === cardId);
 
-    if (movementType === 'transfer') {
+          // Validar si el pago supera la deuda total adeudada
+          if (card) {
+            const totalDeuda = calculateCardPurchasesTotal(card);
+            if (amount > totalDeuda) {
+              setConfirmConfig({
+                isOpen: true,
+                title: 'Monto Superior a la Deuda',
+                message: `Estás ingresando un pago de ${formatCurrency(amount, card.moneda)}, pero la totalidad adeudada en "${card.name}" es de ${formatCurrency(totalDeuda, card.moneda)}.\n\nPor favor corrige el valor antes de continuar.`,
+                confirmText: 'Entendido',
+                cancelText: null,
+                variant: 'warning',
+                onConfirm: () => {}
+              });
+              return;
+            }
+          }
+
+          destType = 'card';
+          destId = cardId;
+          destName = card ? `Tarjeta ${card.name}` : undefined;
+        } else if (movementExpenseDestId.startsWith('deuda:')) {
+          const deudaId = movementExpenseDestId.replace('deuda:', '');
+          const deuda = deudasPorPagar.find(d => d.id === deudaId);
+          destType = 'deuda';
+          destId = deudaId;
+          destName = deuda ? `Deuda ${deuda.nombre}` : undefined;
+        }
+      }
+    } else if (movementType === 'income') {
+      sourceId = movementIncomeDestId || (data.billeteraItems[0] ? `billetera:${data.billeteraItems[0].id}` : (data.portfolioItems[0] ? `portfolio:${data.portfolioItems[0].id}` : ''));
+
+      if (movementIncomeOriginId && movementIncomeOriginId !== 'general' && movementIncomeOriginId.startsWith('deuda:')) {
+        const deudaId = movementIncomeOriginId.replace('deuda:', '');
+        const deuda = deudasPorCobrar.find(d => d.id === deudaId);
+        destType = 'deuda';
+        destId = deudaId;
+        destName = deuda ? deuda.nombre : undefined;
+      }
+    } else if (movementType === 'transfer') {
+      sourceId = movementSourceId || (data.billeteraItems[0] ? `billetera:${data.billeteraItems[0].id}` : (data.portfolioItems[0] ? `portfolio:${data.portfolioItems[0].id}` : ''));
+      const isSourcePortfolio = sourceId.startsWith('portfolio:');
+      const rawSourceId = sourceId.replace('portfolio:', '').replace('billetera:', '');
+      const sourceAccount = isSourcePortfolio
+        ? (data.portfolioItems || []).find(p => p.id === rawSourceId)
+        : (data.billeteraItems || []).find(b => b.id === rawSourceId);
+
+      // Negative balance warning
+      if (sourceAccount && (sourceAccount.saldo - amount < 0)) {
+        setConfirmConfig({
+          isOpen: true,
+          title: 'Saldo Insuficiente en Origen',
+          message: `El movimiento de ${formatCurrency(amount, sourceAccount.moneda)} supera el saldo actual de "${sourceAccount.nombre}" (${formatCurrency(sourceAccount.saldo, sourceAccount.moneda)}). El saldo resultante sería negativo (${formatCurrency(sourceAccount.saldo - amount, sourceAccount.moneda)}).\n\nPor favor corrige el valor o revisa los saldos antes de continuar.`,
+          confirmText: 'Entendido',
+          cancelText: null,
+          variant: 'danger',
+          onConfirm: () => {}
+        });
+        return;
+      }
+
       const isDestPortfolio = movementDestTransferId.startsWith('portfolio:');
       const rawDestId = movementDestTransferId.replace('portfolio:', '').replace('billetera:', '');
       const destAccount = isDestPortfolio
-        ? data.portfolioItems.find(p => p.id === rawDestId)
-        : data.billeteraItems.find(b => b.id === rawDestId);
+        ? (data.portfolioItems || []).find(p => p.id === rawDestId)
+        : (data.billeteraItems || []).find(b => b.id === rawDestId);
 
       destType = isDestPortfolio ? 'portfolio' : 'account';
       destId = movementDestTransferId;
       destName = destAccount?.nombre;
-    } else if (movementType === 'expense' && movementDestType === 'payment' && movementDestId) {
-      if (movementDestId.startsWith('card:')) {
-        const cardId = movementDestId.replace('card:', '');
-        const card = data.creditCards.find(c => c.id === cardId);
-        
-        // Validar si el pago supera la deuda total adeudada
-        if (card) {
-          const totalDeuda = calculateCardPurchasesTotal(card);
-          if (amount > totalDeuda) {
-            setConfirmConfig({
-              isOpen: true,
-              title: 'Monto Superior a la Deuda',
-              message: `Estás ingresando un pago de ${formatCurrency(amount)}, pero la totalidad adeudada en "${card.name}" es de ${formatCurrency(totalDeuda)}.\n\nPor favor corrige el valor antes de continuar.`,
-              confirmText: 'Entendido',
-              cancelText: null,
-              variant: 'warning',
-              onConfirm: () => {}
-            });
-            return;
-          }
-        }
-
-        destType = 'card';
-        destId = cardId;
-        destName = card ? `Tarjeta ${card.name}` : undefined;
-      } else if (movementDestId.startsWith('deuda:')) {
-        const deudaId = movementDestId.replace('deuda:', '');
-        const deuda = deudasPorPagar.find(d => d.id === deudaId);
-        destType = 'deuda';
-        destId = deudaId;
-        destName = deuda ? `Deuda ${deuda.nombre}` : undefined;
-      }
-    } else if (movementType === 'income' && incomeOriginType === 'deuda' && incomeOriginDeudaId) {
-      const deuda = deudasPorCobrar.find(d => d.id === incomeOriginDeudaId);
-      destType = 'deuda';
-      destId = incomeOriginDeudaId;
-      destName = deuda ? deuda.nombre : undefined;
     }
+
+    const isSourcePort = sourceId.startsWith('portfolio:');
+    const rSourceId = sourceId.replace('portfolio:', '').replace('billetera:', '');
+    const srcAccount = isSourcePort
+      ? (data.portfolioItems || []).find(p => p.id === rSourceId)
+      : (data.billeteraItems || []).find(b => b.id === rSourceId);
 
     const defaultName = movementType === 'expense'
       ? (destName ? `Pago a ${destName}` : 'Gasto')
       : movementType === 'transfer'
       ? (destName ? `Transferencia a ${destName}` : 'Transferencia')
-      : (destName ? `Cobro de deuda ${destName}` : 'Ingreso');
+      : (destName ? `Cobro de ${destName}` : 'Ingreso');
 
     const defaultIcon = movementType === 'income' ? 'pago' : movementType === 'transfer' ? 'transferencia' : 'compras';
     const finalIcon = movementIcon || defaultIcon;
-    const sourceMoneda = sourceAccount?.moneda || 'COP';
+    const sourceMoneda = srcAccount?.moneda || 'COP';
 
     addExpenseMovement({
       type: movementType,
@@ -923,15 +959,44 @@ export const BilleteraView: React.FC = () => {
               />
 
               {/* Selector de Cuenta Origen / Destino */}
-              {movementType === 'transfer' ? (
-                <div className="space-y-3">
-                  <div>
-                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                      Cuenta Origen
-                    </label>
+              <div className="space-y-3">
+                {/* 1. Origen */}
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                    Origen
+                  </label>
+                  {movementType === 'income' ? (
+                    <CustomSelect
+                      value={movementIncomeOriginId}
+                      onChange={val => setMovementIncomeOriginId(val)}
+                      options={[
+                        {
+                          value: 'general',
+                          label: 'Ingreso General',
+                          icon: ShoppingBag
+                        },
+                        ...deudasPorCobrar.map(d => ({
+                          value: `deuda:${d.id}`,
+                          label: `${d.nombre}${d.monto !== undefined && d.monto > 0 ? ` (${formatCurrency(d.monto, d.moneda)})` : ''}`,
+                          group: 'Deudas a favor',
+                          icon: CreditCard
+                        }))
+                      ]}
+                    />
+                  ) : (
                     <CustomSelect
                       value={movementSourceId}
-                      onChange={val => setMovementSourceId(val)}
+                      onChange={val => {
+                        setMovementSourceId(val);
+                        if (movementType === 'transfer' && val === movementDestTransferId) {
+                          const accounts = [
+                            ...data.billeteraItems.map(b => `billetera:${b.id}`),
+                            ...(data.portfolioItems || []).map(p => `portfolio:${p.id}`)
+                          ];
+                          const other = accounts.find(a => a !== val) || '';
+                          setMovementDestTransferId(other);
+                        }
+                      }}
                       options={[
                         ...data.billeteraItems.map(b => ({
                           value: `billetera:${b.id}`,
@@ -945,12 +1010,59 @@ export const BilleteraView: React.FC = () => {
                         }))
                       ]}
                     />
-                  </div>
+                  )}
+                </div>
 
-                  <div>
-                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                      Destino
-                    </label>
+                {/* 2. Destino */}
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                    Destino
+                  </label>
+                  {movementType === 'expense' ? (
+                    <CustomSelect
+                      value={movementExpenseDestId}
+                      onChange={val => setMovementExpenseDestId(val)}
+                      options={[
+                        {
+                          value: 'none',
+                          label: 'Gasto General',
+                          icon: ShoppingBag
+                        },
+                        ...data.creditCards.map(c => {
+                          const deuda = calculateCardPurchasesTotal(c);
+                          return {
+                            value: `card:${c.id}`,
+                            label: `${c.name}${deuda > 0 ? ` (${formatCurrency(deuda, c.moneda)})` : ''}`,
+                            group: 'Tarjetas de Crédito',
+                            icon: CreditCard
+                          };
+                        }),
+                        ...deudasPorPagar.map(d => ({
+                          value: `deuda:${d.id}`,
+                          label: `${d.nombre}${d.monto !== undefined && d.monto > 0 ? ` (${formatCurrency(d.monto, d.moneda)})` : ''}`,
+                          group: 'Deudas por pagar',
+                          icon: CreditCard
+                        }))
+                      ]}
+                    />
+                  ) : movementType === 'income' ? (
+                    <CustomSelect
+                      value={movementIncomeDestId}
+                      onChange={val => setMovementIncomeDestId(val)}
+                      options={[
+                        ...data.billeteraItems.map(b => ({
+                          value: `billetera:${b.id}`,
+                          label: b.nombre,
+                          group: 'Billetera'
+                        })),
+                        ...(data.portfolioItems || []).map(p => ({
+                          value: `portfolio:${p.id}`,
+                          label: p.nombre,
+                          group: 'Portafolio'
+                        }))
+                      ]}
+                    />
+                  ) : (
                     <CustomSelect
                       value={movementDestTransferId}
                       onChange={val => setMovementDestTransferId(val)}
@@ -971,186 +1083,58 @@ export const BilleteraView: React.FC = () => {
                           }))
                       ]}
                     />
-                  </div>
+                  )}
+                </div>
 
-                  {(() => {
-                    const isSrcPort = movementSourceId.startsWith('portfolio:');
-                    const rSrcId = movementSourceId.replace('portfolio:', '').replace('billetera:', '');
-                    const srcAcc = isSrcPort
-                      ? (data.portfolioItems || []).find(p => p.id === rSrcId)
-                      : (data.billeteraItems || []).find(b => b.id === rSrcId);
-                    const srcCurr = srcAcc?.moneda || 'COP';
+                {/* Si es transferencia entre monedas distintas, mostrar conversión TRM */}
+                {movementType === 'transfer' && (() => {
+                  const isSrcPort = movementSourceId.startsWith('portfolio:');
+                  const rSrcId = movementSourceId.replace('portfolio:', '').replace('billetera:', '');
+                  const srcAcc = isSrcPort
+                    ? (data.portfolioItems || []).find(p => p.id === rSrcId)
+                    : (data.billeteraItems || []).find(b => b.id === rSrcId);
+                  const srcCurr = srcAcc?.moneda || 'COP';
 
-                    const isDstPort = movementDestTransferId.startsWith('portfolio:');
-                    const rDstId = movementDestTransferId.replace('portfolio:', '').replace('billetera:', '');
-                    const dstAcc = isDstPort
-                      ? (data.portfolioItems || []).find(p => p.id === rDstId)
-                      : (data.billeteraItems || []).find(b => b.id === rDstId);
-                    const dstCurr = dstAcc?.moneda || 'COP';
+                  const isDstPort = movementDestTransferId.startsWith('portfolio:');
+                  const rDstId = movementDestTransferId.replace('portfolio:', '').replace('billetera:', '');
+                  const dstAcc = isDstPort
+                    ? (data.portfolioItems || []).find(p => p.id === rDstId)
+                    : (data.billeteraItems || []).find(b => b.id === rDstId);
+                  const dstCurr = dstAcc?.moneda || 'COP';
 
-                    const isDiff = srcCurr !== dstCurr;
-                    const numAmt = parseFloat(movementAmount) || 0;
-                    const rate = data.dolarRate || 3600;
-                    const convertedAmt = srcCurr === 'USD' && dstCurr === 'COP'
-                      ? numAmt * rate
-                      : (rate > 0 ? numAmt / rate : 0);
+                  const isDiff = srcCurr !== dstCurr;
+                  const numAmt = parseFloat(movementAmount) || 0;
+                  const rate = data.dolarRate || 3600;
+                  const convertedAmt = srcCurr === 'USD' && dstCurr === 'COP'
+                    ? numAmt * rate
+                    : (rate > 0 ? numAmt / rate : 0);
 
-                    if (!isDiff || numAmt <= 0) return null;
+                  if (!isDiff || numAmt <= 0) return null;
 
-                    return (
-                      <div className="p-3.5 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/40 rounded-2xl text-xs space-y-1.5 animate-fadeIn">
-                        <div className="flex items-center justify-between text-slate-600 dark:text-slate-400 font-medium">
-                          <span>Tasa de cambio (TRM):</span>
-                          <span className="font-mono font-bold text-slate-800 dark:text-white">
-                            1 USD = {formatCurrency(rate, 'COP')}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between text-slate-700 dark:text-slate-300 font-semibold">
-                          <span>Se descuenta ({srcCurr}):</span>
-                          <span className="font-mono font-bold text-rose-600 dark:text-rose-400">
-                            {formatCurrency(numAmt, srcCurr)}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between text-slate-700 dark:text-slate-300 font-semibold">
-                          <span>Se acredita ({dstCurr}):</span>
-                          <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                            {formatCurrency(convertedAmt, dstCurr)}
-                          </span>
-                        </div>
+                  return (
+                    <div className="p-3.5 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/40 rounded-2xl text-xs space-y-1.5 animate-fadeIn">
+                      <div className="flex items-center justify-between text-slate-600 dark:text-slate-400 font-medium">
+                        <span>Tasa de cambio (TRM):</span>
+                        <span className="font-mono font-bold text-slate-800 dark:text-white">
+                          1 USD = {formatCurrency(rate, 'COP')}
+                        </span>
                       </div>
-                    );
-                  })()}
-                </div>
-              ) : (
-                <div>
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                    {movementType === 'income' ? 'Cuenta Destino' : 'Cuenta Origen'}
-                  </label>
-                  <CustomSelect
-                    value={movementSourceId}
-                    onChange={val => setMovementSourceId(val)}
-                    options={data.billeteraItems.map(b => ({
-                      value: `billetera:${b.id}`,
-                      label: b.nombre
-                    }))}
-                  />
-                </div>
-              )}
-
-              {/* Origen si es INGRESO */}
-              {movementType === 'income' && deudasPorCobrar.length > 0 && (
-                <div className="pt-1 border-t border-slate-200 dark:border-slate-800">
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
-                    Origen del Ingreso
-                  </label>
-                  <div className="grid grid-cols-2 gap-2 mb-2">
-                    <button
-                      type="button"
-                      onClick={() => setIncomeOriginType('general')}
-                      className={`py-2 px-3 rounded-2xl text-xs font-bold border flex items-center justify-center gap-1.5 transition-all ${
-                        incomeOriginType === 'general'
-                          ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
-                          : 'bg-slate-50 dark:bg-slate-950/40 border-slate-300 dark:border-slate-800 text-slate-600 dark:text-slate-400'
-                      }`}
-                    >
-                      <ShoppingBag className="w-3.5 h-3.5" /> Ingreso General
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIncomeOriginType('deuda');
-                        if (!incomeOriginDeudaId && deudasPorCobrar[0]) {
-                          setIncomeOriginDeudaId(deudasPorCobrar[0].id);
-                        }
-                      }}
-                      className={`py-2 px-3 rounded-2xl text-xs font-bold border flex items-center justify-center gap-1.5 transition-all ${
-                        incomeOriginType === 'deuda'
-                          ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
-                          : 'bg-slate-50 dark:bg-slate-950/40 border-slate-300 dark:border-slate-800 text-slate-600 dark:text-slate-400'
-                      }`}
-                    >
-                      <CreditCard className="w-3.5 h-3.5" /> Deuda
-                    </button>
-                  </div>
-
-                  {incomeOriginType === 'deuda' && (
-                    <div className="animate-fadeIn mt-2">
-                      <CustomSelect
-                        value={incomeOriginDeudaId}
-                        onChange={val => setIncomeOriginDeudaId(val)}
-                        options={deudasPorCobrar.map(d => ({
-                          value: d.id,
-                          label: `${d.nombre} ${d.monto !== undefined ? `(${formatCurrency(d.monto)})` : ''}`
-                        }))}
-                      />
+                      <div className="flex items-center justify-between text-slate-700 dark:text-slate-300 font-semibold">
+                        <span>Se descuenta ({srcCurr}):</span>
+                        <span className="font-mono font-bold text-rose-600 dark:text-rose-400">
+                          {formatCurrency(numAmt, srcCurr)}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between text-slate-700 dark:text-slate-300 font-semibold">
+                        <span>Se acredita ({dstCurr}):</span>
+                        <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                          {formatCurrency(convertedAmt, dstCurr)}
+                        </span>
+                      </div>
                     </div>
-                  )}
-                </div>
-              )}
-
-              {/* Destino si es GASTO */}
-              {movementType === 'expense' && (data.creditCards.length > 0 || deudasPorPagar.length > 0) && (
-                <div className="pt-1 border-t border-slate-200 dark:border-slate-800">
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
-                    Destino
-                  </label>
-                  <div className="grid grid-cols-2 gap-2 mb-2">
-                    <button
-                      type="button"
-                      onClick={() => setMovementDestType('none')}
-                      className={`py-2 px-3 rounded-2xl text-xs font-bold border flex items-center justify-center gap-1.5 transition-all ${
-                        movementDestType === 'none'
-                          ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
-                          : 'bg-slate-50 dark:bg-slate-950/40 border-slate-300 dark:border-slate-800 text-slate-600 dark:text-slate-400'
-                      }`}
-                    >
-                      <ShoppingBag className="w-3.5 h-3.5" /> Gasto General
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setMovementDestType('payment');
-                        if (!movementDestId) {
-                          const firstTarget = data.creditCards[0]
-                            ? `card:${data.creditCards[0].id}`
-                            : (deudasPorPagar[0] ? `deuda:${deudasPorPagar[0].id}` : '');
-                          setMovementDestId(firstTarget);
-                        }
-                      }}
-                      className={`py-2 px-3 rounded-2xl text-xs font-bold border flex items-center justify-center gap-1.5 transition-all ${
-                        movementDestType === 'payment'
-                          ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
-                          : 'bg-slate-50 dark:bg-slate-950/40 border-slate-300 dark:border-slate-800 text-slate-600 dark:text-slate-400'
-                      }`}
-                    >
-                      <CreditCard className="w-3.5 h-3.5" /> Pagos
-                    </button>
-                  </div>
-
-                  {movementDestType === 'payment' && (
-                    <div className="animate-fadeIn mt-2">
-                      <CustomSelect
-                        value={movementDestId}
-                        onChange={val => setMovementDestId(val)}
-                        options={[
-                          ...data.creditCards.map(c => ({
-                            value: `card:${c.id}`,
-                            label: c.name,
-                            group: 'Tarjetas de Crédito'
-                          })),
-                          ...deudasPorPagar.map(d => ({
-                            value: `deuda:${d.id}`,
-                            label: d.nombre,
-                            group: 'Deudas'
-                          }))
-                        ]}
-                      />
-                    </div>
-                  )}
-                </div>
-              )}
+                  );
+                })()}
+              </div>
 
               <div className="flex items-center gap-2 pt-3">
                 <button
