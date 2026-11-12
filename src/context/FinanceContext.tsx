@@ -774,6 +774,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
             ...c,
             billingCutoffAmount: undefined,
             billingCutoffDate: undefined,
+            lastCutoffDate: undefined,
             purchases: [],
             payments: []
           };

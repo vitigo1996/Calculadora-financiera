@@ -5,7 +5,7 @@ import {
   calculateCardPurchasesTotal,
   calculateCardPaymentDue,
   isWithinMonths,
-  isPurchaseBeforeCurrentBillingCycle
+  isPurchaseBeforeCurrentMonthBillingDate
 } from '../../services/financeCalculations';
 import { CreditCardItem } from '../../models/finance';
 import { getIconComponent, getIconLabel, normalizeIconId, ALL_ICON_ITEMS, IconPickerModal } from '../../components/ui/IconPicker';
@@ -46,6 +46,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
     performCardCutoff,
     payCardCutoff,
     cancelCardCutoff,
+    clearCardPurchases,
     addCardPurchase,
     updateCardPurchase,
     deleteCardPurchaseRecord,
@@ -340,7 +341,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
                     {/* Footer de Tarjeta: Cupo y Cupo Disp. */}
                     <div className={`pt-2.5 mt-2.5 border-t flex items-center justify-between text-xs ${isSelected ? 'border-blue-200 dark:border-slate-700 text-slate-500 dark:text-slate-400' : 'border-slate-200 dark:border-slate-800 text-slate-400'}`}>
                       <span className="text-slate-500 dark:text-slate-400">
-                        {cc.cutoffDay ? `Corte: d. ${cc.cutoffDay}` : `Cupo: ${formatCurrency(cc.creditLimit)}`}
+                        Cupo: <span className="font-mono font-medium text-slate-700 dark:text-slate-300">{formatCurrency(cc.creditLimit)}</span>
                       </span>
 
                       <span className="text-slate-500 dark:text-slate-400">
@@ -364,16 +365,6 @@ export const CreditosSuscripcionesView: React.FC = () => {
               <h3 className="text-base font-extrabold text-slate-800 dark:text-white uppercase tracking-wide">
                 {selectedCard.name.toUpperCase()}
               </h3>
-              {selectedCard.cutoffDay && (
-                <span className="text-xs px-2.5 py-0.5 rounded-full font-semibold bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/50">
-                  Corte: Día {selectedCard.cutoffDay}
-                </span>
-              )}
-              {selectedCard.paymentDay && (
-                <span className="text-xs px-2.5 py-0.5 rounded-full font-semibold bg-slate-200/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700">
-                  Pago: Día {selectedCard.paymentDay}
-                </span>
-              )}
             </div>
 
             {/* Botones de acción: Corte, Editar, Agregar (+) */}
@@ -419,6 +410,26 @@ export const CreditosSuscripcionesView: React.FC = () => {
                 title="Agregar Compra"
               >
                 <Plus className="w-4 h-4" />
+              </button>
+
+              {/* 4. Eliminar todo el registro de la tarjeta */}
+              <button
+                type="button"
+                onClick={() => {
+                  setConfirmConfig({
+                    isOpen: true,
+                    title: 'Eliminar Registro de Tarjeta',
+                    message: `¿Estás seguro de eliminar todo el registro de compras de "${selectedCard.name}"? La tarjeta quedará limpia sin gastos.`,
+                    confirmText: 'Sí, eliminar todo',
+                    cancelText: 'Cancelar',
+                    variant: 'danger',
+                    onConfirm: () => clearCardPurchases(selectedCard.id)
+                  });
+                }}
+                className="p-2 rounded-xl text-xs font-semibold bg-rose-50 dark:bg-rose-950/60 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/50 transition-all flex items-center justify-center shadow-sm"
+                title="Eliminar todo el registro"
+              >
+                <Trash2 className="w-4 h-4" />
               </button>
             </div>
           </div>
@@ -530,7 +541,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
 
               return visiblePurchases.slice(0, visiblePurchasesCount).map((p, pIdx) => {
                 const PurchaseIcon = getIconComponent(p.icon || 'compras');
-                const isOldRecord = isPurchaseBeforeCurrentBillingCycle(p.date, selectedCard?.cutoffDay);
+                const isOldRecord = isPurchaseBeforeCurrentMonthBillingDate(p.date, selectedCard?.cutoffDay);
                 const formattedDate = p.date ? (() => {
                   const d = new Date(p.date);
                   return isNaN(d.getTime())
@@ -597,23 +608,14 @@ export const CreditosSuscripcionesView: React.FC = () => {
                           {p.concept}
                         </h4>
 
-                        {/* Metadatos: Fecha, Estado de Facturación */}
-                        <div className="flex flex-col gap-0.5 mt-1 text-[11px] text-slate-500 dark:text-slate-400 leading-tight">
-                          {formattedDate && (
+                        {/* Metadatos: Fecha */}
+                        {formattedDate && (
+                          <div className="flex flex-col gap-0.5 mt-1 text-[11px] text-slate-500 dark:text-slate-400 leading-tight">
                             <span className="inline-flex items-center gap-1 text-slate-400 dark:text-slate-500 font-medium">
                               <Calendar className="w-3 h-3 flex-shrink-0" /> {formattedDate}
                             </span>
-                          )}
-                          {isOldRecord ? (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-400 dark:text-slate-500">
-                              <Scissors className="w-3 h-3 flex-shrink-0" /> Corte anterior
-                            </span>
-                          ) : selectedCard?.cutoffDay ? (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
-                              <Sparkles className="w-3 h-3 flex-shrink-0 text-amber-500" /> Corte actual
-                            </span>
-                          ) : null}
-                        </div>
+                          </div>
+                        )}
                       </div>
                     </div>
 
