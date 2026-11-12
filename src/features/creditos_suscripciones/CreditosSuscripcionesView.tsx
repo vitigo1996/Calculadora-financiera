@@ -511,9 +511,11 @@ export const CreditosSuscripcionesView: React.FC = () => {
                 );
               }
 
+              const hasCutoff = selectedCard.billingCutoffAmount !== undefined || Boolean(selectedCard.lastCutoffDate);
+
               return visiblePurchases.slice(0, visiblePurchasesCount).map((p, pIdx) => {
                 const PurchaseIcon = getIconComponent(p.icon || 'compras');
-                const isPaid = Boolean(p.isPaid);
+                const isOldRecord = hasCutoff && !p.isAfterCutoff;
                 const formattedDate = p.date ? (() => {
                   const d = new Date(p.date);
                   return isNaN(d.getTime())
@@ -545,8 +547,8 @@ export const CreditosSuscripcionesView: React.FC = () => {
                     }}
                     onDragEnd={() => setDraggedPurchaseIdx(null)}
                     className={`p-4 transition-colors flex items-center justify-between gap-3 ${
-                      isPaid
-                        ? 'bg-slate-100/70 dark:bg-slate-950/45 opacity-55'
+                      isOldRecord
+                        ? 'bg-slate-100/75 dark:bg-slate-950/60 opacity-60'
                         : 'bg-white dark:bg-slate-900'
                     } ${isEditingPurchases ? 'cursor-move select-none' : ''}`}
                   >
@@ -567,7 +569,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
                         })}
                         title="Click para cambiar categoría"
                         className={`w-10 h-10 rounded-2xl flex items-center justify-center border shadow-sm flex-shrink-0 mt-0.5 transition-transform ${
-                          isPaid
+                          isOldRecord
                             ? 'bg-slate-200/60 dark:bg-slate-800/60 text-slate-400 dark:text-slate-500 border-slate-300/50 dark:border-slate-700/50'
                             : 'bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800/50 hover:scale-105 active:scale-95 cursor-pointer'
                         }`}
@@ -576,24 +578,24 @@ export const CreditosSuscripcionesView: React.FC = () => {
                       </button>
 
                       <div className="min-w-0 flex-1">
-                        <h4 className={`font-bold text-sm truncate ${isPaid ? 'text-slate-400 dark:text-slate-500' : 'text-slate-800 dark:text-white'}`}>
+                        <h4 className={`text-sm truncate ${isOldRecord ? 'font-medium text-slate-400 dark:text-slate-500' : 'font-bold text-slate-800 dark:text-white'}`}>
                           {p.concept}
                         </h4>
 
-                        {/* Metadatos: Fecha, Estado de Pago, Corte */}
+                        {/* Metadatos: Fecha, Estado de Corte */}
                         <div className="flex flex-col gap-0.5 mt-1 text-[11px] text-slate-500 dark:text-slate-400 leading-tight">
                           {formattedDate && (
                             <span className="inline-flex items-center gap-1 text-slate-400 dark:text-slate-500 font-medium">
                               <Calendar className="w-3 h-3 flex-shrink-0" /> {formattedDate}
                             </span>
                           )}
-                          {isPaid ? (
+                          {isOldRecord ? (
                             <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-400 dark:text-slate-500">
-                              <Check className="w-3 h-3 text-emerald-500/70" /> Pagado en corte anterior
+                              <Scissors className="w-3 h-3 flex-shrink-0" /> Anterior al corte
                             </span>
-                          ) : p.isAfterCutoff ? (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
-                              <Scissors className="w-3 h-3 flex-shrink-0" /> Compra Post-Corte
+                          ) : hasCutoff ? (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                              <Sparkles className="w-3 h-3 flex-shrink-0 text-amber-500" /> Corte actual
                             </span>
                           ) : null}
                         </div>
@@ -602,26 +604,13 @@ export const CreditosSuscripcionesView: React.FC = () => {
 
                     <div className="flex items-center gap-2 flex-shrink-0">
                       <div className="text-right">
-                        <span className={`font-mono font-bold text-sm block ${isPaid ? 'text-slate-400 dark:text-slate-500' : 'text-slate-800 dark:text-white'}`}>
+                        <span className={`font-mono text-sm block ${isOldRecord ? 'font-medium text-slate-400 dark:text-slate-500' : 'font-bold text-slate-800 dark:text-white'}`}>
                           {formatCurrency(p.amount)}
                         </span>
                       </div>
 
                       {isEditingPurchases && (
                         <div className="flex items-center gap-1">
-                          <button
-                            type="button"
-                            onClick={() => toggleCardPurchasePaid(selectedCard.id, p.id)}
-                            className={`p-2 rounded-xl border text-xs font-semibold transition-colors ${
-                              isPaid
-                                ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800/50'
-                                : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-emerald-600 border-slate-200 dark:border-slate-700'
-                            }`}
-                            title={isPaid ? 'Marcar como pendiente' : 'Marcar como pagado'}
-                          >
-                            <Check className="w-3.5 h-3.5" />
-                          </button>
-
                           <button
                             onClick={() => {
                               setConfirmConfig({

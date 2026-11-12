@@ -93,6 +93,7 @@ export interface CreditCardItem {
   minPaymentOverride?: number;
   billingCutoffAmount?: number; // Saldo congelado al hacer corte
   billingCutoffDate?: string;
+  lastCutoffDate?: string;
   cutoffBasePayments?: number; // Total acumulado de pagos al momento del corte
   purchases: CreditCardPurchase[];
   payments?: CreditCardPayment[];

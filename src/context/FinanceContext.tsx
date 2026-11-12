@@ -345,31 +345,13 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
             let newCutoffDate = c.billingCutoffDate;
             let newCutoffBasePayments = c.cutoffBasePayments;
 
-            let updatedPurchases = c.purchases || [];
-            // Si hay corte activo y se hace el pago, todos los registros pagados con ese corte se marcan como pagados
+            // Si hay corte activo y los pagos cubren el monto facturado, se quita el corte
             if (c.billingCutoffAmount !== undefined) {
               const paymentsSinceCutoff = Math.max(0, totalPayments - (c.cutoffBasePayments || 0));
               if (paymentsSinceCutoff >= c.billingCutoffAmount) {
-                // Pagado en su totalidad: los registros pre-corte quedan marcados como pagados
-                updatedPurchases = updatedPurchases.map(p => {
-                  if (!p.isAfterCutoff) {
-                    return { ...p, isPaid: true };
-                  }
-                  return { ...p, isAfterCutoff: false };
-                });
                 newCutoffAmount = undefined;
                 newCutoffDate = undefined;
                 newCutoffBasePayments = undefined;
-              } else if (paymentsSinceCutoff > 0) {
-                // Pago parcial hacia el corte
-                let remainingCoverage = paymentsSinceCutoff;
-                updatedPurchases = [...updatedPurchases].reverse().map(p => {
-                  if (!p.isAfterCutoff && !p.isPaid && remainingCoverage >= (p.amount || 0)) {
-                    remainingCoverage -= (p.amount || 0);
-                    return { ...p, isPaid: true };
-                  }
-                  return p;
-                }).reverse();
               }
             }
 
@@ -378,8 +360,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
               billingCutoffAmount: newCutoffAmount,
               billingCutoffDate: newCutoffDate,
               cutoffBasePayments: newCutoffBasePayments,
-              payments: updatedPayments,
-              purchases: updatedPurchases
+              payments: updatedPayments
             };
           }
           return c;
@@ -729,10 +710,12 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         if (c.id === cardId) {
           const currentTotal = calculateCardPurchasesTotal(c);
           const currentPaymentsTotal = (c.payments || []).reduce((sum, p) => sum + (p.amount || 0), 0);
+          const nowIso = new Date().toISOString();
           return {
             ...c,
             billingCutoffAmount: currentTotal,
-            billingCutoffDate: new Date().toLocaleDateString('es-CO', { day: '2-digit', month: 'short' }),
+            billingCutoffDate: nowIso,
+            lastCutoffDate: nowIso,
             cutoffBasePayments: currentPaymentsTotal,
             purchases: (c.purchases || []).map(p => ({ ...p, isAfterCutoff: false }))
           };
@@ -742,24 +725,17 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }));
   };
 
-  // Pagar Corte de Tarjeta: marca todos los registros pre-corte como pagados y pasa los post-corte a actuales
+  // Pagar Corte de Tarjeta
   const payCardCutoff = (cardId: string) => {
     setData(prev => ({
       ...prev,
       creditCards: prev.creditCards.map(c => {
         if (c.id === cardId) {
-          const updatedPurchases = (c.purchases || []).map(p => {
-            if (!p.isAfterCutoff) {
-              return { ...p, isPaid: true };
-            }
-            return { ...p, isAfterCutoff: false };
-          });
           return {
             ...c,
             billingCutoffAmount: undefined,
             billingCutoffDate: undefined,
-            cutoffBasePayments: undefined,
-            purchases: updatedPurchases
+            cutoffBasePayments: undefined
           };
         }
         return c;
@@ -777,6 +753,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
             ...c,
             billingCutoffAmount: undefined,
             billingCutoffDate: undefined,
+            lastCutoffDate: undefined,
             cutoffBasePayments: undefined,
             purchases: (c.purchases || []).map(p => ({ ...p, isAfterCutoff: false }))
           };
