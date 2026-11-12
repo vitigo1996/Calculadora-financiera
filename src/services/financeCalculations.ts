@@ -412,9 +412,10 @@ export function getCardBillingCycleStartDate(cutoffDay: number, referenceDate: D
 }
 
 /**
- * Determina si una compra fue creada antes de la fecha de facturación del mes en el que nos encontramos actualmente.
- * Toma el cutoffDay y construye la fecha en el mes actual (año actual, mes actual, cutoffDay).
- * Cualquier compra creada antes de esa fecha retorna true.
+ * Determina si una compra es un registro viejo (anterior a la fecha de inicio del corte actual).
+ * Si el día de corte es 15 y hoy es 12 de nov: el corte actual inició el 15 de oct.
+ * Todo lo que esté entre el 15 de oct y hoy está en el corte actual (normal).
+ * Todo lo que sea anterior al 15 de oct hacia atrás es registro viejo (en gris / tono tenue).
  */
 export function isPurchaseBeforeCurrentMonthBillingDate(
   purchaseDateStr?: string,
@@ -425,11 +426,6 @@ export function isPurchaseBeforeCurrentMonthBillingDate(
   const pDate = new Date(purchaseDateStr);
   if (isNaN(pDate.getTime())) return false;
 
-  const currentYear = now.getFullYear();
-  const currentMonth = now.getMonth();
-  const maxDays = new Date(currentYear, currentMonth + 1, 0).getDate();
-  const safeDay = Math.min(cutoffDay, maxDays);
-
-  const billingDateThisMonth = new Date(currentYear, currentMonth, safeDay, 0, 0, 0, 0);
-  return pDate < billingDateThisMonth;
+  const cycleStart = getCardBillingCycleStartDate(cutoffDay, now);
+  return pDate < cycleStart;
 }
