@@ -6,7 +6,7 @@ import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import { AmountCalculatorInput } from '../../components/ui/AmountCalculatorInput';
 import { InfoModal, InfoButton } from '../../components/ui/InfoModal';
 import { CustomSelect } from '../../components/ui/CustomSelect';
-import { SuscripcionesView } from '../deudas/DeudasView';
+import { SuscripcionesView } from '../suscripciones/SuscripcionesView';
 
 const DAY_OPTIONS = [
   { value: '', label: 'Seleccionar día' },
