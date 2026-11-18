@@ -4,11 +4,11 @@ android {
     namespace "com.finanzas.personales"
     compileSdk rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.finanzas.personales"
+        applicationId "com.misfinanzas.personales"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode 2
+        versionName "1.1"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -16,8 +16,22 @@ android {
             ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        misfinanzas {
+            storeFile file('misfinanzas.keystore')
+            storePassword 'misfinanzas'
+            keyAlias 'misfinanzas'
+            keyPassword 'misfinanzas'
+            v1SigningEnabled true
+            v2SigningEnabled true
+        }
+    }
     buildTypes {
+        debug {
+            signingConfig signingConfigs.misfinanzas
+        }
         release {
+            signingConfig signingConfigs.misfinanzas
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
