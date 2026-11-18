@@ -39,7 +39,8 @@ export const PortafolioView: React.FC = () => {
     addPortfolioItem,
     updatePortfolioItem,
     deletePortfolioItem,
-    reorderPortfolioItems
+    reorderPortfolioItems,
+    hideBalances
   } = useFinance();
 
   // Desplegable de Análisis y Pestañas
@@ -223,12 +224,12 @@ export const PortafolioView: React.FC = () => {
                           </span>
                         )}
                         <span className="font-mono font-bold text-sm text-slate-800 dark:text-white">
-                          {formatCurrency(item.saldo, itemMoneda)}
+                          {hideBalances ? '••••••' : formatCurrency(item.saldo, itemMoneda)}
                         </span>
                       </div>
                       {isDiff && (
                         <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono block">
-                          {formatCurrency(equivalentInBase, baseCurrency)}
+                          {hideBalances ? '≈ ••••••' : formatCurrency(equivalentInBase, baseCurrency)}
                         </span>
                       )}
                     </div>
@@ -349,9 +350,9 @@ export const PortafolioView: React.FC = () => {
 
                           {/* Texto pequeño debajo de la barra horizontal con el valor */}
                           <div className="flex justify-between items-center text-[11px] text-slate-500 dark:text-slate-400 font-mono">
-                            <span>{formatCurrency(item.saldo, item.moneda || 'COP')}</span>
+                            <span>{hideBalances ? '••••••' : formatCurrency(item.saldo, item.moneda || 'COP')}</span>
                             {item.moneda !== baseCurrency && (
-                              <span className="text-[10px]">≈ {formatCurrency(valBase, baseCurrency)}</span>
+                              <span className="text-[10px]">{hideBalances ? '≈ ••••••' : `≈ ${formatCurrency(valBase, baseCurrency)}`}</span>
                             )}
                           </div>
                         </div>
@@ -387,7 +388,7 @@ export const PortafolioView: React.FC = () => {
                           ))}
                         </Pie>
                         <Tooltip
-                          formatter={(value: any, name: any) => [`${formatCurrency(Number(value), baseCurrency)}`, `${name}`]}
+                          formatter={(value: any, name: any) => [hideBalances ? '••••••' : `${formatCurrency(Number(value), baseCurrency)}`, `${name}`]}
                           contentStyle={{
                             backgroundColor: '#0f172a',
                             borderColor: '#334155',
@@ -422,7 +423,7 @@ export const PortafolioView: React.FC = () => {
                         </div>
                         <div className="text-right font-mono flex-shrink-0">
                           <span className="font-bold text-slate-900 dark:text-white block">
-                            {formatCurrency(item.valorCOP, baseCurrency)}
+                            {hideBalances ? '••••••' : formatCurrency(item.valorCOP, baseCurrency)}
                           </span>
                           <span className="text-[10px] text-slate-400">
                             {item.percentage.toFixed(1)}%

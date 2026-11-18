@@ -63,6 +63,29 @@ export const AppContent: React.FC = () => {
     };
   }, []);
 
+  // Evitar desplazamiento de la pantalla de fondo al abrir ventanas emergentes (modales)
+  React.useEffect(() => {
+    const updateModalScrollLock = () => {
+      const hasModal = document.querySelector('.modal-backdrop-scroll') !== null;
+      document.body.classList.toggle('modal-open', hasModal);
+      document.documentElement.classList.toggle('modal-open', hasModal);
+    };
+
+    updateModalScrollLock();
+
+    const observer = new MutationObserver(() => {
+      updateModalScrollLock();
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    return () => {
+      observer.disconnect();
+      document.body.classList.remove('modal-open');
+      document.documentElement.classList.remove('modal-open');
+    };
+  }, []);
+
   const renderActiveView = () => {
     switch (activeTab) {
       case 'billetera':

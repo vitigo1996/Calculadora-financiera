@@ -27,7 +27,8 @@ export const DeudasSection: React.FC = () => {
     addDeudaItem,
     updateDeudaItem,
     deleteDeudaItem,
-    reorderDeudaItems
+    reorderDeudaItems,
+    hideBalances
   } = useFinance();
 
   const [isEditingDeudas, setIsEditingDeudas] = useState(false);
@@ -196,7 +197,7 @@ export const DeudasSection: React.FC = () => {
                   {hasAmount ? (
                     <div className="text-right">
                       <span className="font-mono font-bold text-sm text-slate-800 dark:text-white block">
-                        {formatCurrency(item.monto || 0)}
+                        {hideBalances ? '••••••' : formatCurrency(item.monto || 0)}
                       </span>
                     </div>
                   ) : null}

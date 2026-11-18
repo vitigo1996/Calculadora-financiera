@@ -86,6 +86,9 @@ interface FinanceContextType {
   toggleSubscription: (id: string) => void;
   resetToDefault: () => void;
   importData: (imported: AppFinanceData) => void;
+  hideBalances: boolean;
+  setHideBalances: (hide: boolean) => void;
+  toggleHideBalances: () => void;
 }
 
 const FinanceContext = createContext<FinanceContextType | undefined>(undefined);
@@ -93,6 +96,31 @@ const FinanceContext = createContext<FinanceContextType | undefined>(undefined);
 export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [data, setData] = useState<AppFinanceData>(() => StorageService.loadData());
   const [isFetchingRate, setIsFetchingRate] = useState(false);
+  const [hideBalances, setHideBalancesState] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem('app_hide_balances');
+      return saved === 'true';
+    } catch (e) {
+      return false;
+    }
+  });
+
+  const setHideBalances = (hide: boolean) => {
+    setHideBalancesState(hide);
+    try {
+      localStorage.setItem('app_hide_balances', hide ? 'true' : 'false');
+    } catch (e) {}
+  };
+
+  const toggleHideBalances = () => {
+    setHideBalancesState(prev => {
+      const next = !prev;
+      try {
+        localStorage.setItem('app_hide_balances', next ? 'true' : 'false');
+      } catch (e) {}
+      return next;
+    });
+  };
 
   const baseCurrency: 'COP' | 'USD' = data.baseCurrency || 'COP';
 
@@ -1194,7 +1222,10 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         reorderSubscriptions,
         toggleSubscription,
         resetToDefault,
-        importData
+        importData,
+        hideBalances,
+        setHideBalances,
+        toggleHideBalances
       }}
     >
       {children}

@@ -13,7 +13,9 @@ import {
   RefreshCw,
   ChevronRight,
   ChevronDown,
-  Wallet
+  Wallet,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 
 export const AjustesView: React.FC = () => {
@@ -23,7 +25,9 @@ export const AjustesView: React.FC = () => {
     updateExpenseSplitMethod,
     baseCurrency,
     setBaseCurrency,
-    resetToDefault
+    resetToDefault,
+    hideBalances,
+    toggleHideBalances
   } = useFinance();
   const { theme, toggleTheme } = useTheme();
 
@@ -110,7 +114,41 @@ export const AjustesView: React.FC = () => {
           </button>
         </div>
 
-        {/* 2. MONEDA BASE */}
+        {/* 2. OCULTAR SALDOS */}
+        <div className="p-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-200/60 dark:border-blue-800/40 shadow-xs flex-shrink-0">
+              {hideBalances ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </div>
+            <div>
+              <h4 className="font-bold text-slate-800 dark:text-white text-sm">Ocultar Saldos</h4>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={toggleHideBalances}
+            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-2xl text-xs font-bold border shadow-sm transition-all ${
+              hideBalances
+                ? 'bg-blue-600 text-white border-blue-600 shadow-blue-500/20'
+                : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-white border border-slate-300/80 dark:border-slate-700'
+            }`}
+          >
+            {hideBalances ? (
+              <>
+                <EyeOff className="w-3.5 h-3.5" />
+                <span>Oculto</span>
+              </>
+            ) : (
+              <>
+                <Eye className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
+                <span>Visible</span>
+              </>
+            )}
+          </button>
+        </div>
+
+        {/* 3. MONEDA BASE */}
         <div className="p-4 flex items-center justify-between relative z-40">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-200/60 dark:border-blue-800/40 shadow-xs flex-shrink-0">
@@ -134,7 +172,7 @@ export const AjustesView: React.FC = () => {
           />
         </div>
 
-        {/* 3. INGRESOS (BOTÓN CON SUBMENÚ DINÁMICO) */}
+        {/* 4. INGRESOS (BOTÓN CON SUBMENÚ DINÁMICO) */}
         <div className="transition-colors">
           <button
             type="button"
@@ -187,7 +225,7 @@ export const AjustesView: React.FC = () => {
           )}
         </div>
 
-        {/* 4. MÉTODO DE REPARTO */}
+        {/* 5. MÉTODO DE REPARTO */}
         <div className="p-4 flex items-center justify-between gap-2 sm:gap-3 relative z-30">
           <div className="flex items-center gap-3 min-w-0 flex-1">
             <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-200/60 dark:border-blue-800/40 shadow-xs flex-shrink-0">
@@ -214,7 +252,7 @@ export const AjustesView: React.FC = () => {
           />
         </div>
 
-        {/* 5. RESTABLECER */}
+        {/* 6. RESTABLECER */}
         <button
           type="button"
           onClick={() => setShowResetConfirm(true)}

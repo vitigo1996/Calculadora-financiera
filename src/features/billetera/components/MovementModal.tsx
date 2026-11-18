@@ -12,6 +12,7 @@ import { AmountCalculatorInput } from '../../../components/ui/AmountCalculatorIn
 import { CustomSelect } from '../../../components/ui/CustomSelect';
 import { formatCurrency, calculateCardPurchasesTotal } from '../../../services/financeCalculations';
 import { predictCategory } from '../../../services/categoryPredictor';
+import { useFinance } from '../../../context/FinanceContext';
 
 interface MovementModalProps {
   isOpen: boolean;
@@ -42,6 +43,7 @@ export const MovementModal: React.FC<MovementModalProps> = ({
   onSave,
   setConfirmConfig
 }) => {
+  const { hideBalances } = useFinance();
   const [movementType, setMovementType] = useState<'expense' | 'income' | 'transfer'>('expense');
   const [movementName, setMovementName] = useState('');
   const [movementAmount, setMovementAmount] = useState('');
@@ -281,11 +283,12 @@ export const MovementModal: React.FC<MovementModalProps> = ({
                     {
                       value: 'general',
                       label: 'Ingreso General',
+                      group: 'General',
                       icon: ShoppingBag
                     },
                     ...deudasPorCobrar.map(d => ({
                       value: `deuda:${d.id}`,
-                      label: `${d.nombre}${d.monto !== undefined && d.monto > 0 ? ` (${formatCurrency(d.monto, d.moneda)})` : ''}`,
+                      label: `${d.nombre}${d.monto !== undefined && d.monto > 0 ? ` (${hideBalances ? '••••••' : formatCurrency(d.monto, d.moneda)})` : ''}`,
                       group: 'Deudas a favor',
                       icon: CreditCard
                     }))
@@ -334,20 +337,21 @@ export const MovementModal: React.FC<MovementModalProps> = ({
                     {
                       value: 'none',
                       label: 'Gasto General',
+                      group: 'General',
                       icon: ShoppingBag
                     },
                     ...data.creditCards.map(c => {
                       const deuda = calculateCardPurchasesTotal(c);
                       return {
                         value: `card:${c.id}`,
-                        label: `${c.name}${deuda > 0 ? ` (${formatCurrency(deuda, c.moneda)})` : ''}`,
+                        label: `${c.name}${deuda > 0 ? ` (${hideBalances ? '••••••' : formatCurrency(deuda, c.moneda)})` : ''}`,
                         group: 'Tarjetas de Crédito',
                         icon: CreditCard
                       };
                     }),
                     ...deudasPorPagar.map(d => ({
                       value: `deuda:${d.id}`,
-                      label: `${d.nombre}${d.monto !== undefined && d.monto > 0 ? ` (${formatCurrency(d.monto, d.moneda)})` : ''}`,
+                      label: `${d.nombre}${d.monto !== undefined && d.monto > 0 ? ` (${hideBalances ? '••••••' : formatCurrency(d.monto, d.moneda)})` : ''}`,
                       group: 'Deudas por pagar',
                       icon: CreditCard
                     }))
@@ -433,13 +437,13 @@ export const MovementModal: React.FC<MovementModalProps> = ({
                   <div className="flex items-center justify-between text-slate-700 dark:text-slate-300 font-semibold">
                     <span>Se descuenta ({srcCurr}):</span>
                     <span className="font-mono font-bold text-rose-600 dark:text-rose-400">
-                      {formatCurrency(numAmt, srcCurr)}
+                      {hideBalances ? '••••••' : formatCurrency(numAmt, srcCurr)}
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-slate-700 dark:text-slate-300 font-semibold">
                     <span>Se acredita ({dstCurr}):</span>
                     <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                      {formatCurrency(convertedAmt, dstCurr)}
+                      {hideBalances ? '••••••' : formatCurrency(convertedAmt, dstCurr)}
                     </span>
                   </div>
                 </div>

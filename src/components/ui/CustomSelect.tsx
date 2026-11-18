@@ -215,13 +215,25 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
           <div
             ref={dropdownRef}
             style={menuStyle}
-            className={`bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl overflow-hidden p-1.5 space-y-1 animate-scaleUp overflow-y-auto scrollbar-thin ${dropdownClassName}`}
+            className={`bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl overflow-hidden p-1.5 space-y-1 animate-scaleUp overflow-y-auto overscroll-contain scrollbar-thin ${dropdownClassName}`}
           >
             {groupedOptions.map((g, gIdx) => (
-              <div key={gIdx} className="space-y-1">
+              <div
+                key={gIdx}
+                className={
+                  gIdx > 0 && g.group
+                    ? 'pt-2 mt-1 border-t border-slate-100 dark:border-slate-800/80 space-y-1'
+                    : 'space-y-1'
+                }
+              >
                 {g.group && (
-                  <div className="px-3 pt-1.5 pb-0.5 text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                    {g.group}
+                  <div className="px-1.5 pt-1 pb-0.5">
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50/90 dark:bg-blue-950/60 border border-blue-200/80 dark:border-blue-800/70 shadow-xs">
+                      <span className="w-1.5 h-1.5 rounded-full bg-blue-600 dark:bg-blue-400 flex-shrink-0" />
+                      <span className="text-[11px] font-black uppercase tracking-wider text-blue-900 dark:text-blue-200">
+                        {g.group}
+                      </span>
+                    </div>
                   </div>
                 )}
                 {g.items.map(opt => {

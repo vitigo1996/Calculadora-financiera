@@ -52,7 +52,8 @@ export const CreditosSuscripcionesView: React.FC = () => {
     updateCardPurchase,
     deleteCardPurchaseRecord,
     toggleCardPurchasePaid,
-    moveCardPurchase
+    moveCardPurchase,
+    hideBalances
   } = useFinance();
 
   // Selection & Edit mode
@@ -323,7 +324,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
                             Pago Mínimo
                           </span>
                           <span className="font-mono font-bold text-base block text-slate-900 dark:text-white truncate">
-                            {formatCurrency(pagoDelMes)}
+                            {hideBalances ? '••••••' : formatCurrency(pagoDelMes)}
                           </span>
                         </div>
 
@@ -333,7 +334,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
                             Deuda Total
                           </span>
                           <span className="font-mono font-bold text-base block text-slate-900 dark:text-white truncate">
-                            {formatCurrency(totalDeuda)}
+                            {hideBalances ? '••••••' : formatCurrency(totalDeuda)}
                           </span>
                         </div>
                       </div>
@@ -342,11 +343,11 @@ export const CreditosSuscripcionesView: React.FC = () => {
                     {/* Footer de Tarjeta: Cupo y Cupo Disp. */}
                     <div className={`pt-2.5 mt-2.5 border-t flex items-center justify-between text-xs ${isSelected ? 'border-blue-200 dark:border-slate-700 text-slate-500 dark:text-slate-400' : 'border-slate-200 dark:border-slate-800 text-slate-400'}`}>
                       <span className="text-slate-500 dark:text-slate-400">
-                        Cupo: <span className="font-mono font-medium text-slate-700 dark:text-slate-300">{formatCurrency(cc.creditLimit)}</span>
+                        Cupo: <span className="font-mono font-medium text-slate-700 dark:text-slate-300">{hideBalances ? '••••••' : formatCurrency(cc.creditLimit)}</span>
                       </span>
 
                       <span className="text-slate-500 dark:text-slate-400">
-                        Cupo Disp.: <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(cupoDisponible)}</span>
+                        Cupo Disp.: <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">{hideBalances ? '••••••' : formatCurrency(cupoDisponible)}</span>
                       </span>
                     </div>
                   </div>
@@ -623,7 +624,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
                     <div className="flex items-center gap-2 flex-shrink-0">
                       <div className="text-right">
                         <span className={`font-mono text-sm block ${isOldRecord ? 'font-medium text-slate-400 dark:text-slate-500' : 'font-bold text-slate-800 dark:text-white'}`}>
-                          {formatCurrency(p.amount)}
+                          {hideBalances ? '••••••' : formatCurrency(p.amount)}
                         </span>
                       </div>
 

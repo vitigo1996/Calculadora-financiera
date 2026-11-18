@@ -33,6 +33,7 @@ import {
 export const BilleteraView: React.FC = () => {
   const {
     data,
+    hideBalances,
     addBilleteraItem,
     updateBilleteraItem,
     deleteBilleteraItem,
@@ -341,7 +342,7 @@ export const BilleteraView: React.FC = () => {
                       <div className="flex items-center gap-2 flex-shrink-0">
                         <div className="text-right">
                           <span className="font-mono font-bold text-sm text-slate-800 dark:text-white block">
-                            {formatCurrency(item.saldo)}
+                            {hideBalances ? '••••••' : formatCurrency(item.saldo)}
                           </span>
                         </div>
 
@@ -599,7 +600,9 @@ export const BilleteraView: React.FC = () => {
                                 : 'text-rose-600 dark:text-rose-400'
                             }`}
                           >
-                            {isIncome ? '+' : isTransfer ? '' : '-'}{formatCurrency(mov.amount)}
+                            {hideBalances
+                              ? `${isIncome ? '+' : isTransfer ? '' : '-'}••••••`
+                              : `${isIncome ? '+' : isTransfer ? '' : '-'}${formatCurrency(mov.amount)}`}
                           </span>
                         </div>
 
