@@ -12,7 +12,8 @@
     "cap:add": "cap add android",
     "cap:sync": "cap sync android",
     "cap:open": "cap open android",
-    "cap:build": "vite build && cap sync android"
+    "cap:build": "vite build && cap sync android",
+    "drive:upload": "bash scripts/upload-drive.sh"
   },
   "dependencies": {
     "@capacitor/android": "^6.2.0",
