@@ -102,15 +102,25 @@ export function calculateCardPaymentDue(cc: CreditCardItem): number {
   return calculateCardPurchasesTotal(cc);
 }
 
+/**
+ * Convierte un monto en la moneda del registro a la moneda base configurada en la app.
+ * Registros sin moneda se asumen en COP.
+ */
+export function toBaseCurrency(amount: number, moneda: 'COP' | 'USD' | undefined, data: AppFinanceData): number {
+  return convertToBase(amount || 0, moneda || 'COP', data.baseCurrency || 'COP', data.dolarRate || 3600);
+}
+
 export function calculateAllFinances(data: AppFinanceData): CalculatedSummary {
+  // Todos los totales se expresan en la moneda base (conversión COP/USD con la tasa vigente)
+  const toBase = (amount: number, moneda?: 'COP' | 'USD') => toBaseCurrency(amount, moneda, data);
   const activePeople = (data.people || []).filter((p, idx) => idx === 0 ? true : (p.enabled && (p.monthlyIncome || 0) > 0));
   const isShared = data.mode === 'shared' && activePeople.length > 1;
   const p1 = activePeople[0] || { name: 'Yo', monthlyIncome: 0, healthPensionRate: 0.08, enabled: true };
   const p2 = activePeople[1] || { name: 'Persona 2', monthlyIncome: 0, healthPensionRate: 0.0, enabled: false };
 
-  const totalIncome = activePeople.reduce((sum, p) => sum + (p.monthlyIncome || 0), 0);
-  const p1Income = p1.monthlyIncome || 0;
-  const p2Income = p2.monthlyIncome || 0;
+  const totalIncome = activePeople.reduce((sum, p) => sum + toBase(p.monthlyIncome || 0, p.moneda), 0);
+  const p1Income = toBase(p1.monthlyIncome || 0, (p1 as { moneda?: 'COP' | 'USD' }).moneda);
+  const p2Income = toBase(p2.monthlyIncome || 0, (p2 as { moneda?: 'COP' | 'USD' }).moneda);
 
   const splitMethod = data.expenseSplitMethod || 'proportional';
 
@@ -143,7 +153,7 @@ export function calculateAllFinances(data: AppFinanceData): CalculatedSummary {
   let finDeMesHousing = 0;
 
   (data.housingExpenses || []).forEach(item => {
-    const itemAmount = item.totalAmount || 0;
+    const itemAmount = toBase(item.totalAmount || 0, item.moneda);
     const isItemShared = item.isShared !== false && isShared;
     const myShare = isItemShared ? itemAmount * h4 : itemAmount;
     const partnerShare = isItemShared ? itemAmount * i4 : 0;
@@ -170,7 +180,7 @@ export function calculateAllFinances(data: AppFinanceData): CalculatedSummary {
     const monthlyVal = ob.davidAmount !== undefined && ob.davidAmount !== ob.totalAmount && ob.totalDebtBalance
       ? ob.davidAmount
       : ob.totalAmount;
-    const obAmount = monthlyVal || 0;
+    const obAmount = toBase(monthlyVal || 0, ob.moneda);
     const isObShared = ob.isShared !== false && isShared;
     const myShare = isObShared ? obAmount * h4 : obAmount;
     const partnerShare = isObShared ? obAmount * i4 : 0;
@@ -192,7 +202,7 @@ export function calculateAllFinances(data: AppFinanceData): CalculatedSummary {
   let finDeMesCards = 0;
 
   (data.creditCards || []).forEach(cc => {
-    const dueAmount = calculateCardPaymentDue(cc) || 0;
+    const dueAmount = toBase(calculateCardPaymentDue(cc) || 0, cc.moneda);
 
     m5_tarjetas += dueAmount;
 
@@ -263,15 +273,15 @@ export function calculateAllFinances(data: AppFinanceData): CalculatedSummary {
   });
 
   // Totales de vivienda
-  const totalHousingMonth = (data.housingExpenses || []).reduce((acc, h) => acc + (h.totalAmount || 0), 0);
+  const totalHousingMonth = (data.housingExpenses || []).reduce((acc, h) => acc + toBase(h.totalAmount || 0, h.moneda), 0);
   const totalHousingYear = totalHousingMonth * 12;
 
   // Totales de obligaciones
-  const totalMonthlyObligations = (data.obligations || []).reduce((acc, ob) => acc + (ob.totalAmount || 0), 0);
-  const totalDebtBalance = (data.obligations || []).reduce((acc, ob) => acc + (ob.totalDebtBalance || 0), 0);
+  const totalMonthlyObligations = (data.obligations || []).reduce((acc, ob) => acc + toBase(ob.totalAmount || 0, ob.moneda), 0);
+  const totalDebtBalance = (data.obligations || []).reduce((acc, ob) => acc + toBase(ob.totalDebtBalance || 0, ob.moneda), 0);
 
   // Totales de tarjetas
-  const totalCreditLimit = (data.creditCards || []).reduce((acc, c) => acc + (c.creditLimit || 0), 0);
+  const totalCreditLimit = (data.creditCards || []).reduce((acc, c) => acc + toBase(c.creditLimit || 0, c.moneda), 0);
   const totalCreditCardDue = m5_tarjetas;
 
   return {

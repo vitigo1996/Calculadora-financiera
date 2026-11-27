@@ -5,7 +5,6 @@ import {
   HousingExpense,
   SubscriptionItem,
   CreditCardItem,
-  CreditCardPayment,
   ObligationItem,
   BilleteraAccountItem,
   DeudaItem,
@@ -16,7 +15,8 @@ import {
 } from '../models/finance';
 import { StorageService } from '../services/storageService';
 import { CurrencyService } from '../services/currencyService';
-import { calculateAllFinances, CalculatedSummary, calculateCardPurchasesTotal, formatCurrency } from '../services/financeCalculations';
+import { calculateAllFinances, CalculatedSummary, calculateCardPurchasesTotal } from '../services/financeCalculations';
+import { applyNewMovement, revertMovement, NewMovementInput } from '../services/movementService';
 
 interface FinanceContextType {
   data: AppFinanceData;
@@ -34,7 +34,7 @@ interface FinanceContextType {
   deleteBilleteraItem: (id: string) => void;
   moveBilleteraItem: (index: number, direction: 'up' | 'down') => void;
   reorderBilleteraItems: (fromIndex: number, toIndex: number) => void;
-  addExpenseMovement: (movement: { type?: 'expense' | 'income' | 'transfer'; name: string; amount: number; moneda: 'COP' | 'USD'; sourceAccountId: string; destinationType?: 'none' | 'card' | 'obligation' | 'account' | 'deuda' | 'portfolio'; destinationId?: string; destinationName?: string; icon?: string }) => void;
+  addExpenseMovement: (movement: NewMovementInput) => void;
   updateExpenseMovement: (id: string, updated: Partial<ExpenseMovement>) => void;
   deleteExpenseMovement: (id: string) => void;
   reorderExpenseMovements: (fromIndex: number, toIndex: number) => void;
@@ -243,212 +243,9 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }));
   };
 
-  const addExpenseMovement = (movement: {
-    type?: 'expense' | 'income' | 'transfer';
-    name: string;
-    amount: number;
-    moneda: 'COP' | 'USD';
-    sourceAccountId: string;
-    destinationType?: 'none' | 'card' | 'obligation' | 'account' | 'deuda' | 'portfolio';
-    destinationId?: string;
-    destinationName?: string;
-    icon?: string;
-  }) => {
-    setData(prev => {
-      const type = movement.type || 'expense';
-      const isIncome = type === 'income';
-      const isTransfer = type === 'transfer';
-
-      // Determine Source Account (Billetera or Portfolio)
-      const rawSourceId = movement.sourceAccountId.replace('portfolio:', '').replace('billetera:', '');
-      const isSourcePortfolio = movement.sourceAccountId.startsWith('portfolio:') ||
-        (!prev.billeteraItems.some(b => b.id === movement.sourceAccountId) && prev.portfolioItems.some(p => p.id === rawSourceId));
-
-      const sourceBilletera = prev.billeteraItems.find(b => b.id === rawSourceId || b.id === movement.sourceAccountId);
-      const sourcePortfolio = prev.portfolioItems.find(p => p.id === rawSourceId || p.id === movement.sourceAccountId);
-      const sourceAccountName = isSourcePortfolio
-        ? (sourcePortfolio ? sourcePortfolio.nombre : 'Portafolio')
-        : (sourceBilletera ? sourceBilletera.nombre : 'Billetera');
-      const sourceMoneda: 'COP' | 'USD' = (isSourcePortfolio ? sourcePortfolio?.moneda : sourceBilletera?.moneda) || 'COP';
-
-      // Determine Destination Account for Transfer
-      let destinationName = movement.destinationName;
-      let isDestPortfolio = false;
-      let rawDestId = movement.destinationId ? movement.destinationId.replace('portfolio:', '').replace('billetera:', '') : '';
-      let destObj: { id: string; nombre: string; saldo: number; moneda?: 'COP' | 'USD' } | undefined = undefined;
-
-      if (isTransfer && movement.destinationId) {
-        isDestPortfolio = movement.destinationId.startsWith('portfolio:') ||
-          (!prev.billeteraItems.some(b => b.id === movement.destinationId) && prev.portfolioItems.some(p => p.id === rawDestId));
-
-        if (isDestPortfolio) {
-          destObj = prev.portfolioItems.find(p => p.id === rawDestId || p.id === movement.destinationId);
-          destinationName = destObj ? destObj.nombre : 'Portafolio';
-        } else {
-          destObj = prev.billeteraItems.find(b => b.id === rawDestId || b.id === movement.destinationId);
-          destinationName = destObj ? destObj.nombre : 'Cuenta destino';
-        }
-      }
-
-      const destMoneda: 'COP' | 'USD' = destObj?.moneda || 'COP';
-      const rate = prev.dolarRate || 3600;
-
-      // Calcular monto convertido a transferir en la cuenta destino si las monedas difieren
-      let destTransferAmount = movement.amount;
-      if (isTransfer && sourceMoneda !== destMoneda) {
-        if (sourceMoneda === 'USD' && destMoneda === 'COP') {
-          destTransferAmount = movement.amount * rate;
-        } else if (sourceMoneda === 'COP' && destMoneda === 'USD') {
-          destTransferAmount = rate > 0 ? movement.amount / rate : 0;
-        }
-      }
-
-      const newMovement: ExpenseMovement = {
-        id: `mov-${Date.now()}`,
-        type,
-        name: movement.name.trim(),
-        amount: movement.amount,
-        moneda: movement.moneda || sourceMoneda,
-        icon: movement.icon,
-        sourceAccountId: movement.sourceAccountId,
-        sourceAccountName,
-        destinationType: isIncome
-          ? (movement.destinationType === 'deuda' ? 'deuda' : undefined)
-          : (isTransfer ? (isDestPortfolio ? 'portfolio' : 'account') : (movement.destinationType || 'none')),
-        destinationId: isIncome ? (movement.destinationType === 'deuda' ? movement.destinationId : undefined) : movement.destinationId,
-        destinationName: isIncome
-          ? (movement.destinationType === 'deuda' ? destinationName : undefined)
-          : (isTransfer && sourceMoneda !== destMoneda
-              ? `${destinationName} (Recibe: ${formatCurrency(destTransferAmount, destMoneda)})`
-              : destinationName),
-        date: new Date().toISOString()
-      };
-
-      // 1. Actualizar saldo en la cuenta de Billetera
-      let updatedBilletera = (prev.billeteraItems || []).map(acc => {
-        if (!isSourcePortfolio && (acc.id === rawSourceId || acc.id === movement.sourceAccountId)) {
-          if (isIncome) {
-            return { ...acc, saldo: acc.saldo + movement.amount };
-          } else {
-            return { ...acc, saldo: Math.max(0, acc.saldo - movement.amount) };
-          }
-        }
-        if (isTransfer && !isDestPortfolio && (acc.id === rawDestId || acc.id === movement.destinationId)) {
-          return { ...acc, saldo: acc.saldo + destTransferAmount };
-        }
-        return acc;
-      });
-
-      // 2. Actualizar saldo en Portafolio
-      let updatedPortfolio = (prev.portfolioItems || []).map(port => {
-        if (isSourcePortfolio && (port.id === rawSourceId || port.id === movement.sourceAccountId)) {
-          if (isIncome) {
-            return { ...port, saldo: port.saldo + movement.amount };
-          } else {
-            return { ...port, saldo: Math.max(0, port.saldo - movement.amount) };
-          }
-        }
-        if (isTransfer && isDestPortfolio && (port.id === rawDestId || port.id === movement.destinationId)) {
-          return { ...port, saldo: port.saldo + destTransferAmount };
-        }
-        return port;
-      });
-
-      // 3. Si es Gasto y el destino es Tarjeta de Crédito, registrar el abono/pago a la tarjeta
-      let updatedCreditCards = prev.creditCards;
-      if (!isIncome && !isTransfer && movement.destinationType === 'card' && movement.destinationId) {
-        updatedCreditCards = (prev.creditCards || []).map(c => {
-          if (c.id === movement.destinationId) {
-            const newPayment: CreditCardPayment = {
-              id: `pay-${Date.now()}`,
-              amount: movement.amount,
-              date: new Date().toLocaleDateString('es-CO', { day: '2-digit', month: 'short' }),
-              concept: movement.name.trim() || 'Abono / Pago',
-              sourceAccountName
-            };
-            const updatedPayments = [newPayment, ...(c.payments || [])];
-            const totalPayments = updatedPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
-
-            let newCutoffAmount = c.billingCutoffAmount;
-            let newCutoffDate = c.billingCutoffDate;
-            let newCutoffBasePayments = c.cutoffBasePayments;
-
-            // Si hay corte activo y los pagos cubren el monto facturado, se quita el corte
-            if (c.billingCutoffAmount !== undefined) {
-              const paymentsSinceCutoff = Math.max(0, totalPayments - (c.cutoffBasePayments || 0));
-              if (paymentsSinceCutoff >= c.billingCutoffAmount) {
-                newCutoffAmount = undefined;
-                newCutoffDate = undefined;
-                newCutoffBasePayments = undefined;
-              }
-            }
-
-            return {
-              ...c,
-              billingCutoffAmount: newCutoffAmount,
-              billingCutoffDate: newCutoffDate,
-              cutoffBasePayments: newCutoffBasePayments,
-              payments: updatedPayments
-            };
-          }
-          return c;
-        });
-      }
-
-      // 4. Si el destino es Deuda / Obligación, restar al saldo adeudado
-      let updatedDeudas = prev.deudaItems;
-      let updatedObligations = prev.obligations;
-
-      // Descontar si es Gasto hacia una deuda por pagar / obligación
-      if (!isIncome && !isTransfer && (movement.destinationType === 'deuda' || movement.destinationType === 'obligation') && movement.destinationId) {
-        const destId = movement.destinationId;
-        const rawId = destId.startsWith('d-') ? destId.replace('d-', '') : (destId.startsWith('o-') ? destId.replace('o-', '') : destId);
-        
-        updatedDeudas = (prev.deudaItems || []).map(d => {
-          if (d.id === destId || d.id === rawId) {
-            return {
-              ...d,
-              monto: Math.max(0, (d.monto || 0) - movement.amount)
-            };
-          }
-          return d;
-        });
-
-        updatedObligations = (prev.obligations || []).map(ob => {
-          if ((ob.id === destId || ob.id === rawId) && ob.totalDebtBalance !== undefined) {
-            return {
-              ...ob,
-              totalDebtBalance: Math.max(0, ob.totalDebtBalance - movement.amount)
-            };
-          }
-          return ob;
-        });
-      }
-
-      // Descontar si es Ingreso proveniente de una deuda a mi favor (por_cobrar)
-      if (isIncome && movement.destinationType === 'deuda' && movement.destinationId) {
-        const debtId = movement.destinationId;
-        updatedDeudas = (prev.deudaItems || []).map(d => {
-          if (d.id === debtId) {
-            return {
-              ...d,
-              monto: Math.max(0, (d.monto || 0) - movement.amount)
-            };
-          }
-          return d;
-        });
-      }
-
-      return {
-        ...prev,
-        billeteraItems: updatedBilletera,
-        portfolioItems: updatedPortfolio,
-        creditCards: updatedCreditCards,
-        deudaItems: updatedDeudas,
-        obligations: updatedObligations,
-        expenseMovements: [newMovement, ...(prev.expenseMovements || [])]
-      };
-    });
+  // Registrar movimiento: la lógica de saldos vive en movementService (función pura y probada)
+  const addExpenseMovement = (movement: NewMovementInput) => {
+    setData(prev => applyNewMovement(prev, movement));
   };
 
   const updateExpenseMovement = (id: string, updated: Partial<ExpenseMovement>) => {
@@ -460,116 +257,9 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }));
   };
 
+  // Eliminar movimiento revirtiendo exactamente su efecto sobre saldos, tarjetas y deudas
   const deleteExpenseMovement = (id: string) => {
-    setData(prev => {
-      const movement = (prev.expenseMovements || []).find(m => m.id === id);
-      if (!movement) return prev;
-
-      const remainingMovements = (prev.expenseMovements || []).filter(m => m.id !== id);
-
-      const isIncome = movement.type === 'income';
-      const isTransfer = movement.type === 'transfer';
-      const isSourcePortfolio = movement.sourceAccountId?.startsWith('portfolio:');
-      const rawSourceId = movement.sourceAccountId?.replace('portfolio:', '').replace('billetera:', '');
-      const isDestPortfolio = movement.destinationId?.startsWith('portfolio:');
-      const rawDestId = movement.destinationId?.replace('portfolio:', '').replace('billetera:', '');
-
-      // Revertir saldo de billetera
-      let updatedBilletera = (prev.billeteraItems || []).map(acc => {
-        if (!isSourcePortfolio && (acc.id === rawSourceId || acc.id === movement.sourceAccountId)) {
-          if (isIncome) {
-            return { ...acc, saldo: Math.max(0, acc.saldo - movement.amount) };
-          } else {
-            return { ...acc, saldo: acc.saldo + movement.amount };
-          }
-        }
-        if (isTransfer && !isDestPortfolio && (acc.id === rawDestId || acc.id === movement.destinationId)) {
-          return { ...acc, saldo: Math.max(0, acc.saldo - movement.amount) };
-        }
-        return acc;
-      });
-
-      // Revertir saldo de portafolio
-      let updatedPortfolio = (prev.portfolioItems || []).map(port => {
-        if (isSourcePortfolio && (port.id === rawSourceId || port.id === movement.sourceAccountId)) {
-          if (isIncome) {
-            return { ...port, saldo: Math.max(0, port.saldo - movement.amount) };
-          } else {
-            return { ...port, saldo: port.saldo + movement.amount };
-          }
-        }
-        if (isTransfer && isDestPortfolio && (port.id === rawDestId || port.id === movement.destinationId)) {
-          return { ...port, saldo: Math.max(0, port.saldo - movement.amount) };
-        }
-        return port;
-      });
-
-      // Revertir abono a tarjeta si el movimiento pagaba una tarjeta
-      let updatedCreditCards = prev.creditCards;
-      if (!isIncome && !isTransfer && movement.destinationType === 'card' && movement.destinationId) {
-        updatedCreditCards = (prev.creditCards || []).map(c => {
-          if (c.id === movement.destinationId) {
-            let amountToRemove = movement.amount;
-            const updatedPayments: CreditCardPayment[] = [];
-            for (const pay of (c.payments || [])) {
-              if (amountToRemove <= 0) {
-                updatedPayments.push(pay);
-              } else if (pay.amount <= amountToRemove) {
-                amountToRemove -= pay.amount;
-              } else {
-                updatedPayments.push({ ...pay, amount: pay.amount - amountToRemove });
-                amountToRemove = 0;
-              }
-            }
-            return {
-              ...c,
-              payments: updatedPayments
-            };
-          }
-          return c;
-        });
-      }
-
-      // Revertir deuda u obligación
-      let updatedDeudas = prev.deudaItems;
-      let updatedObligations = prev.obligations;
-      if (!isIncome && !isTransfer && (movement.destinationType === 'deuda' || movement.destinationType === 'obligation') && movement.destinationId) {
-        const destId = movement.destinationId;
-        const rawId = destId.startsWith('d-') ? destId.replace('d-', '') : (destId.startsWith('o-') ? destId.replace('o-', '') : destId);
-        updatedDeudas = (prev.deudaItems || []).map(d => {
-          if (d.id === destId || d.id === rawId) {
-            return { ...d, monto: (d.monto || 0) + movement.amount };
-          }
-          return d;
-        });
-        updatedObligations = (prev.obligations || []).map(ob => {
-          if ((ob.id === destId || ob.id === rawId) && ob.totalDebtBalance !== undefined) {
-            return { ...ob, totalDebtBalance: ob.totalDebtBalance + movement.amount };
-          }
-          return ob;
-        });
-      }
-
-      if (isIncome && movement.destinationType === 'deuda' && movement.destinationId) {
-        const debtId = movement.destinationId;
-        updatedDeudas = (prev.deudaItems || []).map(d => {
-          if (d.id === debtId) {
-            return { ...d, monto: (d.monto || 0) + movement.amount };
-          }
-          return d;
-        });
-      }
-
-      return {
-        ...prev,
-        billeteraItems: updatedBilletera,
-        portfolioItems: updatedPortfolio,
-        creditCards: updatedCreditCards,
-        deudaItems: updatedDeudas,
-        obligations: updatedObligations,
-        expenseMovements: remainingMovements
-      };
-    });
+    setData(prev => revertMovement(prev, id));
   };
 
   const reorderExpenseMovements = (fromIndex: number, toIndex: number) => {

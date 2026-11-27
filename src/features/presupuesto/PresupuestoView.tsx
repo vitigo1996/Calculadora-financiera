@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useFinance } from '../../context/FinanceContext';
-import { formatCurrency, calculateCardPaymentDue } from '../../services/financeCalculations';
+import { formatCurrency as formatCurrencyRaw, calculateCardPaymentDue, toBaseCurrency } from '../../services/financeCalculations';
 import { GastosFijosView } from '../gastos_fijos/GastosFijosView';
 import {
   Receipt,
@@ -15,6 +15,9 @@ import {
 export const PresupuestoView: React.FC = () => {
   const { data, summary } = useFinance();
   const pres = summary.presupuesto;
+  // Montos del presupuesto expresados en la moneda base
+  const baseCurrency = data.baseCurrency || 'COP';
+  const formatCurrency = (amount: number) => formatCurrencyRaw(amount, baseCurrency);
 
   // Submenu: Presupuesto | Gastos
   const [subView, setSubView] = useState<'presupuesto' | 'gastos'>('presupuesto');
@@ -31,7 +34,8 @@ export const PresupuestoView: React.FC = () => {
   // 1. Vivienda
   const housingItems = (data.housingExpenses || []).map(h => {
     const isItemShared = h.isShared !== false && isShared;
-    const amount = isItemShared ? (h.totalAmount || 0) * ratioYo : (h.totalAmount || 0);
+    const base = toBaseCurrency(h.totalAmount || 0, h.moneda, data);
+    const amount = isItemShared ? base * ratioYo : base;
     return {
       id: h.id,
       name: h.name,
@@ -49,7 +53,8 @@ export const PresupuestoView: React.FC = () => {
       ? ob.davidAmount
       : ob.totalAmount;
     const isObShared = ob.isShared !== false && isShared;
-    const amount = isObShared ? (monthlyVal || 0) * ratioYo : (monthlyVal || 0);
+    const base = toBaseCurrency(monthlyVal || 0, ob.moneda, data);
+    const amount = isObShared ? base * ratioYo : base;
     return {
       id: ob.id,
       name: ob.name,
@@ -63,7 +68,7 @@ export const PresupuestoView: React.FC = () => {
 
   // 3. Tarjetas
   const cardItems = (data.creditCards || []).map(cc => {
-    const amount = calculateCardPaymentDue(cc);
+    const amount = toBaseCurrency(calculateCardPaymentDue(cc), cc.moneda, data);
     return {
       id: cc.id,
       name: cc.name,
