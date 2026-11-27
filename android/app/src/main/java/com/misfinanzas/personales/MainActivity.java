@@ -1,4 +1,4 @@
-package com.finanzas.personales;
+package com.misfinanzas.personales;
 
 import com.getcapacitor.BridgeActivity;
 

@@ -25,3 +25,12 @@ dist-ssr
 
 # Temporary files
 scratch/
+
+# Firma Android (nunca versionar)
+*.keystore
+*.jks
+android/keystore.properties
+
+# Binarios compilados (se generan en CI)
+*.apk
+*.aab

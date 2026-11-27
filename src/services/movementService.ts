@@ -4,6 +4,7 @@ import {
   ExpenseMovement
 } from '../models/finance';
 import { convertToBase, formatCurrency } from './financeCalculations';
+import { generateId } from './idService';
 
 type Moneda = 'COP' | 'USD';
 type AccountKind = 'billetera' | 'portfolio';
@@ -118,7 +119,7 @@ export function applyNewMovement(
   const sourceApplied = Math.abs(srcResult.applied);
 
   const movement: ExpenseMovement = {
-    id: `mov-${stamp}`,
+    id: generateId('mov', stamp),
     type,
     name: input.name.trim(),
     amount,
@@ -160,7 +161,7 @@ export function applyNewMovement(
     if (card) {
       const payAmount = convert(sourceApplied, sourceMoneda, card.moneda || 'COP', rate);
       const payment: CreditCardPayment = {
-        id: `pay-${stamp}`,
+        id: generateId('pay', stamp),
         amount: payAmount,
         date: now.toISOString(),
         concept: input.name.trim() || 'Abono / Pago',

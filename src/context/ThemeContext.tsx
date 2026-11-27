@@ -15,7 +15,9 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     try {
       const saved = localStorage.getItem('app_theme');
       if (saved === 'light' || saved === 'dark') return saved;
-    } catch (e) {}
+    } catch {
+      // Almacenamiento no disponible (modo privado o bloqueado): se ignora sin afectar la app
+    }
     return 'dark'; // default to elegant dark
   });
 
@@ -30,7 +32,9 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
     try {
       localStorage.setItem('app_theme', theme);
-    } catch (e) {}
+    } catch {
+      // Almacenamiento no disponible (modo privado o bloqueado): se ignora sin afectar la app
+    }
   }, [theme]);
 
   const toggleTheme = () => {

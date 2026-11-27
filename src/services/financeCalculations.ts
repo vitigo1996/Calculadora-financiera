@@ -418,7 +418,7 @@ export function parsePurchaseDate(dateStr?: string | number, id?: string): Date 
     };
 
     // Formato DD/MM/YYYY o DD-MM-YYYY
-    const dmy = trimmed.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+    const dmy = trimmed.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})$/);
     if (dmy) {
       const day = parseInt(dmy[1], 10);
       const month = parseInt(dmy[2], 10) - 1;
@@ -428,7 +428,7 @@ export function parsePurchaseDate(dateStr?: string | number, id?: string): Date 
     }
 
     // Formato YYYY/MM/DD o YYYY-MM-DD
-    const ymd = trimmed.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+    const ymd = trimmed.match(/^(\d{4})[/-](\d{1,2})[/-](\d{1,2})/);
     if (ymd) {
       const year = parseInt(ymd[1], 10);
       const month = parseInt(ymd[2], 10) - 1;
@@ -437,7 +437,7 @@ export function parsePurchaseDate(dateStr?: string | number, id?: string): Date 
     }
 
     // Formato en español: '28 de sept', '28 sept 2026', '28 de septiembre de 2026'
-    const cleanSp = trimmed.toLowerCase().replace(/[\.,]/g, '').replace(/\s+/g, ' ');
+    const cleanSp = trimmed.toLowerCase().replace(/[.,]/g, '').replace(/\s+/g, ' ');
     const spMatch = cleanSp.match(/^(\d{1,2})\s*(?:de\s+)?([a-z]+)(?:\s*(?:de\s+)?(\d{2,4}))?$/);
     if (spMatch) {
       const day = parseInt(spMatch[1], 10);

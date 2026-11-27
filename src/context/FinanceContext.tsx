@@ -14,6 +14,8 @@ import {
   ExpenseMovement
 } from '../models/finance';
 import { StorageService } from '../services/storageService';
+import { generateId } from '../services/idService';
+import { validateFinanceData } from '../services/dataValidation';
 import { CurrencyService } from '../services/currencyService';
 import { calculateAllFinances, CalculatedSummary, calculateCardPurchasesTotal } from '../services/financeCalculations';
 import { applyNewMovement, revertMovement, NewMovementInput } from '../services/movementService';
@@ -85,7 +87,8 @@ interface FinanceContextType {
   reorderSubscriptions: (fromIndex: number, toIndex: number) => void;
   toggleSubscription: (id: string) => void;
   resetToDefault: () => void;
-  importData: (imported: AppFinanceData) => void;
+  importData: (imported: unknown) => { ok: true; warnings: string[] } | { ok: false; error: string };
+  storageError: boolean;
   hideBalances: boolean;
   setHideBalances: (hide: boolean) => void;
   toggleHideBalances: () => void;
@@ -109,7 +112,9 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setHideBalancesState(hide);
     try {
       localStorage.setItem('app_hide_balances', hide ? 'true' : 'false');
-    } catch (e) {}
+    } catch {
+      // Almacenamiento no disponible (modo privado o bloqueado): se ignora sin afectar la app
+    }
   };
 
   const toggleHideBalances = () => {
@@ -117,7 +122,9 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const next = !prev;
       try {
         localStorage.setItem('app_hide_balances', next ? 'true' : 'false');
-      } catch (e) {}
+      } catch {
+      // Almacenamiento no disponible (modo privado o bloqueado): se ignora sin afectar la app
+    }
       return next;
     });
   };
@@ -156,8 +163,10 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     refreshLiveDolarRate();
   }, [refreshLiveDolarRate]);
 
+  // Persistir en cada cambio; si falla (p. ej. almacenamiento lleno) se expone el error a la UI
+  const [storageError, setStorageError] = useState(false);
   useEffect(() => {
-    StorageService.saveData(data);
+    setStorageError(!StorageService.saveData(data));
   }, [data]);
 
   const summary = calculateAllFinances(data);
@@ -191,7 +200,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const addBilleteraItem = (item: { nombre: string; moneda: 'COP' | 'USD'; saldo: number; icon?: string }) => {
     const newItem: BilleteraAccountItem = {
-      id: `acc-${Date.now()}`,
+      id: generateId('acc'),
       ...item
     };
     setData(prev => ({
@@ -284,7 +293,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const addDeudaItem = (item: { nombre: string; monto?: number; moneda: 'COP' | 'USD'; tipo: 'por_cobrar' | 'por_pagar'; icon?: string }) => {
     const newItem: DeudaItem = {
-      id: `deuda-${Date.now()}`,
+      id: generateId('deuda'),
       ...item
     };
     setData(prev => ({
@@ -328,7 +337,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const addPortfolioItem = (item: { nombre: string; moneda: 'COP' | 'USD'; saldo: number; icon?: string; color?: string }) => {
     const newItem: PortfolioAccountItem = {
-      id: `port-${Date.now()}`,
+      id: generateId('port'),
       ...item
     };
     setData(prev => ({
@@ -372,7 +381,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const addCreditCard = (card: { name: string; period?: PaymentPeriod; paymentDay?: number; cutoffDay?: number; creditLimit: number; moneda?: 'COP' | 'USD'; minPaymentOverride?: number }) => {
     const newCard: CreditCardItem = {
-      id: `cc-${Date.now()}`,
+      id: generateId('cc'),
       name: card.name,
       period: card.period || '1st_fortnight',
       paymentDay: card.paymentDay,
@@ -508,7 +517,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const hasActiveCutoff = targetCard?.billingCutoffAmount !== undefined;
 
     const newP = {
-      id: `p-${Date.now()}`,
+      id: generateId('p'),
       ...purchase,
       moneda: purchase.moneda || targetCard?.moneda || 'COP',
       date: new Date().toISOString(),
@@ -665,7 +674,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   // Housing CRUD
   const addHousingExpense = (item: { name: string; period?: PaymentPeriod; paymentDay?: number; totalAmount: number; moneda?: 'COP' | 'USD'; isShared?: boolean; icon?: string }) => {
     const newH: HousingExpense = {
-      id: `house-${Date.now()}`,
+      id: generateId('house'),
       isShared: item.isShared !== undefined ? item.isShared : true,
       moneda: item.moneda || 'COP',
       period: item.period || '1st_fortnight',
@@ -723,7 +732,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   // Obligations CRUD
   const addObligation = (item: { name: string; period?: PaymentPeriod; paymentDay?: number; totalAmount: number; totalDebtBalance?: number; moneda?: 'COP' | 'USD'; isShared?: boolean; icon?: string }) => {
     const newOb: ObligationItem = {
-      id: `ob-${Date.now()}`,
+      id: generateId('ob'),
       isShared: item.isShared !== undefined ? item.isShared : true,
       moneda: item.moneda || 'COP',
       period: item.period || '1st_fortnight',
@@ -781,7 +790,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   // Subscriptions CRUD
   const addSubscription = (item: { name: string; totalPrice: number; members: number; billing: 'monthly' | 'yearly'; period?: PaymentPeriod; billingMonth?: string; moneda?: 'COP' | 'USD'; icon?: string }) => {
     const newSub: SubscriptionItem = {
-      id: `sub-${Date.now()}`,
+      id: generateId('sub'),
       active: true,
       period: item.period || '1st_fortnight',
       billingMonth: item.billingMonth,
@@ -839,8 +848,12 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setData(def);
   };
 
-  const importData = (imported: AppFinanceData) => {
-    setData(imported);
+  // Importar respaldo: se valida antes de reemplazar los datos actuales
+  const importData = (imported: unknown): { ok: true; warnings: string[] } | { ok: false; error: string } => {
+    const result = validateFinanceData(imported);
+    if (!result.ok) return result;
+    setData(result.data);
+    return { ok: true, warnings: result.warnings };
   };
 
   return (
@@ -913,6 +926,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         toggleSubscription,
         resetToDefault,
         importData,
+        storageError,
         hideBalances,
         setHideBalances,
         toggleHideBalances

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FinanceProvider } from './context/FinanceContext';
+import { FinanceProvider, useFinance } from './context/FinanceContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { BottomNav, TabType } from './components/ui/BottomNav';
 import { BilleteraView } from './features/billetera/BilleteraView';
@@ -9,6 +9,7 @@ import { AjustesView } from './features/ajustes/AjustesView';
 
 export const AppContent: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('billetera');
+  const { storageError } = useFinance();
 
   // Detección reactiva de teclado y campos de texto para permitir desplazamiento cómodo
   React.useEffect(() => {
@@ -104,6 +105,13 @@ export const AppContent: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-200/80 dark:bg-slate-950 flex justify-center selection:bg-blue-600 selection:text-white transition-colors duration-200">
       <div className="w-full max-w-md min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 flex flex-col shadow-2xl relative md:border-x md:border-slate-300/80 md:dark:border-slate-800">
+        {/* Aviso persistente si los cambios no se pudieron guardar en el dispositivo */}
+        {storageError && (
+          <div role="alert" className="sticky top-0 z-40 bg-rose-600 text-white text-xs font-semibold px-4 py-2 text-center">
+            No se pudieron guardar los cambios en el dispositivo (almacenamiento lleno o bloqueado).
+            Exporta un respaldo desde Ajustes para no perder información.
+          </div>
+        )}
         <main className="flex-1 w-full px-3.5 pt-3 pb-24 overflow-x-clip">
           {renderActiveView()}
         </main>
