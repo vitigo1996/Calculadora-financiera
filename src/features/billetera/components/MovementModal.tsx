@@ -24,7 +24,7 @@ interface MovementModalProps {
     type: 'expense' | 'income' | 'transfer';
     name: string;
     amount: number;
-    moneda: 'COP' | 'USD';
+    moneda?: 'COP' | 'USD'; // Se ignora: el servicio usa la moneda de la cuenta de origen
     sourceAccountId: string;
     destinationType?: 'none' | 'card' | 'obligation' | 'account' | 'deuda' | 'portfolio';
     destinationId?: string;
@@ -144,7 +144,6 @@ export const MovementModal: React.FC<MovementModalProps> = ({
       type: movementType,
       name: movementName.trim() || defaultName,
       amount,
-      moneda: 'COP',
       sourceAccountId: selectedSourceId,
       destinationType: destType,
       destinationId: destId,

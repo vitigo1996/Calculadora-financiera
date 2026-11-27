@@ -61,7 +61,7 @@ npm run dev
    git push origin main
    ```
 2. En tu repositorio de GitHub, ve a la pestaña **Actions**.
-3. El flujo compilará automáticamente el archivo **`app-debug.apk`**.
+3. El flujo compilará automáticamente el archivo firmado **`app-release.apk`** (requiere los secretos de firma `MISFINANZAS_*` configurados en el repositorio).
 4. Descárgalo en tu celular e instálalo para probar la app inmediatamente.
 
 ### Opción 2: Compilación Local con Android Studio

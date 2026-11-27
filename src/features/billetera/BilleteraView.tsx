@@ -602,7 +602,7 @@ export const BilleteraView: React.FC = () => {
                           >
                             {hideBalances
                               ? `${isIncome ? '+' : isTransfer ? '' : '-'}••••••`
-                              : `${isIncome ? '+' : isTransfer ? '' : '-'}${formatCurrency(mov.amount)}`}
+                              : `${isIncome ? '+' : isTransfer ? '' : '-'}${formatCurrency(mov.amount, mov.moneda || 'COP')}`}
                           </span>
                         </div>
 

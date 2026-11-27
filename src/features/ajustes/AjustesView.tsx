@@ -15,8 +15,14 @@ import {
   ChevronDown,
   Wallet,
   Eye,
-  EyeOff
+  EyeOff,
+  Download,
+  Upload,
+  FileSpreadsheet
 } from 'lucide-react';
+import { StorageService } from '../../services/storageService';
+import { parseBackupText } from '../../services/dataValidation';
+import { AppFinanceData } from '../../models/finance';
 
 export const AjustesView: React.FC = () => {
   const {
@@ -26,12 +32,44 @@ export const AjustesView: React.FC = () => {
     baseCurrency,
     setBaseCurrency,
     resetToDefault,
+    importData,
     hideBalances,
     toggleHideBalances
   } = useFinance();
   const { theme, toggleTheme } = useTheme();
 
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+
+  // --- Respaldo de datos ---
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [pendingImport, setPendingImport] = useState<AppFinanceData | null>(null);
+  const [backupNotice, setBackupNotice] = useState<{ title: string; message: string; variant: 'success' | 'danger' } | null>(null);
+
+  // Ejecuta una exportación y muestra el error si falla (o si el usuario cancela el menú compartir)
+  const runExport = async (kind: 'json' | 'excel') => {
+    try {
+      if (kind === 'json') await StorageService.exportJSON(data);
+      else await StorageService.exportExcel(data);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      // Cerrar el menú "Compartir" sin elegir destino no es un error
+      if (/cancel/i.test(msg)) return;
+      setBackupNotice({ title: 'Error al exportar', message: msg, variant: 'danger' });
+    }
+  };
+
+  // Lee el archivo seleccionado, lo valida y pide confirmación antes de reemplazar
+  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // permite volver a elegir el mismo archivo
+    if (!file) return;
+    const result = parseBackupText(await file.text());
+    if (!result.ok) {
+      setBackupNotice({ title: 'Respaldo inválido', message: result.error, variant: 'danger' });
+      return;
+    }
+    setPendingImport(result.data);
+  };
   const [isIngresosExpanded, setIsIngresosExpanded] = useState(false);
 
   // Asegurar 4 aportantes fijos
@@ -252,7 +290,45 @@ export const AjustesView: React.FC = () => {
           />
         </div>
 
-        {/* 6. RESTABLECER */}
+        {/* 6. RESPALDO DE DATOS */}
+        <div className="p-4 border-b border-slate-200 dark:border-slate-800 space-y-2">
+          <h4 className="font-bold text-slate-800 dark:text-white text-sm">Respaldo de datos</h4>
+          <div className="grid grid-cols-3 gap-2">
+            <button
+              type="button"
+              onClick={() => runExport('json')}
+              className="flex flex-col items-center gap-1 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200"
+            >
+              <Download className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+              Exportar respaldo
+            </button>
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="flex flex-col items-center gap-1 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200"
+            >
+              <Upload className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+              Importar respaldo
+            </button>
+            <button
+              type="button"
+              onClick={() => runExport('excel')}
+              className="flex flex-col items-center gap-1 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200"
+            >
+              <FileSpreadsheet className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+              Exportar Excel
+            </button>
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="application/json,.json"
+            className="hidden"
+            onChange={handleImportFile}
+          />
+        </div>
+
+        {/* 7. RESTABLECER */}
         <button
           type="button"
           onClick={() => setShowResetConfirm(true)}
@@ -284,6 +360,42 @@ export const AjustesView: React.FC = () => {
           setShowResetConfirm(false);
         }}
         onCancel={() => setShowResetConfirm(false)}
+      />
+
+      {/* Confirmación antes de reemplazar los datos con un respaldo */}
+      <ConfirmModal
+        isOpen={pendingImport !== null}
+        title="Importar respaldo"
+        message="Los datos actuales se reemplazarán por los del respaldo. Se recomienda exportar un respaldo antes de continuar."
+        confirmText="Importar"
+        cancelText="Cancelar"
+        variant="warning"
+        onConfirm={() => {
+          const result = pendingImport ? importData(pendingImport) : null;
+          setPendingImport(null);
+          if (result && !result.ok) {
+            setBackupNotice({ title: 'Respaldo inválido', message: result.error, variant: 'danger' });
+          } else if (result) {
+            setBackupNotice({
+              title: 'Respaldo importado',
+              message: ['Los datos se restauraron correctamente.', ...result.warnings].join('\n'),
+              variant: 'success'
+            });
+          }
+        }}
+        onCancel={() => setPendingImport(null)}
+      />
+
+      {/* Resultado de importación/exportación */}
+      <ConfirmModal
+        isOpen={backupNotice !== null}
+        title={backupNotice?.title}
+        message={backupNotice?.message || ''}
+        confirmText="Entendido"
+        cancelText={null}
+        variant={backupNotice?.variant}
+        onConfirm={() => setBackupNotice(null)}
+        onCancel={() => setBackupNotice(null)}
       />
     </div>
   );

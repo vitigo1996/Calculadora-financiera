@@ -127,6 +127,18 @@ export interface ExpenseMovement {
   destinationId?: string;
   destinationName?: string;
   date: string;
+  // --- Trazabilidad para revertir el movimiento con exactitud al eliminarlo ---
+  // (opcionales: los registros antiguos no los tienen y se revierten con lógica heredada)
+  sourceKind?: 'billetera' | 'portfolio';   // Tipo de cuenta de origen resuelto al crear
+  destKind?: 'billetera' | 'portfolio';     // Tipo de cuenta destino (solo transferencias)
+  sourceApplied?: number;                   // Monto realmente aplicado al origen (moneda del origen)
+  destApplied?: number;                     // Monto realmente aplicado al destino (moneda del destino)
+  cardPaymentId?: string;                   // Id del abono creado en la tarjeta destino
+  clearedCutoff?: {                         // Corte de tarjeta que este pago cerró (para restaurarlo)
+    amount: number;
+    date?: string;
+    basePayments?: number;
+  };
 }
 
 export interface AppFinanceData {

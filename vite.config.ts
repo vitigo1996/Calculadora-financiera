@@ -11,6 +11,18 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    sourcemap: false
+    sourcemap: false,
+    // recharts ocupa ~500 kB por sí sola; el límite se ajusta para no avisar por esa librería
+    chunkSizeWarningLimit: 600,
+    rollupOptions: {
+      output: {
+        // Separar librerías grandes en archivos propios (mejor caché y carga inicial más liviana)
+        manualChunks: {
+          react: ['react', 'react-dom'],
+          charts: ['recharts'],
+          icons: ['lucide-react']
+        }
+      }
+    }
   }
 });

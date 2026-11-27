@@ -7,8 +7,9 @@ APK_FILE_ID="10tCI43CehajQBIKRgN9rZhw1PQZSox8w"
 AAB_FILE_ID="14obXTO1fO2eHGvG2ZQXX_264shHkh5-v"
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-APK_PATH="${REPO_ROOT}/MisFinanzas.apk"
-AAB_PATH="${REPO_ROOT}/MisFinanzas.aab"
+# Binarios generados por Gradle (ya no se versionan en git). Se pueden sobrescribir por variable de entorno.
+APK_PATH="${APK_PATH:-${REPO_ROOT}/android/app/build/outputs/apk/release/app-release.apk}"
+AAB_PATH="${AAB_PATH:-${REPO_ROOT}/android/app/build/outputs/bundle/release/app-release.aab}"
 
 if [[ ! -f "${APK_PATH}" ]]; then
   echo "Error: No se encontró ${APK_PATH}" >&2
@@ -20,12 +21,12 @@ if [[ ! -f "${AAB_PATH}" ]]; then
   exit 1
 fi
 
-echo "Subiendo MisFinanzas.apk a la carpeta 'aplicación finanzas' (${DRIVE_FOLDER_ID})..."
+echo "Subiendo $(basename "${APK_PATH}") a la carpeta 'aplicación finanzas' (${DRIVE_FOLDER_ID})..."
 if ! gdrive mutate update "${APK_FILE_ID}" "${APK_PATH}" --mime-type "application/vnd.android.package-archive"; then
   gdrive mutate upload "${APK_PATH}" --parent "${DRIVE_FOLDER_ID}" --mime-type "application/vnd.android.package-archive"
 fi
 
-echo "Subiendo MisFinanzas.aab a la carpeta 'aplicación finanzas' (${DRIVE_FOLDER_ID})..."
+echo "Subiendo $(basename "${AAB_PATH}") a la carpeta 'aplicación finanzas' (${DRIVE_FOLDER_ID})..."
 if ! gdrive mutate update "${AAB_FILE_ID}" "${AAB_PATH}" --mime-type "application/x-zip"; then
   gdrive mutate upload "${AAB_PATH}" --parent "${DRIVE_FOLDER_ID}" --mime-type "application/x-zip"
 fi

@@ -11,7 +11,9 @@ export const CurrencyService = {
           try {
             localStorage.setItem('last_live_usd_rate', copRate.toString());
             localStorage.setItem('last_live_usd_timestamp', new Date().toISOString());
-          } catch (e) {}
+          } catch {
+      // Almacenamiento no disponible (modo privado o bloqueado): se ignora sin afectar la app
+    }
           return copRate;
         }
       }
@@ -28,7 +30,9 @@ export const CurrencyService = {
         const parsed = parseFloat(cached);
         if (!isNaN(parsed) && parsed > 0) return parsed;
       }
-    } catch (e) {}
+    } catch {
+      // Almacenamiento no disponible (modo privado o bloqueado): se ignora sin afectar la app
+    }
     return null;
   }
 };

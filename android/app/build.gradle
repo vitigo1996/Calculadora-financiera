@@ -1,14 +1,14 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace "com.finanzas.personales"
+    namespace "com.misfinanzas.personales"
     compileSdk rootProject.ext.compileSdkVersion
     defaultConfig {
         applicationId "com.misfinanzas.personales"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 2
-        versionName "1.1"
+        versionCode 3
+        versionName "1.2"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -16,22 +16,44 @@ android {
             ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    // Firma: las credenciales NO se versionan. Se leen de variables de entorno (CI)
+    // o de android/keystore.properties (local, ignorado por git).
+    def keystoreProps = new Properties()
+    def keystorePropsFile = rootProject.file('keystore.properties')
+    if (keystorePropsFile.exists()) {
+        keystorePropsFile.withInputStream { keystoreProps.load(it) }
+    }
+    def signingValue = { String envName, String propName ->
+        System.getenv(envName) ?: keystoreProps.getProperty(propName)
+    }
+    def ksPath = signingValue('MISFINANZAS_KEYSTORE_FILE', 'storeFile') ?: 'misfinanzas.keystore'
+    def ksFile = file(ksPath)
+    def ksPassword = signingValue('MISFINANZAS_KEYSTORE_PASSWORD', 'storePassword')
+    def ksAlias = signingValue('MISFINANZAS_KEY_ALIAS', 'keyAlias')
+    def ksKeyPassword = signingValue('MISFINANZAS_KEY_PASSWORD', 'keyPassword')
+    def hasSigning = ksFile.exists() && ksPassword && ksAlias && ksKeyPassword
+    if (!hasSigning) {
+        logger.warn('Firma MisFinanzas no configurada: debug usará la clave de depuración y release saldrá sin firmar.')
+    }
+
     signingConfigs {
-        misfinanzas {
-            storeFile file('misfinanzas.keystore')
-            storePassword 'misfinanzas'
-            keyAlias 'misfinanzas'
-            keyPassword 'misfinanzas'
-            v1SigningEnabled true
-            v2SigningEnabled true
+        if (hasSigning) {
+            misfinanzas {
+                storeFile ksFile
+                storePassword ksPassword
+                keyAlias ksAlias
+                keyPassword ksKeyPassword
+                v1SigningEnabled true
+                v2SigningEnabled true
+            }
         }
     }
     buildTypes {
         debug {
-            signingConfig signingConfigs.misfinanzas
+            if (hasSigning) signingConfig signingConfigs.misfinanzas
         }
         release {
-            signingConfig signingConfigs.misfinanzas
+            if (hasSigning) signingConfig signingConfigs.misfinanzas
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
