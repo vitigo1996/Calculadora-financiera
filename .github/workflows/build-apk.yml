@@ -43,15 +43,16 @@ jobs:
       - name: Grant Execute Permission for Gradlew
         run: chmod +x android/gradlew
 
-      # La clave de firma viene de los secretos del repositorio (Settings > Secrets and variables > Actions):
-      # MISFINANZAS_KEYSTORE_BASE64, MISFINANZAS_KEYSTORE_PASSWORD, MISFINANZAS_KEY_ALIAS, MISFINANZAS_KEY_PASSWORD
-      - name: Restore Signing Keystore
+      # Firma: si existen los secretos del repositorio (Settings > Secrets and variables > Actions)
+      # MISFINANZAS_KEYSTORE_BASE64, MISFINANZAS_KEYSTORE_PASSWORD, MISFINANZAS_KEY_ALIAS y MISFINANZAS_KEY_PASSWORD,
+      # se usan esos. Si no, Gradle usa android/app/misfinanzas.keystore + android/keystore.properties del repositorio.
+      - name: Restore Signing Keystore (optional)
         env:
           KEYSTORE_BASE64: ${{ secrets.MISFINANZAS_KEYSTORE_BASE64 }}
         run: |
           if [ -z "$KEYSTORE_BASE64" ]; then
-            echo "::error::Falta el secreto MISFINANZAS_KEYSTORE_BASE64. Sin él el APK no se puede firmar con la clave de la app."
-            exit 1
+            echo "::notice::Sin secretos de firma: se usa la clave versionada en el repositorio."
+            exit 0
           fi
           echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/misfinanzas.keystore"
           echo "MISFINANZAS_KEYSTORE_FILE=$RUNNER_TEMP/misfinanzas.keystore" >> "$GITHUB_ENV"

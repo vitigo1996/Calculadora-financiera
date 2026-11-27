@@ -26,10 +26,13 @@ dist-ssr
 # Temporary files
 scratch/
 
-# Firma Android (nunca versionar)
+# Firma Android
+# TEMPORAL: la clave actual se mantiene versionada (ya era pública en el historial) para poder
+# actualizar la app sin perder datos. Al migrar a una clave nueva, quitar estas excepciones
+# y usar únicamente los secretos MISFINANZAS_* de GitHub Actions.
 *.keystore
 *.jks
-android/keystore.properties
+!android/app/misfinanzas.keystore
 
 # Binarios compilados (se generan en CI)
 *.apk
