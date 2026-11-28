@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { applyNewMovement, revertMovement } from '../movementService';
-import { calculateAllFinances } from '../financeCalculations';
+import { calculateAllFinances, calculateCardPaymentDue } from '../financeCalculations';
 import { AppFinanceData } from '../../models/finance';
 import { initialFinanceData } from '../defaultData';
 
@@ -125,6 +125,41 @@ describe('movementService: crear y eliminar restaura el estado', () => {
     const reverted = revertMovement(legacy, 'mov-legacy');
     expect(bal(reverted, 'acc-cop')).toBe(1_000_000);
     expect(bal(reverted, 'port-1')).toBe(2_000_000);
+  });
+});
+
+describe('movementService: pagos a compras en cuotas', () => {
+  const withInstallments = (): AppFinanceData => ({
+    ...makeData(),
+    creditCards: [{
+      id: 'cc-1', name: 'Visa', creditLimit: 5_000_000, moneda: 'COP',
+      purchases: [
+        { id: 'p-tv', concept: 'TV', amount: 1_200_000, installments: 12, date: '2026-09-01T00:00:00.000Z' },
+        { id: 'p-nev', concept: 'Nevera', amount: 2_400_000, installments: 12, date: '2026-11-10T00:00:00.000Z' }
+      ],
+      payments: []
+    }]
+  });
+
+  it('un pago desde Registro abona una cuota a cada compra y no cambia la cuota mensual', () => {
+    const after = applyNewMovement(withInstallments(), {
+      type: 'expense', name: 'Pago Visa', amount: 300_000,
+      sourceAccountId: 'billetera:acc-cop', destinationType: 'card', destinationId: 'cc-1'
+    }, t0);
+    const [tv, nev] = after.creditCards[0].purchases;
+    expect(tv.paidAmount).toBe(100_000);
+    expect(nev.paidAmount).toBe(200_000);
+    expect(calculateCardPaymentDue(after.creditCards[0])).toBe(300_000);
+  });
+
+  it('eliminar el pago revierte el avance de cuotas', () => {
+    const after = applyNewMovement(withInstallments(), {
+      type: 'expense', name: 'Pago Visa', amount: 300_000,
+      sourceAccountId: 'billetera:acc-cop', destinationType: 'card', destinationId: 'cc-1'
+    }, t0);
+    const reverted = revertMovement(after, lastId(after));
+    expect(reverted.creditCards[0].purchases.every(p => (p.paidAmount || 0) === 0)).toBe(true);
+    expect(reverted.creditCards[0].payments).toEqual([]);
   });
 });
 

@@ -1,5 +1,6 @@
 import {
   AppFinanceData,
+  CreditCardPurchase,
   HousingExpense,
   ObligationItem,
   CreditCardItem,
@@ -73,31 +74,51 @@ export function calculateCardPurchasesTotal(cc: CreditCardItem): number {
   return Math.max(0, totalPurchases - totalPayments);
 }
 
-/**
- * Cuotas que faltan por pagar de una tarjeta con deuda diferida.
- * Se descuenta una cuota por cada mes calendario transcurrido desde que se definieron.
- * Nunca baja de 1 mientras exista la configuración. Devuelve undefined si no hay cuotas definidas.
- */
-export function getRemainingInstallments(cc: CreditCardItem, now: Date = new Date()): number | undefined {
-  if (!cc.installments || cc.installments <= 0) return undefined;
-  const setAt = cc.installmentsSetAt ? new Date(cc.installmentsSetAt) : now;
-  const validSetAt = isNaN(setAt.getTime()) ? now : setAt;
-  const monthsElapsed = Math.max(
-    0,
-    (now.getFullYear() - validSetAt.getFullYear()) * 12 + (now.getMonth() - validSetAt.getMonth())
-  );
-  return Math.max(1, cc.installments - monthsElapsed);
+/** Información de cuotas de una compra de tarjeta. */
+export interface PurchaseInstallmentInfo {
+  installments: number;   // Total de cuotas (1 = contado)
+  quota: number;          // Cuota mensual fija = monto / cuotas
+  paid: number;           // Monto abonado a la compra con pagos desde "Registro"
+  remaining: number;      // Saldo pendiente de la compra
+  currentInstallment: number; // Cuota que se está pagando (1..installments)
+  paidInstallments: number;   // Cuotas completas ya pagadas
+  finished: boolean;      // Compra totalmente pagada
 }
 
-export function calculateCardPaymentDue(cc: CreditCardItem, now: Date = new Date()): number {
-  if (cc.minPaymentOverride !== undefined && cc.minPaymentOverride > 0) {
-    return cc.minPaymentOverride;
-  }
-  // Cuotas definidas: la deuda total se divide entre las cuotas restantes
-  const remainingInstallments = getRemainingInstallments(cc, now);
-  if (remainingInstallments !== undefined) {
-    return calculateCardPurchasesTotal(cc) / remainingInstallments;
-  }
+/** Compra diferida a más de una cuota. */
+export function isInstallmentPurchase(p: CreditCardPurchase): boolean {
+  return (p.installments || 1) > 1;
+}
+
+/**
+ * Calcula el estado de cuotas de una compra. No depende de la fecha:
+ * el avance solo cambia cuando se registra un pago a la tarjeta desde "Registro".
+ */
+export function getPurchaseInstallmentInfo(p: CreditCardPurchase): PurchaseInstallmentInfo {
+  const installments = Math.max(1, Math.floor(p.installments || 1));
+  const amount = Math.max(0, p.amount || 0);
+  const quota = amount / installments;
+  const paid = Math.min(amount, Math.max(0, p.paidAmount || 0));
+  const remaining = Math.max(0, amount - paid);
+  // Tolerancia de 1 peso por redondeos en la división
+  const paidInstallments = quota > 0 ? Math.min(installments, Math.floor((paid + 1) / quota)) : installments;
+  const finished = remaining <= 1;
+  return {
+    installments,
+    quota,
+    paid,
+    remaining,
+    paidInstallments,
+    currentInstallment: Math.min(installments, paidInstallments + 1),
+    finished
+  };
+}
+
+/**
+ * Pago del mes según el modelo anterior (corte de facturación / total pendiente).
+ * Se aplica a las compras de contado.
+ */
+function calculateLegacyPaymentDue(cc: CreditCardItem): number {
   const totalPurchases = (cc.purchases || []).reduce((sum, p) => sum + (p.amount || 0), 0);
   const totalPayments = (cc.payments || []).reduce((sum, pay) => sum + (pay.amount || 0), 0);
 
@@ -121,6 +142,42 @@ export function calculateCardPaymentDue(cc: CreditCardItem, now: Date = new Date
   }
 
   return calculateCardPurchasesTotal(cc);
+}
+
+/**
+ * Pago del mes de una tarjeta (valor que entra al presupuesto):
+ * - Compras en cuotas: suma de la cuota mensual fija de cada compra no pagada
+ *   (no cambia por las cuotas que falten ni por el saldo; solo baja la última cuota si queda menos).
+ * - Compras de contado: cálculo anterior (corte de facturación / saldo pendiente).
+ */
+export function calculateCardPaymentDue(cc: CreditCardItem): number {
+  if (cc.minPaymentOverride !== undefined && cc.minPaymentOverride > 0) {
+    return cc.minPaymentOverride;
+  }
+  const purchases = cc.purchases || [];
+  const installmentPurchases = purchases.filter(isInstallmentPurchase);
+  if (installmentPurchases.length === 0) return calculateLegacyPaymentDue(cc);
+
+  // Cuotas del mes de las compras diferidas
+  let installmentsDue = 0;
+  let allocatedToInstallments = 0;
+  for (const p of installmentPurchases) {
+    const info = getPurchaseInstallmentInfo(p);
+    allocatedToInstallments += info.paid;
+    if (!info.finished) installmentsDue += Math.min(info.quota, info.remaining);
+  }
+
+  // Compras de contado: se descuentan de los pagos lo ya abonado a compras en cuotas
+  const totalPayments = (cc.payments || []).reduce((sum, pay) => sum + (pay.amount || 0), 0);
+  const cashCard: CreditCardItem = {
+    ...cc,
+    purchases: purchases.filter(p => !isInstallmentPurchase(p)),
+    payments: [{ id: 'agg', amount: Math.max(0, totalPayments - allocatedToInstallments), date: '' }],
+    cutoffBasePayments: cc.cutoffBasePayments !== undefined
+      ? Math.max(0, cc.cutoffBasePayments - allocatedToInstallments)
+      : undefined
+  };
+  return installmentsDue + calculateLegacyPaymentDue(cashCard);
 }
 
 /**

@@ -9,6 +9,9 @@ jobs:
   build:
     name: Build Android APK
     runs-on: ubuntu-latest
+    # Necesario para publicar el APK en GitHub Releases
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout Repository
@@ -83,3 +86,19 @@ jobs:
           name: MisFinanzas-AAB
           path: android/app/build/outputs/bundle/release/app-release.aab
           retention-days: 30
+
+      # Publica el APK con un enlace fijo que no cambia entre compilaciones:
+      # https://github.com/<repo>/releases/download/apk-latest/MisFinanzas.apk
+      - name: Publish APK to GitHub Release (apk-latest)
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION=$(grep -oP 'versionName "\K[^"]+' android/app/build.gradle)
+          cp android/app/build/outputs/apk/release/app-release.apk MisFinanzas.apk
+          gh release delete apk-latest --yes --cleanup-tag || true
+          gh release create apk-latest MisFinanzas.apk \
+            --title "MisFinanzas ${VERSION}" \
+            --notes "APK firmado de la última versión de main (${GITHUB_SHA::7}). Se instala encima de la app sin perder datos." \
+            --target "${GITHUB_SHA}" \
+            --latest

@@ -19,7 +19,7 @@ const COLLECTIONS: Record<string, { label: string; text: string[]; numbers: stri
   portfolioItems: { label: 'Portafolio', text: ['nombre'], numbers: ['saldo'] },
   housingExpenses: { label: 'Vivienda', text: ['name'], numbers: ['totalAmount', 'paymentDay'] },
   obligations: { label: 'Obligaciones', text: ['name'], numbers: ['totalAmount', 'totalDebtBalance', 'paymentDay'] },
-  creditCards: { label: 'Tarjetas', text: ['name'], numbers: ['creditLimit', 'paymentDay', 'cutoffDay', 'installments'] },
+  creditCards: { label: 'Tarjetas', text: ['name'], numbers: ['creditLimit', 'paymentDay', 'cutoffDay'] },
   subscriptions: { label: 'Suscripciones', text: ['name'], numbers: ['totalPrice', 'members'] },
   expenseMovements: { label: 'Registro', text: ['name', 'sourceAccountId'], numbers: ['amount'] }
 };
