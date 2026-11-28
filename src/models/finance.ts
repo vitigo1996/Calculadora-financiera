@@ -96,6 +96,8 @@ export interface CreditCardItem {
   billingCutoffDate?: string;
   lastCutoffDate?: string;
   cutoffBasePayments?: number; // Total acumulado de pagos al momento del corte
+  installments?: number;        // Cuotas pendientes de la deuda total al momento de definirlas
+  installmentsSetAt?: string;   // Fecha ISO en que se definieron las cuotas (inicia la cuenta regresiva mensual)
   purchases: CreditCardPurchase[];
   payments?: CreditCardPayment[];
 }

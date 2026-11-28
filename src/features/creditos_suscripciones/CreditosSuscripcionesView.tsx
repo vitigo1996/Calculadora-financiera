@@ -4,6 +4,7 @@ import {
   formatCurrency,
   calculateCardPurchasesTotal,
   calculateCardPaymentDue,
+  getRemainingInstallments,
   isWithinMonths,
   isPurchaseBeforeCurrentMonthBillingDate,
   parsePurchaseDate
@@ -21,6 +22,15 @@ const DAY_OPTIONS = [
   ...Array.from({ length: 31 }, (_, i) => ({
     value: (i + 1).toString(),
     label: `Día ${i + 1}`
+  }))
+];
+
+// Cuotas de la deuda total (cuotas pendientes)
+const INSTALLMENT_OPTIONS = [
+  { value: '', label: 'Sin cuotas' },
+  ...Array.from({ length: 48 }, (_, i) => ({
+    value: (i + 1).toString(),
+    label: `${i + 1} ${i === 0 ? 'cuota' : 'cuotas'}`
   }))
 ];
 import {
@@ -96,6 +106,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
   const [cardLimit, setCardLimit] = useState('');
   const [cardPaymentDay, setCardPaymentDay] = useState<string>('');
   const [cardCutoffDay, setCardCutoffDay] = useState<string>('');
+  const [cardInstallments, setCardInstallments] = useState<string>('');
 
   // Modal: Add Purchase
   const [showAddPurchaseModal, setShowAddPurchaseModal] = useState(false);
@@ -112,6 +123,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
     setCardLimit('');
     setCardPaymentDay('');
     setCardCutoffDay('');
+    setCardInstallments('');
     setEditingCardObj(null);
     setShowCardModal(true);
   };
@@ -123,6 +135,9 @@ export const CreditosSuscripcionesView: React.FC = () => {
     setCardLimit(card.creditLimit.toString());
     setCardPaymentDay(card.paymentDay !== undefined ? card.paymentDay.toString() : '');
     setCardCutoffDay(card.cutoffDay !== undefined ? card.cutoffDay.toString() : '');
+    // Se muestran las cuotas que faltan hoy (no las definidas originalmente)
+    const remaining = getRemainingInstallments(card);
+    setCardInstallments(remaining !== undefined ? remaining.toString() : '');
     setShowCardModal(true);
   };
 
@@ -133,14 +148,24 @@ export const CreditosSuscripcionesView: React.FC = () => {
     const limit = parseFloat(cardLimit) || 0;
     const paymentDayVal = cardPaymentDay ? parseInt(cardPaymentDay, 10) : undefined;
     const cutoffDayVal = cardCutoffDay ? parseInt(cardCutoffDay, 10) : undefined;
+    const installmentsVal = cardInstallments ? parseInt(cardInstallments, 10) : undefined;
 
     if (editingCardObj) {
+      // Solo se reinicia la cuenta regresiva si el número de cuotas cambió
+      const currentRemaining = getRemainingInstallments(editingCardObj);
+      const installmentsChanged = installmentsVal !== currentRemaining;
       updateCreditCard(editingCardObj.id, {
         name: cardName.trim(),
         creditLimit: limit,
         paymentDay: paymentDayVal,
         cutoffDay: cutoffDayVal,
-        moneda: 'COP'
+        moneda: 'COP',
+        ...(installmentsChanged
+          ? {
+              installments: installmentsVal,
+              installmentsSetAt: installmentsVal ? new Date().toISOString() : undefined
+            }
+          : {})
       });
     } else {
       addCreditCard({
@@ -148,7 +173,9 @@ export const CreditosSuscripcionesView: React.FC = () => {
         creditLimit: limit,
         paymentDay: paymentDayVal,
         cutoffDay: cutoffDayVal,
-        moneda: 'COP'
+        moneda: 'COP',
+        installments: installmentsVal,
+        installmentsSetAt: installmentsVal ? new Date().toISOString() : undefined
       });
     }
     setShowCardModal(false);
@@ -251,6 +278,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
                 const isSelected = (selectedCard?.id === cc.id);
                 const totalDeuda = calculateCardPurchasesTotal(cc);
                 const pagoDelMes = calculateCardPaymentDue(cc);
+                const cuotasRestantes = getRemainingInstallments(cc);
                 const cupoDisponible = cc.creditLimit - totalDeuda;
                 const hasCutoff = cc.billingCutoffAmount !== undefined;
 
@@ -321,7 +349,9 @@ export const CreditosSuscripcionesView: React.FC = () => {
                         {/* Pago Mínimo */}
                         <div>
                           <span className="text-slate-500 dark:text-slate-400 block text-xs font-semibold">
-                            Pago Mínimo
+                            {cuotasRestantes !== undefined
+                              ? `Cuota (${cuotasRestantes} ${cuotasRestantes === 1 ? 'restante' : 'restantes'})`
+                              : 'Pago Mínimo'}
                           </span>
                           <span className="font-mono font-bold text-base block text-slate-900 dark:text-white truncate">
                             {hideBalances ? '••••••' : formatCurrency(pagoDelMes)}
@@ -745,6 +775,22 @@ export const CreditosSuscripcionesView: React.FC = () => {
                   onChange={val => setCardPaymentDay(val)}
                   options={DAY_OPTIONS}
                 />
+              </div>
+
+              {/* Cuotas de la deuda total: la deuda se divide entre las cuotas restantes */}
+              <div>
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                  Cuotas de la Deuda Total
+                </label>
+                <CustomSelect
+                  value={cardInstallments}
+                  onChange={val => setCardInstallments(val)}
+                  options={INSTALLMENT_OPTIONS}
+                />
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                  Cuotas que faltan por pagar. La cuota mensual (deuda total ÷ cuotas) va al presupuesto
+                  y se descuenta una cuota cada mes.
+                </p>
               </div>
 
               <div className="flex items-center gap-2 pt-3">
