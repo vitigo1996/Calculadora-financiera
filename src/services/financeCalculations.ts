@@ -73,9 +73,30 @@ export function calculateCardPurchasesTotal(cc: CreditCardItem): number {
   return Math.max(0, totalPurchases - totalPayments);
 }
 
-export function calculateCardPaymentDue(cc: CreditCardItem): number {
+/**
+ * Cuotas que faltan por pagar de una tarjeta con deuda diferida.
+ * Se descuenta una cuota por cada mes calendario transcurrido desde que se definieron.
+ * Nunca baja de 1 mientras exista la configuración. Devuelve undefined si no hay cuotas definidas.
+ */
+export function getRemainingInstallments(cc: CreditCardItem, now: Date = new Date()): number | undefined {
+  if (!cc.installments || cc.installments <= 0) return undefined;
+  const setAt = cc.installmentsSetAt ? new Date(cc.installmentsSetAt) : now;
+  const validSetAt = isNaN(setAt.getTime()) ? now : setAt;
+  const monthsElapsed = Math.max(
+    0,
+    (now.getFullYear() - validSetAt.getFullYear()) * 12 + (now.getMonth() - validSetAt.getMonth())
+  );
+  return Math.max(1, cc.installments - monthsElapsed);
+}
+
+export function calculateCardPaymentDue(cc: CreditCardItem, now: Date = new Date()): number {
   if (cc.minPaymentOverride !== undefined && cc.minPaymentOverride > 0) {
     return cc.minPaymentOverride;
+  }
+  // Cuotas definidas: la deuda total se divide entre las cuotas restantes
+  const remainingInstallments = getRemainingInstallments(cc, now);
+  if (remainingInstallments !== undefined) {
+    return calculateCardPurchasesTotal(cc) / remainingInstallments;
   }
   const totalPurchases = (cc.purchases || []).reduce((sum, p) => sum + (p.amount || 0), 0);
   const totalPayments = (cc.payments || []).reduce((sum, pay) => sum + (pay.amount || 0), 0);

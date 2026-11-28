@@ -51,7 +51,7 @@ interface FinanceContextType {
   deletePortfolioItem: (id: string) => void;
   movePortfolioItem: (index: number, direction: 'up' | 'down') => void;
   reorderPortfolioItems: (fromIndex: number, toIndex: number) => void;
-  addCreditCard: (item: { name: string; period?: PaymentPeriod; paymentDay?: number; cutoffDay?: number; creditLimit: number; moneda?: 'COP' | 'USD'; minPaymentOverride?: number }) => void;
+  addCreditCard: (item: { name: string; period?: PaymentPeriod; paymentDay?: number; cutoffDay?: number; creditLimit: number; moneda?: 'COP' | 'USD'; minPaymentOverride?: number; installments?: number; installmentsSetAt?: string }) => void;
   updateCreditCard: (id: string, updated: Partial<CreditCardItem>) => void;
   deleteCreditCard: (id: string) => void;
   moveCreditCard: (index: number, direction: 'up' | 'down') => void;
@@ -379,7 +379,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }));
   };
 
-  const addCreditCard = (card: { name: string; period?: PaymentPeriod; paymentDay?: number; cutoffDay?: number; creditLimit: number; moneda?: 'COP' | 'USD'; minPaymentOverride?: number }) => {
+  const addCreditCard = (card: { name: string; period?: PaymentPeriod; paymentDay?: number; cutoffDay?: number; creditLimit: number; moneda?: 'COP' | 'USD'; minPaymentOverride?: number; installments?: number; installmentsSetAt?: string }) => {
     const newCard: CreditCardItem = {
       id: generateId('cc'),
       name: card.name,
@@ -389,6 +389,8 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       creditLimit: card.creditLimit,
       moneda: card.moneda || 'COP',
       minPaymentOverride: card.minPaymentOverride,
+      installments: card.installments,
+      installmentsSetAt: card.installmentsSetAt,
       purchases: []
     };
     setData(prev => ({

@@ -169,3 +169,49 @@ describe('financeCalculations Service', () => {
     });
   });
 });
+
+describe('Cuotas de la deuda total en tarjetas', () => {
+  // Importación local para no alterar los imports existentes del archivo
+  const card = (extra: Partial<CreditCardItem> = {}): CreditCardItem => ({
+    id: 'cc', name: 'Visa', creditLimit: 5_000_000, moneda: 'COP',
+    purchases: [{ id: 'p1', concept: 'Compra', amount: 1_200_000 }],
+    payments: [],
+    ...extra
+  });
+
+  it('divide la deuda total entre las cuotas definidas', () => {
+    const now = new Date(2026, 10, 28);
+    const cc = card({ installments: 12, installmentsSetAt: now.toISOString() });
+    expect(calculateCardPaymentDue(cc, now)).toBe(100_000);
+  });
+
+  it('descuenta una cuota por mes transcurrido y recalcula con la deuda restante', () => {
+    const setAt = new Date(2026, 10, 28);
+    const twoMonthsLater = new Date(2027, 0, 5);
+    const cc = card({
+      installments: 12,
+      installmentsSetAt: setAt.toISOString(),
+      payments: [{ id: 'pay', amount: 200_000, date: '2026-12-10' }]
+    });
+    // Deuda 1.000.000 / 10 cuotas restantes
+    expect(calculateCardPaymentDue(cc, twoMonthsLater)).toBe(100_000);
+  });
+
+  it('nunca baja de una cuota restante', () => {
+    const cc = card({ installments: 2, installmentsSetAt: new Date(2026, 0, 1).toISOString() });
+    expect(calculateCardPaymentDue(cc, new Date(2026, 11, 1))).toBe(1_200_000);
+  });
+
+  it('sin cuotas mantiene el cálculo anterior', () => {
+    expect(calculateCardPaymentDue(card())).toBe(1_200_000);
+  });
+
+  it('la cuota entra al presupuesto mensual', () => {
+    const now = new Date();
+    const data: AppFinanceData = {
+      ...initialFinanceData,
+      creditCards: [card({ installments: 6, installmentsSetAt: now.toISOString() })]
+    };
+    expect(calculateAllFinances(data).presupuesto.m5_tarjetas).toBe(200_000);
+  });
+});
