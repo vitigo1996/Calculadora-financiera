@@ -706,16 +706,20 @@ export const BilleteraView: React.FC = () => {
         </div>
       )}
 
-      {/* Modal: Registrar Movimiento */}
-      <MovementModal
-        isOpen={showAddMovementModal}
-        onClose={() => setShowAddMovementModal(false)}
-        data={data}
-        deudasPorCobrar={deudasPorCobrar}
-        deudasPorPagar={deudasPorPagar}
-        onSave={handleSaveMovementFromModal}
-        setConfirmConfig={setConfirmConfig}
-      />
+      {/* Modal: Registrar Movimiento
+          Se monta solo al abrirse: cada apertura arranca con los campos vacíos
+          (al cerrarse se desmonta y se descarta lo escrito en el registro anterior). */}
+      {showAddMovementModal && (
+        <MovementModal
+          isOpen={true}
+          onClose={() => setShowAddMovementModal(false)}
+          data={data}
+          deudasPorCobrar={deudasPorCobrar}
+          deudasPorPagar={deudasPorPagar}
+          onSave={handleSaveMovementFromModal}
+          setConfirmConfig={setConfirmConfig}
+        />
+      )}
 
       {/* Pop-up Modal de Selección de Ícono */}
       {iconPickerTarget && (
