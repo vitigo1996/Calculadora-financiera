@@ -3,7 +3,7 @@ import {
   CreditCardPayment,
   ExpenseMovement
 } from '../models/finance';
-import { convertToBase, formatCurrency } from './financeCalculations';
+import { convertToBase, formatCurrency, getPurchaseInstallmentInfo, isInstallmentPurchase, parsePurchaseDate } from './financeCalculations';
 import { generateId } from './idService';
 
 type Moneda = 'COP' | 'USD';
@@ -84,6 +84,66 @@ function adjustAccount(
     applied
   };
 }
+
+/**
+ * Reparte un pago a tarjeta entre sus compras en cuotas:
+ * 1. Cada compra pendiente recibe su cuota del mes (de la más antigua a la más reciente).
+ * 2. Si el pago supera las cuotas y la deuda de contado, el excedente abona saldo de las compras en cuotas.
+ * Devuelve las asignaciones (para poder revertirlas) y las compras actualizadas.
+ */
+export function allocateCardPayment(
+  card: CreditCard,
+  payAmount: number
+): { allocations: { purchaseId: string; amount: number }[]; purchases: CreditCard['purchases'] } {
+  const purchases = card.purchases || [];
+  const pending = purchases
+    .filter(p => isInstallmentPurchase(p) && !getPurchaseInstallmentInfo(p).finished)
+    .sort((a, b) =>
+      (parsePurchaseDate(a.date, a.id)?.getTime() || 0) - (parsePurchaseDate(b.date, b.id)?.getTime() || 0)
+    );
+  const assigned = new Map<string, number>();
+  let left = payAmount;
+
+  // 1. Una cuota por compra
+  for (const p of pending) {
+    if (left <= 0) break;
+    const info = getPurchaseInstallmentInfo(p);
+    const take = Math.min(left, info.quota, info.remaining);
+    if (take > 0) {
+      assigned.set(p.id, take);
+      left -= take;
+    }
+  }
+
+  // 2. Excedente después de cubrir la deuda de contado → abono a saldos en cuotas
+  if (left > 0) {
+    const cashPurchases = purchases.filter(p => !isInstallmentPurchase(p)).reduce((s, p) => s + (p.amount || 0), 0);
+    const allocatedBefore = purchases.filter(isInstallmentPurchase).reduce((s, p) => s + (p.paidAmount || 0), 0);
+    const paymentsBefore = (card.payments || []).reduce((s, p) => s + (p.amount || 0), 0);
+    const cashDebt = Math.max(0, cashPurchases - Math.max(0, paymentsBefore - allocatedBefore));
+    let extra = Math.max(0, left - cashDebt);
+    for (const p of pending) {
+      if (extra <= 0) break;
+      const info = getPurchaseInstallmentInfo(p);
+      const room = info.remaining - (assigned.get(p.id) || 0);
+      const take = Math.min(extra, room);
+      if (take > 0) {
+        assigned.set(p.id, (assigned.get(p.id) || 0) + take);
+        extra -= take;
+      }
+    }
+  }
+
+  const allocations = [...assigned.entries()].map(([purchaseId, amount]) => ({ purchaseId, amount }));
+  return {
+    allocations,
+    purchases: purchases.map(p =>
+      assigned.has(p.id) ? { ...p, paidAmount: (p.paidAmount || 0) + assigned.get(p.id)! } : p
+    )
+  };
+}
+
+type CreditCard = AppFinanceData['creditCards'][number];
 
 /** Convierte un monto entre COP y USD con la tasa vigente. */
 const convert = (amount: number, from: Moneda, to: Moneda, rate: number): number =>
@@ -167,9 +227,12 @@ export function applyNewMovement(
         concept: input.name.trim() || 'Abono / Pago',
         sourceAccountName
       };
+      // Abonar la cuota del mes a cada compra en cuotas (antes de agregar el pago al historial)
+      const allocation = allocateCardPayment(card, payAmount);
+      if (allocation.allocations.length > 0) movement.installmentAllocations = allocation.allocations;
       const payments = [payment, ...(card.payments || [])];
       const totalPayments = payments.reduce((s, p) => s + (p.amount || 0), 0);
-      let updatedCard = { ...card, payments };
+      let updatedCard = { ...card, payments, purchases: allocation.purchases };
       // Si el pago cubre el corte facturado, se cierra el corte (y se guarda para poder restaurarlo)
       if (card.billingCutoffAmount !== undefined) {
         const paidSinceCutoff = Math.max(0, totalPayments - (card.cutoffBasePayments || 0));
@@ -290,17 +353,23 @@ export function revertMovement(prev: AppFinanceData, id: string): AppFinanceData
             else { payments.push({ ...pay, amount: pay.amount - toRemove }); toRemove = 0; }
           }
         }
+        // Revertir los abonos que este pago hizo a compras en cuotas
+        const allocs = new Map((movement.installmentAllocations || []).map(a => [a.purchaseId, a.amount]));
+        const purchases = allocs.size === 0 ? c.purchases : (c.purchases || []).map(p =>
+          allocs.has(p.id) ? { ...p, paidAmount: Math.max(0, (p.paidAmount || 0) - allocs.get(p.id)!) } : p
+        );
         // Restaurar el corte que este pago cerró, si no se ha hecho un corte nuevo desde entonces
         if (movement.clearedCutoff && c.billingCutoffAmount === undefined) {
           return {
             ...c,
             payments,
+            purchases,
             billingCutoffAmount: movement.clearedCutoff.amount,
             billingCutoffDate: movement.clearedCutoff.date,
             cutoffBasePayments: movement.clearedCutoff.basePayments
           };
         }
-        return { ...c, payments };
+        return { ...c, payments, purchases };
       })
     };
   }

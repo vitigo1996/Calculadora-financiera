@@ -51,7 +51,7 @@ interface FinanceContextType {
   deletePortfolioItem: (id: string) => void;
   movePortfolioItem: (index: number, direction: 'up' | 'down') => void;
   reorderPortfolioItems: (fromIndex: number, toIndex: number) => void;
-  addCreditCard: (item: { name: string; period?: PaymentPeriod; paymentDay?: number; cutoffDay?: number; creditLimit: number; moneda?: 'COP' | 'USD'; minPaymentOverride?: number; installments?: number; installmentsSetAt?: string }) => void;
+  addCreditCard: (item: { name: string; period?: PaymentPeriod; paymentDay?: number; cutoffDay?: number; creditLimit: number; moneda?: 'COP' | 'USD'; minPaymentOverride?: number }) => void;
   updateCreditCard: (id: string, updated: Partial<CreditCardItem>) => void;
   deleteCreditCard: (id: string) => void;
   moveCreditCard: (index: number, direction: 'up' | 'down') => void;
@@ -61,7 +61,7 @@ interface FinanceContextType {
   cancelCardCutoff: (cardId: string) => void;
   clearCardPurchases: (cardId: string) => void;
   clearCardPurchasesVisual: (cardId: string) => void;
-  addCardPurchase: (cardId: string, purchase: { concept: string; amount: number; moneda?: 'COP' | 'USD'; icon?: string }) => void;
+  addCardPurchase: (cardId: string, purchase: { concept: string; amount: number; moneda?: 'COP' | 'USD'; icon?: string; installments?: number }) => void;
   updateCardPurchase: (cardId: string, purchaseId: string, updated: { concept: string; amount: number; moneda?: 'COP' | 'USD'; icon?: string }) => void;
   cancelCardPurchase: (cardId: string, purchaseId: string) => void;
   deleteCardPurchaseRecord: (cardId: string, purchaseId: string) => void;
@@ -379,7 +379,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }));
   };
 
-  const addCreditCard = (card: { name: string; period?: PaymentPeriod; paymentDay?: number; cutoffDay?: number; creditLimit: number; moneda?: 'COP' | 'USD'; minPaymentOverride?: number; installments?: number; installmentsSetAt?: string }) => {
+  const addCreditCard = (card: { name: string; period?: PaymentPeriod; paymentDay?: number; cutoffDay?: number; creditLimit: number; moneda?: 'COP' | 'USD'; minPaymentOverride?: number }) => {
     const newCard: CreditCardItem = {
       id: generateId('cc'),
       name: card.name,
@@ -389,8 +389,6 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       creditLimit: card.creditLimit,
       moneda: card.moneda || 'COP',
       minPaymentOverride: card.minPaymentOverride,
-      installments: card.installments,
-      installmentsSetAt: card.installmentsSetAt,
       purchases: []
     };
     setData(prev => ({
@@ -514,7 +512,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   // Add Card Purchase (inserted at TOP)
-  const addCardPurchase = (cardId: string, purchase: { concept: string; amount: number; moneda?: 'COP' | 'USD'; icon?: string }) => {
+  const addCardPurchase = (cardId: string, purchase: { concept: string; amount: number; moneda?: 'COP' | 'USD'; icon?: string; installments?: number }) => {
     const targetCard = data.creditCards.find(c => c.id === cardId);
     const hasActiveCutoff = targetCard?.billingCutoffAmount !== undefined;
 

@@ -73,6 +73,8 @@ export interface CreditCardPurchase {
   isAfterCutoff?: boolean;
   isPaid?: boolean;
   hidden?: boolean;
+  installments?: number; // Número de cuotas de la compra (1 o vacío = contado)
+  paidAmount?: number;   // Monto abonado a esta compra con pagos registrados desde "Registro"
 }
 
 export interface CreditCardPayment {
@@ -96,8 +98,6 @@ export interface CreditCardItem {
   billingCutoffDate?: string;
   lastCutoffDate?: string;
   cutoffBasePayments?: number; // Total acumulado de pagos al momento del corte
-  installments?: number;        // Cuotas pendientes de la deuda total al momento de definirlas
-  installmentsSetAt?: string;   // Fecha ISO en que se definieron las cuotas (inicia la cuenta regresiva mensual)
   purchases: CreditCardPurchase[];
   payments?: CreditCardPayment[];
 }
@@ -136,6 +136,10 @@ export interface ExpenseMovement {
   sourceApplied?: number;                   // Monto realmente aplicado al origen (moneda del origen)
   destApplied?: number;                     // Monto realmente aplicado al destino (moneda del destino)
   cardPaymentId?: string;                   // Id del abono creado en la tarjeta destino
+  installmentAllocations?: {                // Abonos a compras en cuotas hechos por este pago (para revertirlos)
+    purchaseId: string;
+    amount: number;
+  }[];
   clearedCutoff?: {                         // Corte de tarjeta que este pago cerró (para restaurarlo)
     amount: number;
     date?: string;

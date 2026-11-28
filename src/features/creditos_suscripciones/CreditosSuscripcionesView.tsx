@@ -4,7 +4,8 @@ import {
   formatCurrency,
   calculateCardPurchasesTotal,
   calculateCardPaymentDue,
-  getRemainingInstallments,
+  getPurchaseInstallmentInfo,
+  isInstallmentPurchase,
   isWithinMonths,
   isPurchaseBeforeCurrentMonthBillingDate,
   parsePurchaseDate
@@ -25,12 +26,11 @@ const DAY_OPTIONS = [
   }))
 ];
 
-// Cuotas de la deuda total (cuotas pendientes)
+// Cuotas de una compra (1 = contado)
 const INSTALLMENT_OPTIONS = [
-  { value: '', label: 'Sin cuotas' },
   ...Array.from({ length: 48 }, (_, i) => ({
     value: (i + 1).toString(),
-    label: `${i + 1} ${i === 0 ? 'cuota' : 'cuotas'}`
+    label: i === 0 ? '1 cuota (contado)' : `${i + 1} cuotas`
   }))
 ];
 import {
@@ -106,13 +106,13 @@ export const CreditosSuscripcionesView: React.FC = () => {
   const [cardLimit, setCardLimit] = useState('');
   const [cardPaymentDay, setCardPaymentDay] = useState<string>('');
   const [cardCutoffDay, setCardCutoffDay] = useState<string>('');
-  const [cardInstallments, setCardInstallments] = useState<string>('');
 
   // Modal: Add Purchase
   const [showAddPurchaseModal, setShowAddPurchaseModal] = useState(false);
   const [purchaseConcept, setPurchaseConcept] = useState('');
   const [purchaseAmount, setPurchaseAmount] = useState('');
   const [purchaseIcon, setPurchaseIcon] = useState('compras');
+  const [purchaseInstallments, setPurchaseInstallments] = useState('1');
 
   // Selected card reference
   const selectedCard = data.creditCards.find(c => c.id === selectedCardId) || data.creditCards[0];
@@ -123,7 +123,6 @@ export const CreditosSuscripcionesView: React.FC = () => {
     setCardLimit('');
     setCardPaymentDay('');
     setCardCutoffDay('');
-    setCardInstallments('');
     setEditingCardObj(null);
     setShowCardModal(true);
   };
@@ -135,9 +134,6 @@ export const CreditosSuscripcionesView: React.FC = () => {
     setCardLimit(card.creditLimit.toString());
     setCardPaymentDay(card.paymentDay !== undefined ? card.paymentDay.toString() : '');
     setCardCutoffDay(card.cutoffDay !== undefined ? card.cutoffDay.toString() : '');
-    // Se muestran las cuotas que faltan hoy (no las definidas originalmente)
-    const remaining = getRemainingInstallments(card);
-    setCardInstallments(remaining !== undefined ? remaining.toString() : '');
     setShowCardModal(true);
   };
 
@@ -148,24 +144,14 @@ export const CreditosSuscripcionesView: React.FC = () => {
     const limit = parseFloat(cardLimit) || 0;
     const paymentDayVal = cardPaymentDay ? parseInt(cardPaymentDay, 10) : undefined;
     const cutoffDayVal = cardCutoffDay ? parseInt(cardCutoffDay, 10) : undefined;
-    const installmentsVal = cardInstallments ? parseInt(cardInstallments, 10) : undefined;
 
     if (editingCardObj) {
-      // Solo se reinicia la cuenta regresiva si el número de cuotas cambió
-      const currentRemaining = getRemainingInstallments(editingCardObj);
-      const installmentsChanged = installmentsVal !== currentRemaining;
       updateCreditCard(editingCardObj.id, {
         name: cardName.trim(),
         creditLimit: limit,
         paymentDay: paymentDayVal,
         cutoffDay: cutoffDayVal,
-        moneda: 'COP',
-        ...(installmentsChanged
-          ? {
-              installments: installmentsVal,
-              installmentsSetAt: installmentsVal ? new Date().toISOString() : undefined
-            }
-          : {})
+        moneda: 'COP'
       });
     } else {
       addCreditCard({
@@ -173,9 +159,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
         creditLimit: limit,
         paymentDay: paymentDayVal,
         cutoffDay: cutoffDayVal,
-        moneda: 'COP',
-        installments: installmentsVal,
-        installmentsSetAt: installmentsVal ? new Date().toISOString() : undefined
+        moneda: 'COP'
       });
     }
     setShowCardModal(false);
@@ -187,6 +171,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
     setPurchaseConcept('');
     setPurchaseAmount('');
     setPurchaseIcon('compras');
+    setPurchaseInstallments('1');
     setShowAddPurchaseModal(true);
   };
 
@@ -201,7 +186,9 @@ export const CreditosSuscripcionesView: React.FC = () => {
       concept: purchaseConcept.trim(),
       amount,
       moneda: selectedCard.moneda || 'COP',
-      icon: purchaseIcon || 'compras'
+      icon: purchaseIcon || 'compras',
+      // 1 cuota = contado (no se guarda el campo)
+      installments: parseInt(purchaseInstallments, 10) > 1 ? parseInt(purchaseInstallments, 10) : undefined
     });
 
     setPurchaseConcept('');
@@ -278,7 +265,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
                 const isSelected = (selectedCard?.id === cc.id);
                 const totalDeuda = calculateCardPurchasesTotal(cc);
                 const pagoDelMes = calculateCardPaymentDue(cc);
-                const cuotasRestantes = getRemainingInstallments(cc);
+                const tieneCuotas = (cc.purchases || []).some(isInstallmentPurchase);
                 const cupoDisponible = cc.creditLimit - totalDeuda;
                 const hasCutoff = cc.billingCutoffAmount !== undefined;
 
@@ -349,9 +336,7 @@ export const CreditosSuscripcionesView: React.FC = () => {
                         {/* Pago Mínimo */}
                         <div>
                           <span className="text-slate-500 dark:text-slate-400 block text-xs font-semibold">
-                            {cuotasRestantes !== undefined
-                              ? `Cuota (${cuotasRestantes} ${cuotasRestantes === 1 ? 'restante' : 'restantes'})`
-                              : 'Pago Mínimo'}
+                            {tieneCuotas ? 'Pago del Mes' : 'Pago Mínimo'}
                           </span>
                           <span className="font-mono font-bold text-base block text-slate-900 dark:text-white truncate">
                             {hideBalances ? '••••••' : formatCurrency(pagoDelMes)}
@@ -648,6 +633,18 @@ export const CreditosSuscripcionesView: React.FC = () => {
                             </span>
                           </div>
                         )}
+
+                        {/* Avance de cuotas (solo cambia al registrar pagos desde "Registro") */}
+                        {isInstallmentPurchase(p) && (() => {
+                          const info = getPurchaseInstallmentInfo(p);
+                          return (
+                            <span className={`inline-block mt-1 text-[11px] font-semibold ${info.finished ? 'text-emerald-600 dark:text-emerald-400' : 'text-blue-600 dark:text-blue-400'}`}>
+                              {info.finished
+                                ? `Pagada (${info.installments} cuotas)`
+                                : `Cuota ${info.currentInstallment}/${info.installments} · ${hideBalances ? '••••' : formatCurrency(info.quota)}/mes`}
+                            </span>
+                          );
+                        })()}
                       </div>
                     </div>
 
@@ -777,22 +774,6 @@ export const CreditosSuscripcionesView: React.FC = () => {
                 />
               </div>
 
-              {/* Cuotas de la deuda total: la deuda se divide entre las cuotas restantes */}
-              <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                  Cuotas de la Deuda Total
-                </label>
-                <CustomSelect
-                  value={cardInstallments}
-                  onChange={val => setCardInstallments(val)}
-                  options={INSTALLMENT_OPTIONS}
-                />
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-                  Cuotas que faltan por pagar. La cuota mensual (deuda total ÷ cuotas) va al presupuesto
-                  y se descuenta una cuota cada mes.
-                </p>
-              </div>
-
               <div className="flex items-center gap-2 pt-3">
                 <button
                   type="button"
@@ -860,6 +841,23 @@ export const CreditosSuscripcionesView: React.FC = () => {
                 required
                 title="Ajuste"
               />
+
+              {/* Cuotas de la compra: la cuota mensual (monto ÷ cuotas) es lo que va al presupuesto */}
+              <div>
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                  Cuotas
+                </label>
+                <CustomSelect
+                  value={purchaseInstallments}
+                  onChange={val => setPurchaseInstallments(val)}
+                  options={INSTALLMENT_OPTIONS}
+                />
+                {parseInt(purchaseInstallments, 10) > 1 && (parseFloat(purchaseAmount) || 0) > 0 && (
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                    Cuota mensual: {formatCurrency((parseFloat(purchaseAmount) || 0) / parseInt(purchaseInstallments, 10))}
+                  </p>
+                )}
+              </div>
 
               <div className="flex items-center gap-2 pt-3">
                 <button
